@@ -6,16 +6,16 @@ type PageShellProps = {
 
 export function PageShell({ title, eyebrow, children }: PageShellProps) {
   return (
-    <section className="space-y-6">
+    <section className="container py-10 space-y-6">
       <div className="space-y-2">
         {eyebrow ? (
-          <p className="text-sm font-semibold text-[var(--accent)]">
+          <p className="text-sm font-semibold text-brand-pink">
             {eyebrow}
           </p>
         ) : null}
         <h1 className="text-3xl font-bold">{title}</h1>
       </div>
-      <div className="rounded-lg border border-[var(--line)] bg-white p-6">
+      <div className="rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm">
         {children}
       </div>
     </section>

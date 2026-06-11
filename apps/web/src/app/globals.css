@@ -1,12 +1,22 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-pink: #F389D4;
+  --color-brand-blue: #00AEEF;
+  --color-brand-black: #000000;
+  --color-brand-white: #FFFFFF;
+  --color-brand-light-pink: #FFF5F9;
+  --color-brand-light-blue: #F0F9FF;
+}
+
 :root {
   color-scheme: light;
-  --background: #fffaf7;
-  --foreground: #211b1b;
-  --muted: #766c69;
-  --line: #eaded8;
-  --accent: #9b4054;
+  --background: #FFFFFF;
+  --foreground: #000000;
+  --muted: #8B8B8B;
+  --line: #E8E8E8;
+  --accent: #F389D4;
+  --accent-secondary: #00AEEF;
 }
 
 body {
@@ -24,5 +34,50 @@ a {
 .container {
   margin-inline: auto;
   max-width: 1120px;
-  padding-inline: 20px;
+  padding-inline: 16px;
+}
+
+@keyframes marquee-rtl {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-ltr {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-marquee-rtl {
+  animation: marquee-rtl linear infinite;
+}
+
+.animate-marquee-ltr {
+  animation: marquee-ltr linear infinite;
+}
+
+@keyframes hero-slide {
+  0%, 28% { opacity: 1; }
+  33%, 94% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.hero-slide-anim {
+  animation: hero-slide 12s infinite;
+}
+
+.hero-slide-anim:nth-child(2) {
+  animation-delay: 4s;
+}
+
+.hero-slide-anim:nth-child(3) {
+  animation-delay: 8s;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
