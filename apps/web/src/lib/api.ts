@@ -38,4 +38,20 @@ export async function apiPost<TResponse, TBody>(
   return response.json() as Promise<TResponse>;
 }
 
+export async function apiDelete(path: string): Promise<void> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    const message =
+      typeof errorBody?.message === "string"
+        ? errorBody.message
+        : `API request failed: ${response.status}`;
+    throw new Error(message);
+  }
+}
+
 export { API_URL };

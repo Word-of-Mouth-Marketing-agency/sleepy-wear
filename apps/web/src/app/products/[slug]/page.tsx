@@ -19,8 +19,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
         eyebrow={product.category?.nameAr ?? "تفاصيل المنتج"}
       >
         <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-          <div className="flex aspect-[4/3] items-center justify-center rounded-md bg-[#f6eeea] text-sm text-[var(--muted)]">
-            {product.images[0]?.altAr ?? product.nameAr}
+          <div className="flex aspect-[4/3] items-center justify-center rounded-md bg-[#f6eeea]">
+            {product.images[0] ? (
+              <img
+                alt={product.images[0].altAr ?? product.nameAr}
+                className="h-full w-full rounded-md object-cover"
+                src={product.images[0].url}
+              />
+            ) : (
+              <span className="text-sm text-[var(--muted)]">
+                {product.nameAr}
+              </span>
+            )}
           </div>
           <div className="space-y-4">
             <p className="text-[var(--muted)]">

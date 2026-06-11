@@ -1,6 +1,7 @@
 import type { Category, Color, Product, Size } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { ProductForm, VariantManager } from "@/components/admin/ProductForm";
+import { ImageManager } from "@/components/admin/ImageManager";
 import { apiGet } from "@/lib/api";
 
 type EditProductPageProps = {
@@ -25,6 +26,9 @@ export default async function EditProductPage({
       ) : (
         <div className="space-y-8">
           <ProductForm categories={categories} product={product} />
+          <div className="border-t border-[var(--line)] pt-6">
+            <ImageManager product={product} />
+          </div>
           <div className="border-t border-[var(--line)] pt-6">
             <h2 className="mb-4 text-xl font-bold">المتغيرات والمخزون</h2>
             <VariantManager colors={colors} product={product} sizes={sizes} />
