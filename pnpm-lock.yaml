@@ -127,6 +127,9 @@ importers:
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
     devDependencies:
       '@types/bcryptjs':
         specifier: ^2.4.6
