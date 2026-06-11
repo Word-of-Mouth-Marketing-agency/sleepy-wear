@@ -29,16 +29,18 @@ interface EasyOrderProduct {
   id: string;
   name: string;
   slug: string;
-  price: number;
-  sale_price: number | null;
-  description: string;
-  thumb: string;
-  images: string[];
-  hidden: boolean;
-  track_stock: boolean;
-  quantity: number;
-  categories: EasyOrderCategory[];
+  price?: number | null;
+  sale_price?: number | null;
+  description?: string | null;
+  thumb?: string | null;
+  images?: string[] | null;
+  hidden?: boolean | null;
+  track_stock?: boolean | null;
+  quantity?: number | null;
+  categories?: EasyOrderCategory[] | null;
 }
+
+const UNCATEGORIZED_SLUG = "uncategorized";
 
 const SITEMAP_URL = "https://sleepy-wear.myeasyorders.com/sitemap.xml";
 const JSON_BASE =
@@ -84,6 +86,25 @@ function slugToNameEn(slug: string): string {
     .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function safeArray<T>(arr: T[] | null | undefined): T[] {
+  return Array.isArray(arr) ? arr : [];
+}
+
+function safeNumber(val: number | null | undefined, fallback: number): number {
+  return typeof val === "number" && !Number.isNaN(val) ? val : fallback;
+}
+
+function safeString(val: string | null | undefined, fallback: string): string {
+  return typeof val === "string" ? val : fallback;
+}
+
+function safeBoolean(
+  val: boolean | null | undefined,
+  fallback: boolean,
+): boolean {
+  return typeof val === "boolean" ? val : fallback;
 }
 
 async function fetchSitemap(): Promise<string[]> {
@@ -208,11 +229,33 @@ async function ensureDefaultColor(): Promise<string> {
   return created.id;
 }
 
+async function ensureUncategorizedCategory(dryRun: boolean): Promise<string | null> {
+  const existing = await prisma.category.findUnique({
+    where: { slug: UNCATEGORIZED_SLUG },
+  });
+
+  if (existing) return existing.id;
+  if (dryRun) return `dry-run-${UNCATEGORIZED_SLUG}`;
+
+  const created = await prisma.category.create({
+    data: {
+      nameAr: "\u063A\u064A\u0631 \u0645\u0635\u0646\u0641",
+      nameEn: "Uncategorized",
+      slug: UNCATEGORIZED_SLUG,
+      sortOrder: 9999,
+      isActive: true,
+    },
+  });
+
+  return created.id;
+}
+
 async function importProduct(
   product: EasyOrderProduct,
   productDir: string,
   defaultSizeId: string,
   defaultColorId: string,
+  uncategorizedId: string | null,
   dryRun: boolean,
   stats: {
     categories: number;
@@ -224,7 +267,7 @@ async function importProduct(
 ) {
   const categoryIds: string[] = [];
 
-  for (const cat of product.categories) {
+  for (const cat of safeArray(product.categories)) {
     const catSlug = cat.slug.toLowerCase();
     const existing = await prisma.category.findUnique({
       where: { slug: catSlug },
@@ -250,28 +293,36 @@ async function importProduct(
     }
   }
 
-  const categoryId = categoryIds[0];
+  let categoryId = categoryIds[0];
 
   if (!categoryId) {
-    console.error(`  [SKIP] ${product.slug} \u2014 no categories found`);
-    stats.skipped++;
-    return;
+    if (uncategorizedId) {
+      categoryId = uncategorizedId;
+      console.warn(
+        `  [WARN] ${product.slug} \u2014 no categories, assigned to "Uncategorized"`,
+      );
+    } else {
+      console.error(`  [SKIP] ${product.slug} \u2014 no categories found`);
+      stats.skipped++;
+      return;
+    }
   }
 
-  const productStatus = product.hidden
+  const hidden = safeBoolean(product.hidden, false);
+  const productStatus = hidden
     ? ProductStatus.DRAFT
     : ProductStatus.ACTIVE;
-  const description = stripHtml(product.description || "");
+  const description = stripHtml(safeString(product.description, ""));
 
   if (dryRun) {
     console.log(
       `  [DRY-RUN] Would import: ${product.name} (${product.slug})`,
     );
     console.log(
-      `    status: ${productStatus}, price: ${product.price}, sale: ${product.sale_price ?? "N/A"}`,
+      `    status: ${productStatus}, price: ${safeNumber(product.price, 0)}, sale: ${safeNumber(product.sale_price, 0) || "N/A"}`,
     );
     console.log(
-      `    category: ${categoryId}, images: ${product.images?.length ?? 0} + thumb`,
+      `    category: ${categoryId}, images: ${safeArray(product.images).length + (product.thumb ? 1 : 0)}`,
     );
     stats.products++;
     return;
@@ -313,11 +364,9 @@ async function importProduct(
       imageUrls.push(product.thumb);
     }
 
-    if (product.images && product.images.length > 0) {
-      for (const img of product.images) {
-        if (!imageUrls.includes(img)) {
-          imageUrls.push(img);
-        }
+    for (const img of safeArray(product.images)) {
+      if (!imageUrls.includes(img)) {
+        imageUrls.push(img);
       }
     }
 
@@ -362,8 +411,9 @@ async function importProduct(
       `  [SKIP] Variant for ${product.slug} \u2014 SKU ${sku} already exists`,
     );
   } else {
-    const stock = product.track_stock
-      ? Math.max(0, product.quantity)
+    const trackStock = safeBoolean(product.track_stock, false);
+    const stock = trackStock
+      ? Math.max(0, safeNumber(product.quantity, 0))
       : 999;
 
     await prisma.productVariant.create({
@@ -372,8 +422,8 @@ async function importProduct(
         sizeId: defaultSizeId,
         colorId: defaultColorId,
         sku,
-        price: product.price,
-        salePrice: product.sale_price ?? null,
+        price: safeNumber(product.price, 0),
+        salePrice: safeNumber(product.sale_price, 0) || null,
         stock,
       },
     });
@@ -405,15 +455,19 @@ async function main() {
 
   let defaultSizeId: string;
   let defaultColorId: string;
+  let uncategorizedId: string | null = null;
 
   if (!dryRun) {
     defaultSizeId = await ensureDefaultSize();
     defaultColorId = await ensureDefaultColor();
+    uncategorizedId = await ensureUncategorizedCategory(dryRun);
     console.log(`Default size ID:  ${defaultSizeId}`);
-    console.log(`Default color ID: ${defaultColorId}\n`);
+    console.log(`Default color ID: ${defaultColorId}`);
+    console.log(`Uncategorized category ID: ${uncategorizedId}\n`);
   } else {
     defaultSizeId = "dry-run-size";
     defaultColorId = "dry-run-color";
+    uncategorizedId = "dry-run-uncategorized";
     console.log(`Product images will be saved to: ${productDir}\n`);
   }
 
@@ -436,14 +490,22 @@ async function main() {
       continue;
     }
 
-    await importProduct(
-      product,
-      productDir,
-      defaultSizeId,
-      defaultColorId,
-      dryRun,
-      stats,
-    );
+    try {
+      await importProduct(
+        product,
+        productDir,
+        defaultSizeId,
+        defaultColorId,
+        uncategorizedId,
+        dryRun,
+        stats,
+      );
+    } catch (err) {
+      console.error(
+        `  [ERROR] ${slug} \u2014 unexpected error: ${err}`,
+      );
+      stats.skipped++;
+    }
 
     if (!dryRun && i < slugs.length - 1) {
       await new Promise((r) => setTimeout(r, 200));
