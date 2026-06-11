@@ -1,0 +1,95 @@
+# SleepyWear
+
+Arabic-first custom e-commerce foundation for `sleepyweareg.com`.
+
+## Stack
+
+- `apps/web`: Next.js App Router, TypeScript, Tailwind CSS, RTL by default
+- `apps/api`: NestJS REST API with validation, CORS, `/api` prefix, and starter modules
+- `packages/database`: Prisma schema, PostgreSQL models, seed data
+- `packages/shared`: shared types/constants for web and API
+- Docker Compose: PostgreSQL, Redis, API, web
+- Local uploads under `/uploads`, exposed later as `/media`
+
+## Setup
+
+```bash
+pnpm install
+copy .env.example .env
+pnpm db:generate
+```
+
+Start local infrastructure:
+
+```bash
+docker compose up postgres redis
+```
+
+Run migrations and seed data:
+
+```bash
+pnpm db:migrate
+pnpm db:seed
+```
+
+Run apps:
+
+```bash
+pnpm --filter @sleepywear/api dev
+pnpm --filter @sleepywear/web dev
+```
+
+Web runs on `http://localhost:3000`.
+API runs on `http://localhost:4000/api`.
+Health check: `http://localhost:4000/api/health`.
+
+## Docker
+
+Create `.env` from `.env.example`, then run:
+
+```bash
+docker compose up --build
+```
+
+Persistent Docker volumes are configured for PostgreSQL data and uploads.
+
+## Project Structure
+
+```text
+apps/
+  web/     Next.js storefront and starter admin pages
+  api/     NestJS API modules, DTOs, guards, upload service
+packages/
+  database/ Prisma schema and seed script
+  shared/   common commerce types and constants
+docker/
+  nginx/    placeholder production proxy config
+uploads/    local media root ignored by Git except .gitkeep
+```
+
+## Notes
+
+- Product stock lives on `ProductVariant`, not `Product`.
+- `OrderItem` stores product, variant, SKU, price, and quantity snapshots.
+- Uploads are local-only for now. Future image processing should validate types, convert to WebP, and create thumbnail/card/large versions.
+- Authentication is intentionally placeholder-only; `AdminGuard` should be replaced with real JWT/session checks.
+- Payment, delivery integrations, and advanced inventory reservations are not implemented yet.
+
+## Useful Commands
+
+```bash
+pnpm build
+pnpm typecheck
+pnpm lint
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+```
+
+## Recommended Next Steps
+
+1. Add real Prisma services to the Nest modules.
+2. Implement admin authentication and role checks.
+3. Add product image upload handling with Sharp.
+4. Build product/admin UI once API contracts are stable.
+5. Add checkout validation, order totals, and inventory reservation rules.
