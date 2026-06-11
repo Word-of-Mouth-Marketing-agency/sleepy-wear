@@ -1,19 +1,19 @@
 import type { Category } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
-import { CategoryManager } from "@/components/admin/CategoryManager";
+import { ProductForm } from "@/components/admin/ProductForm";
 import { apiGet } from "@/lib/api";
 
-export default async function AdminCategoriesPage() {
+export default async function NewProductPage() {
   const categories = await apiGet<Category[]>(
     "/categories?includeInactive=true",
   ).catch(() => null);
 
   return (
-    <PageShell title="إدارة التصنيفات" eyebrow="Admin">
+    <PageShell title="إضافة منتج" eyebrow="Admin">
       {!categories ? (
         <p className="text-red-700">تعذر تحميل التصنيفات.</p>
       ) : (
-        <CategoryManager categories={categories} />
+        <ProductForm categories={categories} />
       )}
     </PageShell>
   );

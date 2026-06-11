@@ -11,9 +11,11 @@ import {
 } from "@nestjs/common";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CreateProductDto } from "./dto/create-product.dto";
+import { CreateVariantDto } from "./dto/create-variant.dto";
 import { ListProductsQueryDto } from "./dto/list-products-query.dto";
 import { UpdateVariantStockDto } from "./dto/update-variant-stock.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { UpdateVariantDto } from "./dto/update-variant.dto";
 import { ProductsService } from "./products.service";
 
 @Controller("products")
@@ -51,6 +53,24 @@ export class ProductsController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.productsService.remove(id);
+  }
+
+  @UseGuards(AdminGuard)
+  @Post(":id/variants")
+  createVariant(@Param("id") id: string, @Body() dto: CreateVariantDto) {
+    return this.productsService.createVariant(id, dto);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("variants/:id")
+  updateVariant(@Param("id") id: string, @Body() dto: UpdateVariantDto) {
+    return this.productsService.updateVariant(id, dto);
+  }
+
+  @UseGuards(AdminGuard)
+  @Delete("variants/:id")
+  removeVariant(@Param("id") id: string) {
+    return this.productsService.removeVariant(id);
   }
 
   @UseGuards(AdminGuard)

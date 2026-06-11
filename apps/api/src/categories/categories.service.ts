@@ -10,9 +10,9 @@ import { UpdateCategoryDto } from "./dto/update-category.dto";
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(includeInactive = false) {
     const categories = await this.prisma.category.findMany({
-      where: { isActive: true },
+      where: includeInactive ? undefined : { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { nameAr: "asc" }],
       include: {
         _count: {

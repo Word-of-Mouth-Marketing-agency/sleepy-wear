@@ -6,8 +6,10 @@ import {
 import { Prisma, ProductStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto } from "./dto/create-product.dto";
+import { CreateVariantDto } from "./dto/create-variant.dto";
 import { ListProductsQueryDto } from "./dto/list-products-query.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { UpdateVariantDto } from "./dto/update-variant.dto";
 
 @Injectable()
 export class ProductsService {
@@ -16,9 +18,13 @@ export class ProductsService {
   async findAll(query: ListProductsQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 12;
-    const where: Prisma.ProductWhereInput = {
-      status: query.status ?? ProductStatus.ACTIVE,
-    };
+    const where: Prisma.ProductWhereInput = {};
+
+    if (query.status) {
+      where.status = query.status;
+    } else if (query.includeInactive !== "true") {
+      where.status = ProductStatus.ACTIVE;
+    }
 
     if (query.search) {
       where.nameAr = { contains: query.search, mode: "insensitive" };
@@ -155,10 +161,67 @@ export class ProductsService {
     return mapVariant(updated);
   }
 
+  async createVariant(productId: string, dto: CreateVariantDto) {
+    await this.ensureProduct(productId);
+
+    const variant = await this.prisma.productVariant.create({
+      data: {
+        productId,
+        sku: dto.sku,
+        price: new Prisma.Decimal(dto.price),
+        salePrice: dto.salePrice ? new Prisma.Decimal(dto.salePrice) : null,
+        sizeId: dto.sizeId || null,
+        colorId: dto.colorId || null,
+        stock: dto.stock,
+      },
+      include: { size: true, color: true },
+    });
+
+    return mapVariant(variant);
+  }
+
+  async updateVariant(variantId: string, dto: UpdateVariantDto) {
+    await this.ensureVariant(variantId);
+
+    const variant = await this.prisma.productVariant.update({
+      where: { id: variantId },
+      data: {
+        sku: dto.sku,
+        price: dto.price ? new Prisma.Decimal(dto.price) : undefined,
+        salePrice:
+          dto.salePrice === undefined
+            ? undefined
+            : dto.salePrice
+              ? new Prisma.Decimal(dto.salePrice)
+              : null,
+        sizeId: dto.sizeId === undefined ? undefined : dto.sizeId || null,
+        colorId: dto.colorId === undefined ? undefined : dto.colorId || null,
+        stock: dto.stock,
+      },
+      include: { size: true, color: true },
+    });
+
+    return mapVariant(variant);
+  }
+
+  async removeVariant(variantId: string) {
+    await this.ensureVariant(variantId);
+    await this.prisma.productVariant.delete({ where: { id: variantId } });
+    return { id: variantId, deleted: true };
+  }
+
   private async ensureProduct(id: string) {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException("Product not found");
     return product;
+  }
+
+  private async ensureVariant(id: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id },
+    });
+    if (!variant) throw new NotFoundException("Variant not found");
+    return variant;
   }
 }
 

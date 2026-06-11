@@ -20,8 +20,8 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  findAll() {
-    return this.categoriesService.findAll();
+  findAll(@Query("includeInactive") includeInactive?: string) {
+    return this.categoriesService.findAll(includeInactive === "true");
   }
 
   @Get(":slug")
