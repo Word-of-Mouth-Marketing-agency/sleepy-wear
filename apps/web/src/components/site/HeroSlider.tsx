@@ -35,7 +35,7 @@ const slides: Slide[] = [
 export function HeroSlider() {
   return (
     <section className="relative overflow-hidden">
-      <div className="relative h-[320px] sm:h-[420px]">
+      <div className="relative min-h-[50vh] sm:h-[80vh]">
         {slides.map((slide, index) => (
           <div
             key={index}
