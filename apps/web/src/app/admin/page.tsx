@@ -36,7 +36,7 @@ export default async function AdminPage() {
   ];
 
   return (
-    <PageShell title="لوحة الإدارة" eyebrow="بدون تسجيل دخول حاليا">
+    <PageShell title="لوحة الإدارة" eyebrow="ملخص المتجر">
       <div className="grid gap-3 sm:grid-cols-3">
         {cards.map((card) => (
           <Link

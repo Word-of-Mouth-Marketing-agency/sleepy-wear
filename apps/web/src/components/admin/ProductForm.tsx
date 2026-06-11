@@ -9,7 +9,7 @@ import type {
   ProductStatus,
   Size,
 } from "@sleepywear/shared";
-import { API_URL } from "@/lib/api";
+import { API_URL, getAdminHeaders } from "@/lib/api";
 
 type ProductFormProps = {
   categories: Category[];
@@ -43,7 +43,10 @@ export function ProductForm({ categories, product }: ProductFormProps) {
         product ? `${API_URL}/products/${product.id}` : `${API_URL}/products`,
         {
           method: product ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...getAdminHeaders(),
+          },
           body: JSON.stringify(payload),
         },
       );
@@ -167,7 +170,10 @@ export function VariantManager({
           : `${API_URL}/products/${product.id}/variants`,
         {
           method: variantId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...getAdminHeaders(),
+          },
           body: JSON.stringify(payload),
         },
       );
@@ -186,6 +192,7 @@ export function VariantManager({
     setError(null);
     const response = await fetch(`${API_URL}/products/variants/${variantId}`, {
       method: "DELETE",
+      headers: { ...getAdminHeaders() },
     });
     if (!response.ok) {
       setError(await readError(response));

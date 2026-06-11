@@ -1,5 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
+function getAdminHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("admin_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     headers: { Accept: "application/json" },
@@ -54,4 +60,4 @@ export async function apiDelete(path: string): Promise<void> {
   }
 }
 
-export { API_URL };
+export { API_URL, getAdminHeaders };

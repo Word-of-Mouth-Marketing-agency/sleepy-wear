@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@sleepywear/shared";
-import { API_URL } from "@/lib/api";
+import { API_URL, getAdminHeaders } from "@/lib/api";
 
 type ImageManagerProps = {
   product: Product;
@@ -28,6 +28,7 @@ export function ImageManager({ product }: ImageManagerProps) {
 
         const response = await fetch(`${API_URL}/uploads/product-image`, {
           method: "POST",
+          headers: { ...getAdminHeaders() },
           body: form,
         });
 
@@ -53,7 +54,10 @@ export function ImageManager({ product }: ImageManagerProps) {
     try {
       const response = await fetch(
         `${API_URL}/uploads/product-image/${imageId}`,
-        { method: "DELETE" },
+        {
+          method: "DELETE",
+          headers: { ...getAdminHeaders() },
+        },
       );
 
       if (!response.ok) {

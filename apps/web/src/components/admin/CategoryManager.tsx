@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Category } from "@sleepywear/shared";
-import { API_URL } from "@/lib/api";
+import { API_URL, getAdminHeaders } from "@/lib/api";
 
 type CategoryManagerProps = {
   categories: Category[];
@@ -32,7 +32,10 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
         : `${API_URL}/categories`,
       {
         method: categoryId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAdminHeaders(),
+        },
         body: JSON.stringify(payload),
       },
     );
@@ -51,6 +54,7 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
     setError(null);
     const response = await fetch(`${API_URL}/categories/${categoryId}`, {
       method: "DELETE",
+      headers: { ...getAdminHeaders() },
     });
     if (!response.ok) {
       setError(await readError(response));

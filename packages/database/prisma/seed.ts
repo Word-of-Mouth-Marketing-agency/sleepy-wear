@@ -1,4 +1,5 @@
 import { PrismaClient, ProductStatus } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { config as loadEnv } from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,31 @@ loadEnv({
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (adminEmail && adminPassword) {
+    const existing = await prisma.adminUser.findUnique({
+      where: { email: adminEmail },
+    });
+
+    if (!existing) {
+      await prisma.adminUser.create({
+        data: {
+          email: adminEmail,
+          name: "Admin",
+          passwordHash: bcrypt.hashSync(adminPassword, 12),
+        },
+      });
+      console.log(`Admin user created: ${adminEmail}`);
+    } else {
+      console.log(`Admin user already exists: ${adminEmail}`);
+    }
+  } else {
+    console.log(
+      "ADMIN_EMAIL / ADMIN_PASSWORD not set — skipping admin seed.",
+    );
+  }
   const categories = await Promise.all(
     [
       { nameAr: "بيجامات", nameEn: "Pajamas", slug: "pajamas" },
