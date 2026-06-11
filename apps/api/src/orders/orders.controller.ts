@@ -5,10 +5,12 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { ListOrdersQueryDto } from "./dto/list-orders-query.dto";
 import { UpdateOrderDto } from "./dto/update-order.dto";
 import { OrdersService } from "./orders.service";
 
@@ -18,8 +20,8 @@ export class OrdersController {
 
   @UseGuards(AdminGuard)
   @Get()
-  findAll() {
-    return this.ordersService.findAll();
+  findAll(@Query() query: ListOrdersQueryDto) {
+    return this.ordersService.findAll(query);
   }
 
   @UseGuards(AdminGuard)

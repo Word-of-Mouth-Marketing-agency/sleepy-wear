@@ -6,9 +6,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { AdminGuard } from "../common/guards/admin.guard";
+import { PaginationQueryDto } from "../common/dto/pagination-query.dto";
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { UpdateCategoryDto } from "./dto/update-category.dto";
@@ -23,8 +25,8 @@ export class CategoriesController {
   }
 
   @Get(":slug")
-  findOne(@Param("slug") slug: string) {
-    return this.categoriesService.findOne(slug);
+  findOne(@Param("slug") slug: string, @Query() query: PaginationQueryDto) {
+    return this.categoriesService.findOne(slug, query);
   }
 
   @UseGuards(AdminGuard)

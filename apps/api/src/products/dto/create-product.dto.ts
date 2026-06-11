@@ -1,18 +1,15 @@
 import {
   IsArray,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Min,
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
-
-enum ProductStatusDto {
-  DRAFT = "DRAFT",
-  ACTIVE = "ACTIVE",
-  ARCHIVED = "ARCHIVED",
-}
+import { ProductStatus } from "@prisma/client";
 
 class ProductVariantDto {
   @IsString()
@@ -30,6 +27,12 @@ class ProductVariantDto {
 
   @IsOptional()
   colorId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  stock?: number;
 }
 
 export class CreateProductDto {
@@ -53,8 +56,8 @@ export class CreateProductDto {
   descriptionAr?: string;
 
   @IsOptional()
-  @IsEnum(ProductStatusDto)
-  status?: ProductStatusDto;
+  @IsEnum(ProductStatus)
+  status?: ProductStatus;
 
   @IsOptional()
   @IsArray()

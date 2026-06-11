@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const seedDir = path.dirname(fileURLToPath(import.meta.url));
 
 loadEnv({
-  path: path.resolve(seedDir, "../../../.env")
+  path: path.resolve(seedDir, "../../../.env"),
 });
 
 const prisma = new PrismaClient();
@@ -92,6 +92,7 @@ async function main() {
         nameAr: item.nameAr,
         categoryId: item.category.id,
         status: ProductStatus.ACTIVE,
+        descriptionAr: "وصف تجريبي قابل للتعديل من لوحة الإدارة.",
       },
       create: {
         nameAr: item.nameAr,
@@ -127,6 +128,8 @@ async function main() {
           price: 850 + index * 50,
           salePrice: index % 2 === 0 ? 790 + index * 50 : null,
           stock: 12 + index,
+          sizeId: size.id,
+          colorId: color.id,
         },
         create: {
           productId: product.id,

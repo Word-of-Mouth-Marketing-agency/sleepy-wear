@@ -6,10 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CreateProductDto } from "./dto/create-product.dto";
+import { ListProductsQueryDto } from "./dto/list-products-query.dto";
+import { UpdateVariantStockDto } from "./dto/update-variant-stock.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { ProductsService } from "./products.service";
 
@@ -18,13 +21,18 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query() query: ListProductsQueryDto) {
+    return this.productsService.findAll(query);
+  }
+
+  @Get(":id/variants")
+  findVariants(@Param("id") id: string) {
+    return this.productsService.findVariants(id);
   }
 
   @Get(":slug")
-  findOne(@Param("slug") slug: string) {
-    return this.productsService.findOne(slug);
+  findOne(@Param("slug") slugOrId: string) {
+    return this.productsService.findOne(slugOrId);
   }
 
   @UseGuards(AdminGuard)
@@ -43,5 +51,14 @@ export class ProductsController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.productsService.remove(id);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("variants/:id/stock")
+  updateVariantStock(
+    @Param("id") id: string,
+    @Body() dto: UpdateVariantStockDto,
+  ) {
+    return this.productsService.updateVariantStock(id, dto.stock);
   }
 }

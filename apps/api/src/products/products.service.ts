@@ -1,26 +1,208 @@
-import { Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { Prisma, ProductStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto } from "./dto/create-product.dto";
+import { ListProductsQueryDto } from "./dto/list-products-query.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 
 @Injectable()
 export class ProductsService {
-  findAll() {
-    return [];
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(query: ListProductsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 12;
+    const where: Prisma.ProductWhereInput = {
+      status: query.status ?? ProductStatus.ACTIVE,
+    };
+
+    if (query.search) {
+      where.nameAr = { contains: query.search, mode: "insensitive" };
+    }
+
+    if (query.categorySlug) {
+      where.category = { slug: query.categorySlug };
+    }
+
+    // The current schema does not yet contain featured/best-seller flags.
+    void query.featured;
+    void query.bestSeller;
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: productInclude,
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    return {
+      items: items.map(mapProduct),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  findOne(slug: string) {
-    return { slug };
+  async findOne(slugOrId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { OR: [{ id: slugOrId }, { slug: slugOrId }] },
+      include: productInclude,
+    });
+
+    if (!product) throw new NotFoundException("Product not found");
+    return mapProduct(product);
   }
 
-  create(dto: CreateProductDto) {
-    return { id: "new-product", ...dto };
+  async create(dto: CreateProductDto) {
+    const category = await this.prisma.category.findUnique({
+      where: { id: dto.categoryId },
+    });
+
+    if (!category) throw new NotFoundException("Category not found");
+
+    const product = await this.prisma.product.create({
+      data: {
+        nameAr: dto.nameAr,
+        nameEn: dto.nameEn,
+        slug: dto.slug,
+        descriptionAr: dto.descriptionAr,
+        categoryId: dto.categoryId,
+        status: dto.status ?? ProductStatus.DRAFT,
+        variants: dto.variants?.length
+          ? {
+              create: dto.variants.map((variant) => ({
+                sku: variant.sku,
+                price: new Prisma.Decimal(variant.price),
+                salePrice: variant.salePrice
+                  ? new Prisma.Decimal(variant.salePrice)
+                  : null,
+                stock: variant.stock ?? 0,
+                sizeId: variant.sizeId,
+                colorId: variant.colorId,
+              })),
+            }
+          : undefined,
+      },
+      include: productInclude,
+    });
+
+    return mapProduct(product);
   }
 
-  update(id: string, dto: UpdateProductDto) {
-    return { id, ...dto };
+  async update(id: string, dto: UpdateProductDto) {
+    await this.ensureProduct(id);
+
+    const product = await this.prisma.product.update({
+      where: { id },
+      data: {
+        nameAr: dto.nameAr,
+        nameEn: dto.nameEn,
+        slug: dto.slug,
+        descriptionAr: dto.descriptionAr,
+        categoryId: dto.categoryId,
+        status: dto.status,
+      },
+      include: productInclude,
+    });
+
+    return mapProduct(product);
   }
 
-  remove(id: string) {
+  async remove(id: string) {
+    await this.ensureProduct(id);
+    await this.prisma.product.delete({ where: { id } });
     return { id, deleted: true };
   }
+
+  async findVariants(productId: string) {
+    await this.ensureProduct(productId);
+    const variants = await this.prisma.productVariant.findMany({
+      where: { productId },
+      include: { size: true, color: true },
+      orderBy: { sku: "asc" },
+    });
+
+    return variants.map(mapVariant);
+  }
+
+  async updateVariantStock(variantId: string, stock: number) {
+    if (stock < 0) throw new BadRequestException("Stock cannot be negative");
+
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: { size: true, color: true },
+    });
+
+    if (!variant) throw new NotFoundException("Variant not found");
+
+    const updated = await this.prisma.productVariant.update({
+      where: { id: variantId },
+      data: { stock },
+      include: { size: true, color: true },
+    });
+
+    return mapVariant(updated);
+  }
+
+  private async ensureProduct(id: string) {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product) throw new NotFoundException("Product not found");
+    return product;
+  }
+}
+
+const productInclude = {
+  category: true,
+  images: { orderBy: { sortOrder: "asc" } },
+  variants: {
+    orderBy: { sku: "asc" },
+    include: { size: true, color: true },
+  },
+} satisfies Prisma.ProductInclude;
+
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: typeof productInclude;
+}>;
+type VariantWithRelations = ProductWithRelations["variants"][number];
+
+export function mapProduct(product: ProductWithRelations) {
+  return {
+    id: product.id,
+    nameAr: product.nameAr,
+    nameEn: product.nameEn,
+    slug: product.slug,
+    descriptionAr: product.descriptionAr,
+    descriptionEn: product.descriptionEn,
+    status: product.status,
+    categoryId: product.categoryId,
+    category: product.category,
+    images: product.images,
+    variants: product.variants.map(mapVariant),
+    createdAt: product.createdAt.toISOString(),
+    updatedAt: product.updatedAt.toISOString(),
+  };
+}
+
+function mapVariant(variant: VariantWithRelations) {
+  return {
+    id: variant.id,
+    productId: variant.productId,
+    sku: variant.sku,
+    price: variant.price.toNumber(),
+    salePrice: variant.salePrice?.toNumber() ?? null,
+    stock: variant.stock,
+    size: variant.size,
+    color: variant.color,
+  };
 }

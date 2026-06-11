@@ -1,6 +1,10 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { config as loadEnv } from "dotenv";
+import path from "node:path";
 import { AppModule } from "./app.module";
+
+loadEnv({ path: path.resolve(process.cwd(), "../../.env") });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

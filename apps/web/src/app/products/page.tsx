@@ -1,37 +1,24 @@
-import Link from "next/link";
+import type { PaginatedResponse, Product } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
-import type { Product } from "@sleepywear/shared";
+import { ProductGrid } from "@/components/ProductGrid";
+import { apiGet } from "@/lib/api";
 
-const products: Pick<Product, "nameAr" | "slug" | "descriptionAr">[] = [
-  {
-    nameAr: "طقم نوم قطني",
-    slug: "cotton-sleep-set",
-    descriptionAr: "منتج تجريبي من بيانات البداية.",
-  },
-  {
-    nameAr: "بيجامة ساتان",
-    slug: "satin-pajama",
-    descriptionAr: "جاهز للربط مع API المنتجات.",
-  },
-];
+export default async function ProductsPage() {
+  try {
+    const products = await apiGet<PaginatedResponse<Product>>("/products");
 
-export default function ProductsPage() {
-  return (
-    <PageShell title="المنتجات" eyebrow="كتالوج المتجر">
-      <div className="grid gap-4 sm:grid-cols-2">
-        {products.map((product) => (
-          <Link
-            key={product.slug}
-            href={`/products/${product.slug}`}
-            className="rounded-md border border-[var(--line)] p-4"
-          >
-            <h2 className="font-semibold">{product.nameAr}</h2>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              {product.descriptionAr}
-            </p>
-          </Link>
-        ))}
-      </div>
-    </PageShell>
-  );
+    return (
+      <PageShell title="المنتجات" eyebrow="كتالوج المتجر">
+        <ProductGrid products={products.items} />
+      </PageShell>
+    );
+  } catch {
+    return (
+      <PageShell title="المنتجات" eyebrow="كتالوج المتجر">
+        <p className="text-red-700">
+          تعذر تحميل المنتجات. تأكد من تشغيل API وقاعدة البيانات.
+        </p>
+      </PageShell>
+    );
+  }
 }
