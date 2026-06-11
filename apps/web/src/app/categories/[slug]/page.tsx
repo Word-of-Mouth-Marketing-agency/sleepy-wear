@@ -12,20 +12,36 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   try {
     const details = await apiGet<CategoryDetails>(`/categories/${slug}`);
+    const { category, products } = details;
 
     return (
-      <PageShell
-        title={details.category.nameAr}
-        eyebrow={`${details.category.productCount ?? 0} منتج`}
-      >
-        <ProductGrid products={details.products.items} />
-      </PageShell>
+      <div className="container py-10">
+        <div className="mb-6">
+          <h1 className="text-2xl font-extrabold sm:text-3xl">
+            {category.nameAr}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {category.productCount ?? products.meta.total} منتج
+          </p>
+        </div>
+
+        {products.items.length > 0 ? (
+          <ProductGrid products={products.items} />
+        ) : (
+          <p className="text-[var(--muted)]">
+            لا توجد منتجات في هذا التصنيف حاليا.
+          </p>
+        )}
+      </div>
     );
   } catch {
     return (
-      <PageShell title="تصنيف المنتجات" eyebrow={slug}>
-        <p className="text-red-700">تعذر تحميل التصنيف أو أنه غير موجود.</p>
-      </PageShell>
+      <div className="container py-10">
+        <h1 className="text-2xl font-extrabold">التصنيفات</h1>
+        <p className="mt-4 text-red-700">
+          تعذر تحميل التصنيف أو أنه غير موجود.
+        </p>
+      </div>
     );
   }
 }

@@ -1,10 +1,10 @@
 import { CheckoutForm } from "@/components/CheckoutForm";
-import { PageShell } from "@/components/PageShell";
 
 export default function CheckoutPage() {
   return (
-    <PageShell title="إتمام الطلب" eyebrow="بدون دفع إلكتروني حاليا">
+    <div className="container py-10">
+      <h1 className="mb-6 text-2xl font-extrabold">إتمام الطلب</h1>
       <CheckoutForm />
-    </PageShell>
+    </div>
   );
 }

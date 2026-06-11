@@ -20,44 +20,58 @@ export default async function ProductsPage({
     );
 
     return (
-      <PageShell title="المنتجات" eyebrow="كتالوج المتجر">
-        <ProductGrid products={data.items} />
-        {data.meta.totalPages > 1 ? (
-          <div className="mt-6 flex items-center justify-center gap-4 text-sm">
-            {page > 1 ? (
-              <Link
-                className="rounded-lg border border-[var(--line)] px-4 py-2 font-semibold transition-colors hover:bg-brand-light-pink"
-                href={`/products?page=${page - 1}`}
-              >
-                السابق
-              </Link>
-            ) : (
-              <span className="px-4 py-2 text-[var(--muted)]">السابق</span>
-            )}
-            <span className="text-[var(--muted)]">
-              {page} من {data.meta.totalPages}
-            </span>
-            {page < data.meta.totalPages ? (
-              <Link
-                className="rounded-lg border border-[var(--line)] px-4 py-2 font-semibold transition-colors hover:bg-brand-light-pink"
-                href={`/products?page=${page + 1}`}
-              >
-                التالي
-              </Link>
-            ) : (
-              <span className="px-4 py-2 text-[var(--muted)]">التالي</span>
-            )}
-          </div>
-        ) : null}
-      </PageShell>
+      <div className="container py-10">
+        <div className="mb-6">
+          <h1 className="text-2xl font-extrabold sm:text-3xl">
+            جميع المنتجات
+          </h1>
+          <p className="mt-1 text-sm text-[var(--muted)]">{data.meta.total} منتج</p>
+        </div>
+
+        {data.items.length > 0 ? (
+          <>
+            <ProductGrid products={data.items} />
+            {data.meta.totalPages > 1 ? (
+              <div className="mt-8 flex items-center justify-center gap-4 text-sm">
+                {page > 1 ? (
+                  <Link
+                    className="rounded-lg border border-[var(--line)] px-4 py-2 font-semibold transition-colors hover:bg-brand-light-pink"
+                    href={`/products?page=${page - 1}`}
+                  >
+                    السابق
+                  </Link>
+                ) : (
+                  <span className="px-4 py-2 text-[var(--muted)]">السابق</span>
+                )}
+                <span className="text-[var(--muted)]">
+                  {page} من {data.meta.totalPages}
+                </span>
+                {page < data.meta.totalPages ? (
+                  <Link
+                    className="rounded-lg border border-[var(--line)] px-4 py-2 font-semibold transition-colors hover:bg-brand-light-pink"
+                    href={`/products?page=${page + 1}`}
+                  >
+                    التالي
+                  </Link>
+                ) : (
+                  <span className="px-4 py-2 text-[var(--muted)]">التالي</span>
+                )}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <p className="text-[var(--muted)]">لا توجد منتجات.</p>
+        )}
+      </div>
     );
   } catch {
     return (
-      <PageShell title="المنتجات" eyebrow="كتالوج المتجر">
-        <p className="text-red-700">
+      <div className="container py-10">
+        <h1 className="text-2xl font-extrabold">جميع المنتجات</h1>
+        <p className="mt-4 text-red-700">
           تعذر تحميل المنتجات. تأكد من تشغيل API وقاعدة البيانات.
         </p>
-      </PageShell>
+      </div>
     );
   }
 }
