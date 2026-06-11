@@ -16,7 +16,6 @@ Arabic-first custom e-commerce foundation for `sleepyweareg.com`.
 ```bash
 pnpm install
 copy .env.example .env
-pnpm db:generate
 ```
 
 Start local infrastructure:
@@ -25,9 +24,10 @@ Start local infrastructure:
 docker compose up postgres redis
 ```
 
-Run migrations and seed data:
+Run Prisma commands from the project root after `.env` exists:
 
 ```bash
+pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
 ```
@@ -42,6 +42,7 @@ pnpm --filter @sleepywear/web dev
 Web runs on `http://localhost:3000`.
 API runs on `http://localhost:4000/api`.
 Health check: `http://localhost:4000/api/health`.
+PostgreSQL is published on `127.0.0.1:5433` for local Prisma commands to avoid conflicts with any host PostgreSQL service on `5432`.
 
 ## Docker
 

@@ -1,4 +1,13 @@
 import { PrismaClient, ProductStatus } from "@prisma/client";
+import { config as loadEnv } from "dotenv";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const seedDir = path.dirname(fileURLToPath(import.meta.url));
+
+loadEnv({
+  path: path.resolve(seedDir, "../../../.env")
+});
 
 const prisma = new PrismaClient();
 
