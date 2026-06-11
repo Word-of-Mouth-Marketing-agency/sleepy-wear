@@ -5,7 +5,7 @@ import { apiGet } from "@/lib/api";
 
 export default async function AdminProductsPage() {
   const products = await apiGet<PaginatedResponse<Product>>(
-    "/products?includeInactive=true&limit=100",
+    "/products?includeInactive=true&limit=500",
   ).catch(() => null);
 
   return (

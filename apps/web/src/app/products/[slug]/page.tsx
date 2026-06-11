@@ -13,6 +13,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
   try {
     const product = await apiGet<Product>(`/products/${slug}`);
 
+    if (product.status !== "ACTIVE") {
+      return (
+        <PageShell title="غير متوفر" eyebrow={slug}>
+          <p className="text-[var(--muted)]">
+            هذا المنتج غير متوفر حاليا.
+          </p>
+        </PageShell>
+      );
+    }
+
     return (
       <PageShell
         title={product.nameAr}

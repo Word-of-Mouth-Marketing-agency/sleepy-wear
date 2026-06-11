@@ -4,7 +4,7 @@ import { apiGet } from "@/lib/api";
 
 async function getCategories() {
   try {
-    return await apiGet<Category[]>("/categories?includeInactive=true");
+    return await apiGet<Category[]>("/categories");
   } catch {
     return [];
   }
