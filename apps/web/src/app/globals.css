@@ -61,9 +61,7 @@ a {
 }
 
 .sleepy-marquee__item {
-  display: inline-flex;
-  align-items: center;
-  gap: clamp(16px, 2vw, 30px);
+  display: inline-block;
   font-size: clamp(14px, 1.6vw, 24px);
   font-weight: 400;
   line-height: 1;
@@ -92,12 +90,8 @@ a {
     animation-duration: var(--sleepy-marquee-mobile-duration, 20s);
   }
 
-  .sleepy-marquee__content,
-  .sleepy-marquee__item {
-    gap: 14px;
-  }
-
   .sleepy-marquee__content {
+    gap: 14px;
     padding-right: 14px;
   }
 

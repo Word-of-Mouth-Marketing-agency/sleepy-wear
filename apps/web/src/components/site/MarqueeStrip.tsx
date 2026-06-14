@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Fragment } from "react";
 
 type MarqueeStripProps = {
   text?: string;
@@ -73,10 +74,10 @@ function MarqueeContent({
   return (
     <div className="sleepy-marquee__content" aria-hidden={ariaHidden}>
       {items.map((item, index) => (
-        <span key={`${item}-${index}`} className="sleepy-marquee__item">
-          {item}
+        <Fragment key={`${item}-${index}`}>
+          <span className="sleepy-marquee__item">{item}</span>
           <span className="sleepy-marquee__icon">✦</span>
-        </span>
+        </Fragment>
       ))}
     </div>
   );
