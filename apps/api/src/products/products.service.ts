@@ -27,7 +27,11 @@ export class ProductsService {
     }
 
     if (query.search) {
-      where.nameAr = { contains: query.search, mode: "insensitive" };
+      where.OR = [
+        { nameAr: { contains: query.search, mode: "insensitive" } },
+        { nameEn: { contains: query.search, mode: "insensitive" } },
+        { slug: { contains: query.search, mode: "insensitive" } },
+      ];
     }
 
     if (query.categorySlug) {

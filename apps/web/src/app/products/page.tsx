@@ -5,27 +5,49 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { apiGet } from "@/lib/api";
 
 type ProductsPageProps = {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; search?: string }>;
 };
 
 export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
-  const { page: pageStr } = await searchParams;
+  const { page: pageStr, search: rawSearch } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
+  const search = rawSearch?.trim() || "";
 
   try {
-    const data = await apiGet<PaginatedResponse<Product>>(
-      `/products?page=${page}`,
-    );
+    const apiPath = search
+      ? `/products?page=${page}&search=${encodeURIComponent(search)}`
+      : `/products?page=${page}`;
+    const data = await apiGet<PaginatedResponse<Product>>(apiPath);
+
+    const pageLink = (p: number) =>
+      search
+        ? `/products?page=${p}&search=${encodeURIComponent(search)}`
+        : `/products?page=${p}`;
 
     return (
       <div className="container py-10">
         <div className="mb-6">
-          <h1 className="text-2xl font-extrabold sm:text-3xl">
-            جميع المنتجات
-          </h1>
-          <p className="mt-1 text-sm text-[var(--muted)]">{data.meta.total} منتج</p>
+          {search ? (
+            <>
+              <h1 className="text-2xl font-extrabold sm:text-3xl">
+                نتائج البحث عن &quot;{search}&quot;
+              </h1>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {data.meta.total} نتيجة
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-extrabold sm:text-3xl">
+                جميع المنتجات
+              </h1>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {data.meta.total} منتج
+              </p>
+            </>
+          )}
         </div>
 
         {data.items.length > 0 ? (
@@ -36,7 +58,7 @@ export default async function ProductsPage({
                 {page > 1 ? (
                   <Link
                     className="rounded-lg border border-[var(--line)] px-4 py-2 font-semibold transition-colors hover:bg-brand-light-pink"
-                    href={`/products?page=${page - 1}`}
+                    href={pageLink(page - 1)}
                   >
                     السابق
                   </Link>
@@ -49,7 +71,7 @@ export default async function ProductsPage({
                 {page < data.meta.totalPages ? (
                   <Link
                     className="rounded-lg border border-[var(--line)] px-4 py-2 font-semibold transition-colors hover:bg-brand-light-pink"
-                    href={`/products?page=${page + 1}`}
+                    href={pageLink(page + 1)}
                   >
                     التالي
                   </Link>
@@ -60,7 +82,21 @@ export default async function ProductsPage({
             ) : null}
           </>
         ) : (
-          <p className="text-[var(--muted)]">لا توجد منتجات.</p>
+          <div className="flex flex-col items-center py-16">
+            <p className="text-lg font-semibold text-[var(--muted)]">
+              {search
+                ? `لا توجد نتائج لـ "${search}"`
+                : "لا توجد منتجات."}
+            </p>
+            {search ? (
+              <Link
+                href="/products"
+                className="mt-4 rounded-lg bg-brand-pink px-6 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                عرض جميع المنتجات
+              </Link>
+            ) : null}
+          </div>
         )}
       </div>
     );
