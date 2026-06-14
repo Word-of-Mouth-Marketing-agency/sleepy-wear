@@ -1,6 +1,4 @@
-"use client";
-
-import { useRef, useEffect } from "react";
+import type { ReactNode } from "react";
 
 type MarqueeStripProps = {
   text?: string;
@@ -12,15 +10,14 @@ type MarqueeStripProps = {
 };
 
 const defaultItems = [
-  "أسعار المصنع",
-  "خامات مريحة",
-  "عروض مستمرة",
-  "توصيل سريع",
-  "تشكيلات جديدة",
+  "توصيل مجاني للطلبات فوق 999 جنيه",
+  "خصم 10% لأول طلب",
+  "ضمان استبدال خلال 14 يوم",
+  "توصيل لجميع المحافظات",
+  "أسعار المصنع مباشرة",
 ];
 
-const SEPARATOR = "✦";
-const DUPLICATE_COUNT = 10;
+const CYCLES = 20;
 
 export function MarqueeStrip({
   text,
@@ -28,85 +25,45 @@ export function MarqueeStrip({
   direction = "rtl",
   reverse = false,
   bgClass = "bg-brand-pink",
-  speedSeconds = 24,
+  speedSeconds = 30,
 }: MarqueeStripProps) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
-
   const content = items && items.length > 0 ? items : getTextItems(text);
   const shouldReverse = reverse || direction === "ltr";
-
-  useEffect(() => {
-    const track = trackRef.current;
-    const measure = measureRef.current;
-    if (!track || !measure) return;
-
-    const groupWidth = measure.offsetWidth;
-    if (groupWidth <= 0) return;
-
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    const anim = track.animate(
-      [
-        { transform: "translate3d(0, 0, 0)" },
-        { transform: `translate3d(-${groupWidth}px, 0, 0)` },
-      ],
-      {
-        duration: speedSeconds * 1000,
-        iterations: Infinity,
-        direction: shouldReverse ? "reverse" : "normal",
-      },
-    );
-
-    if (prefersReduced) anim.pause();
-
-    return () => anim.cancel();
-  }, [speedSeconds, shouldReverse]);
-
-  const contentElements = buildContent(content);
+  const contentElements = buildLongContent(content);
 
   return (
-    <div
-      className={`sleepy-marquee ${bgClass}`}
-      style={{ position: "relative" }}
-    >
+    <div className={`sleepy-marquee ${bgClass}`}>
       <div
-        ref={measureRef}
-        className="sleepy-marquee__content"
+        className="sleepy-marquee__track"
         style={{
-          position: "absolute",
-          visibility: "hidden",
-          pointerEvents: "none",
+          animationDuration: `${speedSeconds}s`,
+          animationDirection: shouldReverse ? "reverse" : "normal",
         }}
-        aria-hidden="true"
       >
-        {contentElements}
-      </div>
-
-      <div ref={trackRef} className="sleepy-marquee__track">
-        {Array.from({ length: DUPLICATE_COUNT }, (_, i) => (
-          <div
-            key={i}
-            className="sleepy-marquee__content"
-            aria-hidden={i > 0}
-          >
-            {contentElements}
-          </div>
-        ))}
+        <div className="sleepy-marquee__content">{contentElements}</div>
+        <div className="sleepy-marquee__content" aria-hidden="true">
+          {contentElements}
+        </div>
       </div>
     </div>
   );
 }
 
-function buildContent(items: string[]) {
-  return items.flatMap((item, i) => [
-    <span key={`t${i}`}>{item}</span>,
-    <span key={`s${i}`} className="sleepy-marquee__icon">
-      {SEPARATOR}
-    </span>,
-  ]);
+function buildLongContent(items: string[]) {
+  const spans: ReactNode[] = [];
+
+  for (let c = 0; c < CYCLES; c++) {
+    for (let i = 0; i < items.length; i++) {
+      spans.push(<span key={`c${c}-i${i}`}>{items[i]}</span>);
+      spans.push(
+        <span key={`c${c}-s${i}`} className="sleepy-marquee__icon">
+          ✦
+        </span>,
+      );
+    }
+  }
+
+  return spans;
 }
 
 function getTextItems(text?: string): string[] {

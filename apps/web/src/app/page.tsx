@@ -22,7 +22,7 @@ export default async function HomePage() {
       <HeroSlider />
 
       <MarqueeStrip
-        text="توصيل مجاني للطلبات فوق 999 جنيه ★ خصم 10% لأول طلب ★ ضمان استبدال خلال 14 يوم ★"
+        text="توصيل مجاني للطلبات فوق 999 جنيه ✦ خصم 10% لأول طلب ✦ ضمان استبدال خلال 14 يوم ✦ توصيل لجميع المحافظات ✦ أسعار المصنع مباشرة"
         direction="rtl"
         bgClass="bg-brand-pink"
       />
@@ -38,7 +38,7 @@ export default async function HomePage() {
       </section>
 
       <MarqueeStrip
-        text="من المصنع مباشرة ★ جودة عالية ★ أسعار لا تقبل المنافسة ★ توصيل لجميع المحافظات ★"
+        text="توصيل مجاني للطلبات فوق 999 جنيه ✦ خصم 10% لأول طلب ✦ ضمان استبدال خلال 14 يوم ✦ توصيل لجميع المحافظات ✦ أسعار المصنع مباشرة"
         direction="ltr"
         bgClass="bg-brand-black"
       />
