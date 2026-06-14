@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
+import { getMediaUrl } from "@/lib/media";
 
 type ImageManagerProps = {
   product: Product;
@@ -89,7 +90,7 @@ export function ImageManager({ product }: ImageManagerProps) {
               <img
                 alt={image.altAr ?? product.nameAr}
                 className="aspect-[4/3] w-full rounded-md object-cover"
-                src={image.url}
+                src={getMediaUrl(image.url)}
               />
               <button
                 className="absolute right-1 top-1 rounded-md bg-red-600 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"

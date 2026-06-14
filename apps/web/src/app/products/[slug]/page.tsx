@@ -1,6 +1,7 @@
 import type { Product } from "@sleepywear/shared";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { apiGet } from "@/lib/api";
+import { getMediaUrl, getThumbUrl } from "@/lib/media";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -40,7 +41,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <img
                   alt={mainImage.altAr ?? product.nameAr}
                   className="h-full w-full rounded-xl object-cover"
-                  src={mainImage.url}
+                  src={getMediaUrl(mainImage.url)}
                 />
               ) : (
                 <span className="text-sm text-[var(--muted)]">
@@ -66,7 +67,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     key={img.id}
                     alt={img.altAr ?? `${product.nameAr} ${i + 2}`}
                     className="h-20 w-20 shrink-0 rounded-lg object-cover"
-                    src={img.url.replace(/(\.webp)$/, "-thumb$1")}
+                    src={getThumbUrl(img.url)}
                   />
                 ))}
               </div>
