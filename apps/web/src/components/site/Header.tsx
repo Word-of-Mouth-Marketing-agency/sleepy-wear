@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Category } from "@sleepywear/shared";
 import { apiGet } from "@/lib/api";
 import { HeaderSearch } from "./HeaderSearch";
+import { NoticeBar } from "./NoticeBar";
 
 async function getCategories() {
   try {
@@ -19,10 +20,12 @@ export async function SiteHeader() {
 
 export function SiteHeaderContent({ categories }: { categories: Category[] }) {
   return (
-    <header className="shadow-sm">
-      <div className="bg-brand-blue text-white text-center py-1.5 text-xs sm:text-sm px-2">
-        عروض و خصومات الشتاء .. اي اوردر يبدأ من 999 جنيه خصم 10% بأكواد خصم BF10 - S10
-      </div>
+    <header className="sticky top-0 z-50 shadow-sm">
+      <NoticeBar>
+        <div className="bg-brand-blue text-white text-center py-1.5 text-xs sm:text-sm px-2">
+          عروض و خصومات الشتاء .. اي اوردر يبدأ من 999 جنيه خصم 10% بأكواد خصم BF10 - S10
+        </div>
+      </NoticeBar>
 
       <div className="bg-white">
         <div className="container flex items-center justify-between py-3">
