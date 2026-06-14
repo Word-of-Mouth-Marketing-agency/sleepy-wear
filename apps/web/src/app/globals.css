@@ -47,7 +47,6 @@ a {
 .sleepy-marquee__track {
   display: flex;
   width: max-content;
-  animation: sleepy-marquee-scroll var(--sleepy-marquee-duration, 24s) linear infinite reverse;
   will-change: transform;
 }
 
@@ -76,18 +75,9 @@ a {
   color: #00AEEF;
 }
 
-@keyframes sleepy-marquee-scroll {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-50%, 0, 0); }
-}
-
 @media only screen and (max-width: 767px) {
   .sleepy-marquee {
     padding: 12px 0;
-  }
-
-  .sleepy-marquee__track {
-    animation-duration: var(--sleepy-marquee-mobile-duration, 20s);
   }
 
   .sleepy-marquee__content {

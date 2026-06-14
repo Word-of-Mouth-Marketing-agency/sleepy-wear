@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react";
-import type { ReactNode } from "react";
+"use client";
+
+import { useRef, useEffect } from "react";
 
 type MarqueeStripProps = {
   text?: string;
@@ -18,6 +19,9 @@ const defaultItems = [
   "تشكيلات جديدة",
 ];
 
+const SEPARATOR = "✦";
+const DUPLICATE_COUNT = 10;
+
 export function MarqueeStrip({
   text,
   items,
@@ -26,58 +30,90 @@ export function MarqueeStrip({
   bgClass = "bg-brand-pink",
   speedSeconds = 24,
 }: MarqueeStripProps) {
-  const shouldReverse = reverse || direction === "ltr";
+  const trackRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+
   const content = items && items.length > 0 ? items : getTextItems(text);
-  const spans = buildSpans(content, "sleepy-marquee");
-  const style = {
-    "--sleepy-marquee-duration": `${speedSeconds}s`,
-    "--sleepy-marquee-mobile-duration": `${Math.round(speedSeconds * (20 / 24))}s`,
-  } as CSSProperties;
+  const shouldReverse = reverse || direction === "ltr";
+
+  useEffect(() => {
+    const track = trackRef.current;
+    const measure = measureRef.current;
+    if (!track || !measure) return;
+
+    const groupWidth = measure.offsetWidth;
+    if (groupWidth <= 0) return;
+
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const anim = track.animate(
+      [
+        { transform: "translate3d(0, 0, 0)" },
+        { transform: `translate3d(-${groupWidth}px, 0, 0)` },
+      ],
+      {
+        duration: speedSeconds * 1000,
+        iterations: Infinity,
+        direction: shouldReverse ? "reverse" : "normal",
+      },
+    );
+
+    if (prefersReduced) anim.pause();
+
+    return () => anim.cancel();
+  }, [speedSeconds, shouldReverse]);
+
+  const contentElements = buildContent(content);
 
   return (
-    <div className={`sleepy-marquee ${bgClass}`} style={style}>
+    <div
+      className={`sleepy-marquee ${bgClass}`}
+      style={{ position: "relative" }}
+    >
       <div
-        className="sleepy-marquee__track"
+        ref={measureRef}
+        className="sleepy-marquee__content"
         style={{
-          animationDirection: shouldReverse ? undefined : "normal",
+          position: "absolute",
+          visibility: "hidden",
+          pointerEvents: "none",
         }}
+        aria-hidden="true"
       >
-        <div className="sleepy-marquee__content">{spans}</div>
-        <div className="sleepy-marquee__content" aria-hidden="true">
-          {spans}
-        </div>
+        {contentElements}
+      </div>
+
+      <div ref={trackRef} className="sleepy-marquee__track">
+        {Array.from({ length: DUPLICATE_COUNT }, (_, i) => (
+          <div
+            key={i}
+            className="sleepy-marquee__content"
+            aria-hidden={i > 0}
+          >
+            {contentElements}
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function buildSpans(items: string[], keyPrefix: string) {
-  const spans: ReactNode[] = [];
-
-  for (let cycle = 0; cycle < 2; cycle++) {
-    for (let i = 0; i < items.length; i++) {
-      spans.push(<span key={`${keyPrefix}-t${cycle}-${i}`}>{items[i]}</span>);
-      spans.push(
-        <span
-          key={`${keyPrefix}-s${cycle}-${i}`}
-          className="sleepy-marquee__icon"
-        >
-          ✦
-        </span>,
-      );
-    }
-  }
-
-  return spans;
+function buildContent(items: string[]) {
+  return items.flatMap((item, i) => [
+    <span key={`t${i}`}>{item}</span>,
+    <span key={`s${i}`} className="sleepy-marquee__icon">
+      {SEPARATOR}
+    </span>,
+  ]);
 }
 
-function getTextItems(text?: string) {
-  if (!text) return defaultItems;
-
-  const textItems = text
+function getTextItems(text?: string): string[] {
+  if (!text) return [...defaultItems];
+  const result = text
     .split(/[★✦]/)
-    .map((item) => item.trim())
+    .map((s) => s.trim())
     .filter(Boolean);
-
-  return textItems.length > 0 ? textItems : defaultItems;
+  return result.length > 0 ? result : [...defaultItems];
 }
