@@ -7,7 +7,11 @@ export function SiteFooter() {
       <div className="container py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <h3 className="mb-3 text-xl font-bold text-brand-pink">{SITE_NAME}</h3>
+            <img
+              alt={SITE_NAME}
+              className="mb-3 h-10 w-auto sm:h-12"
+              src="/brand/pink-logo.png"
+            />
             <p className="text-sm text-gray-400 mb-3">
               ملابس منزلية ولانجري بأفضل الأسعار من المصنع مباشرة.
             </p>

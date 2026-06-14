@@ -137,3 +137,25 @@ a {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #F389D4;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00AEEF;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #F389D4 #FFF5F9;
+}

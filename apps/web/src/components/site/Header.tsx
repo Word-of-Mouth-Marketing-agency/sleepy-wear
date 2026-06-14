@@ -35,11 +35,12 @@ export function SiteHeaderContent({ categories }: { categories: Category[] }) {
             <HeaderSearch />
           </div>
 
-          <Link
-            href="/"
-            className="text-2xl font-extrabold text-brand-pink tracking-tight"
-          >
-            SleepyWear
+          <Link href="/">
+            <img
+              alt="SleepyWear"
+              className="h-10 w-auto sm:h-12"
+              src="/brand/blue-logo.png"
+            />
           </Link>
 
           <div className="flex items-center gap-3 text-lg">
