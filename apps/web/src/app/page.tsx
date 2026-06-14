@@ -21,11 +21,7 @@ export default async function HomePage() {
     <div>
       <HeroSlider />
 
-      <MarqueeStrip
-        text="توصيل مجاني للطلبات فوق 999 جنيه ✦ خصم 10% لأول طلب ✦ ضمان استبدال خلال 14 يوم ✦ توصيل لجميع المحافظات ✦ أسعار المصنع مباشرة"
-        direction="rtl"
-        bgClass="bg-brand-pink"
-      />
+      <MarqueeStrip background="#F389D4" />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">
@@ -37,11 +33,7 @@ export default async function HomePage() {
         <CategorySlider categories={categories} />
       </section>
 
-      <MarqueeStrip
-        text="توصيل مجاني للطلبات فوق 999 جنيه ✦ خصم 10% لأول طلب ✦ ضمان استبدال خلال 14 يوم ✦ توصيل لجميع المحافظات ✦ أسعار المصنع مباشرة"
-        direction="ltr"
-        bgClass="bg-brand-black"
-      />
+      <MarqueeStrip reverse background="#000000" />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">
