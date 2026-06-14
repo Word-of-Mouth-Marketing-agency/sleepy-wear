@@ -48,7 +48,7 @@ export function HeaderSearch() {
 
   return (
     <div ref={containerRef} className="relative">
-      <button onClick={() => setOpen(true)} aria-label="بحث" className="text-[var(--muted)] transition-colors hover:text-brand-pink">
+      <button onClick={() => setOpen(true)} aria-label="بحث" className="text-black transition-colors hover:text-brand-pink">
         <SearchSvg />
       </button>
       {open ? (
