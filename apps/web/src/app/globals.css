@@ -47,7 +47,7 @@ a {
 .sleepy-marquee__track {
   display: flex;
   width: max-content;
-  animation: sleepy-marquee-scroll var(--sleepy-marquee-duration, 24s) linear infinite;
+  animation: sleepy-marquee-scroll var(--sleepy-marquee-duration, 24s) linear infinite reverse;
   will-change: transform;
 }
 
@@ -60,7 +60,7 @@ a {
   white-space: nowrap;
 }
 
-.sleepy-marquee__item {
+.sleepy-marquee__content span {
   display: inline-block;
   font-size: clamp(14px, 1.6vw, 24px);
   font-weight: 400;
@@ -95,7 +95,7 @@ a {
     padding-right: 14px;
   }
 
-  .sleepy-marquee__item {
+  .sleepy-marquee__content span {
     font-size: clamp(13px, 4vw, 18px);
   }
 

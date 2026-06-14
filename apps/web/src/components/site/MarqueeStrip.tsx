@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Fragment } from "react";
+import type { ReactNode } from "react";
 
 type MarqueeStripProps = {
   text?: string;
@@ -28,7 +28,7 @@ export function MarqueeStrip({
 }: MarqueeStripProps) {
   const shouldReverse = reverse || direction === "ltr";
   const content = items && items.length > 0 ? items : getTextItems(text);
-  const repeatedContent = repeatItems(content, 4);
+  const spans = buildSpans(content, "sleepy-marquee");
   const style = {
     "--sleepy-marquee-duration": `${speedSeconds}s`,
     "--sleepy-marquee-mobile-duration": `${Math.round(speedSeconds * (20 / 24))}s`,
@@ -39,18 +39,36 @@ export function MarqueeStrip({
       <div
         className="sleepy-marquee__track"
         style={{
-          animationDirection: shouldReverse ? "reverse" : "normal",
+          animationDirection: shouldReverse ? undefined : "normal",
         }}
       >
-        <MarqueeContent items={repeatedContent} />
-        <MarqueeContent items={repeatedContent} ariaHidden />
+        <div className="sleepy-marquee__content">{spans}</div>
+        <div className="sleepy-marquee__content" aria-hidden="true">
+          {spans}
+        </div>
       </div>
     </div>
   );
 }
 
-function repeatItems(items: string[], times: number) {
-  return Array.from({ length: times }, () => items).flat();
+function buildSpans(items: string[], keyPrefix: string) {
+  const spans: ReactNode[] = [];
+
+  for (let cycle = 0; cycle < 2; cycle++) {
+    for (let i = 0; i < items.length; i++) {
+      spans.push(<span key={`${keyPrefix}-t${cycle}-${i}`}>{items[i]}</span>);
+      spans.push(
+        <span
+          key={`${keyPrefix}-s${cycle}-${i}`}
+          className="sleepy-marquee__icon"
+        >
+          ✦
+        </span>,
+      );
+    }
+  }
+
+  return spans;
 }
 
 function getTextItems(text?: string) {
@@ -62,23 +80,4 @@ function getTextItems(text?: string) {
     .filter(Boolean);
 
   return textItems.length > 0 ? textItems : defaultItems;
-}
-
-function MarqueeContent({
-  items,
-  ariaHidden = false,
-}: {
-  items: string[];
-  ariaHidden?: boolean;
-}) {
-  return (
-    <div className="sleepy-marquee__content" aria-hidden={ariaHidden}>
-      {items.map((item, index) => (
-        <Fragment key={`${item}-${index}`}>
-          <span className="sleepy-marquee__item">{item}</span>
-          <span className="sleepy-marquee__icon">✦</span>
-        </Fragment>
-      ))}
-    </div>
-  );
 }
