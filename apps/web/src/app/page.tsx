@@ -1,6 +1,6 @@
 import type { Category, PaginatedResponse, Product } from "@sleepywear/shared";
 import { HeroSlider } from "@/components/site/HeroSlider";
-import { MarqueeStrip } from "@/components/site/MarqueeStrip";
+import { SimpleMarquee } from "@/components/site/SimpleMarquee";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { CategorySlider } from "@/components/site/CategorySlider";
 import { ProductCard } from "@/components/site/ProductCard";
@@ -21,7 +21,7 @@ export default async function HomePage() {
     <div>
       <HeroSlider />
 
-      <MarqueeStrip background="#F389D4" />
+      <SimpleMarquee background="#F389D4" />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">
@@ -33,7 +33,7 @@ export default async function HomePage() {
         <CategorySlider categories={categories} />
       </section>
 
-      <MarqueeStrip reverse background="#000000" />
+      <SimpleMarquee reverse background="#00AEEF" />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">

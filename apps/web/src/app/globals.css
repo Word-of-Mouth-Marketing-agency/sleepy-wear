@@ -37,29 +37,27 @@ a {
   padding-inline: 16px;
 }
 
-@keyframes wom-marquee-scroll {
+@keyframes simple-marquee-scroll {
   from { transform: translate3d(0, 0, 0); }
   to   { transform: translate3d(-50%, 0, 0); }
 }
 
-.wom-marquee {
+.simple-marquee {
   width: 100%;
   overflow: hidden;
   padding: 16px 0;
-  background: #FBE902;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
+  background: var(--simple-marquee-bg);
   user-select: none;
 }
 
-.wom-marquee__track {
+.simple-marquee__track {
   display: flex;
   width: max-content;
-  animation: wom-marquee-scroll 24s linear infinite reverse;
+  animation: simple-marquee-scroll 34s linear infinite;
   will-change: transform;
 }
 
-.wom-marquee__content {
+.simple-marquee__segment {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
@@ -68,50 +66,47 @@ a {
   white-space: nowrap;
 }
 
-.wom-marquee__content span {
+.simple-marquee__text {
   display: inline-block;
-  font-size: clamp(20px, 3vw, 44px);
+  font-size: clamp(14px, 1.6vw, 24px);
   font-weight: 400;
   line-height: 1;
-  color: #000000;
+  color: #FFFFFF;
 }
 
-.wom-marquee__icon {
-  font-size: clamp(34px, 4.5vw, 76px) !important;
-  font-weight: 400 !important;
+.simple-marquee__separator {
+  display: inline-block;
+  font-size: clamp(20px, 2.4vw, 36px);
+  font-weight: 400;
   line-height: 1;
-  color: #000000;
+  color: var(--simple-marquee-separator);
 }
 
 @media only screen and (max-width: 767px) {
-  .wom-marquee {
+  .simple-marquee {
     padding: 12px 0;
-    background: #FBE902;
   }
 
-  .wom-marquee__track {
-    animation-duration: 20s;
+  .simple-marquee__track {
+    animation-duration: 28s;
   }
 
-  .wom-marquee__content {
+  .simple-marquee__segment {
     gap: 14px;
     padding-right: 14px;
   }
 
-  .wom-marquee__content span {
-    font-size: clamp(18px, 5.5vw, 30px);
-    font-weight: 400;
-    color: #000000;
+  .simple-marquee__text {
+    font-size: clamp(13px, 4vw, 18px);
   }
 
-  .wom-marquee__icon {
-    font-size: clamp(32px, 8vw, 44px) !important;
-    color: #000000;
+  .simple-marquee__separator {
+    font-size: clamp(20px, 6vw, 28px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wom-marquee__track {
+  .simple-marquee__track {
     animation-play-state: paused;
   }
 }
