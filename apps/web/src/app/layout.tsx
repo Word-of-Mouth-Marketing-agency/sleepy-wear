@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
+import { Cairo } from "next/font/google";
 import { DOMAIN, SITE_NAME } from "@sleepywear/shared";
 import { ClientShell } from "@/components/site/ClientShell";
 import { SiteHeader } from "@/components/site/Header";
 import "./globals.css";
+
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  display: "swap",
+  variable: "--font-cairo",
+});
 
 export const metadata: Metadata = {
   title: SITE_NAME,
@@ -14,7 +21,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" className={cairo.variable}>
       <body>
         <ClientShell header={<SiteHeader />}>{children}</ClientShell>
       </body>
