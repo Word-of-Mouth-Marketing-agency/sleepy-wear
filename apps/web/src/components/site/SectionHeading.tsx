@@ -12,7 +12,7 @@ export function SectionHeading({ title, link }: SectionHeadingProps) {
       {link ? (
         <Link
           href={link.href}
-          className="text-sm font-semibold text-brand-pink hover:underline shrink-0"
+          className="shrink-0 rounded-md border border-brand-pink px-4 py-2 text-sm font-semibold text-brand-pink transition-colors hover:bg-brand-pink hover:text-white"
         >
           {link.label}
         </Link>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRef } from "react";
 import type { Category } from "@sleepywear/shared";
 
 type CategorySliderProps = {
@@ -6,26 +9,69 @@ type CategorySliderProps = {
 };
 
 export function CategorySlider({ categories }: CategorySliderProps) {
+  const trackRef = useRef<HTMLDivElement>(null);
+
   if (categories.length === 0) return null;
 
+  function scrollCategories(direction: "previous" | "next") {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const card = track.querySelector<HTMLElement>("[data-category-card]");
+    const cardWidth = card?.offsetWidth ?? track.clientWidth;
+    const gap = 16;
+    const distance = (cardWidth + gap) * 2;
+
+    track.scrollBy({
+      left: direction === "next" ? -distance : distance,
+      behavior: "smooth",
+    });
+  }
+
   return (
-    <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-      {categories.map((cat) => (
-        <Link
-          key={cat.id}
-          href={`/categories/${cat.slug}`}
-          className="flex shrink-0 flex-col items-center gap-2"
-        >
-          <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-brand-light-pink text-brand-pink sm:h-[120px] sm:w-[120px]">
-            <span className="text-sm font-semibold text-center px-2">
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="التصنيفات السابقة"
+        onClick={() => scrollCategories("previous")}
+        className="absolute right-0 top-[42%] z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--line)] bg-white text-lg font-bold text-brand-pink shadow-sm transition-colors hover:bg-brand-light-pink"
+      >
+        ›
+      </button>
+
+      <div
+        ref={trackRef}
+        className="grid auto-cols-[minmax(150px,1fr)] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-12 pb-2 hide-scrollbar sm:auto-cols-[minmax(190px,1fr)] lg:auto-cols-[calc((100%_-_144px)_/_4)]"
+      >
+        {categories.map((cat) => (
+          <Link
+            key={cat.id}
+            href={`/categories/${cat.slug}`}
+            data-category-card
+            className="group block min-w-0"
+          >
+            <div className="aspect-square overflow-hidden rounded-lg border border-[var(--line)] bg-brand-light-pink">
+              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#F389D4_0%,#FFFFFF_52%,#00AEEF_100%)] p-4 text-center text-white transition-transform duration-300 group-hover:scale-105">
+                <span className="text-sm font-bold leading-relaxed drop-shadow-sm sm:text-base">
+                  {cat.nameAr}
+                </span>
+              </div>
+            </div>
+            <span className="mt-3 block truncate text-center text-sm font-semibold text-brand-black">
               {cat.nameAr}
             </span>
-          </div>
-          <span className="text-xs font-semibold text-center">
-            {cat.nameAr}
-          </span>
-        </Link>
-      ))}
+          </Link>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        aria-label="التصنيفات التالية"
+        onClick={() => scrollCategories("next")}
+        className="absolute left-0 top-[42%] z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--line)] bg-white text-lg font-bold text-brand-pink shadow-sm transition-colors hover:bg-brand-light-pink"
+      >
+        ‹
+      </button>
     </div>
   );
 }
