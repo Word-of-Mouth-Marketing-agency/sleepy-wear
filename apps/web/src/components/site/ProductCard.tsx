@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useRef } from "react";
 import type { Product } from "@sleepywear/shared";
 import { getCardUrl } from "@/lib/media";
 import { useCartStore } from "@/stores/cart-store";
@@ -12,6 +13,8 @@ type ProductCardProps = {
 
 export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const [added, setAdded] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const firstVariant = product.variants[0];
   const price = firstVariant
@@ -34,7 +37,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const hasChoices = inStockVariants.length > 1;
 
   function handleAddToCart() {
-    if (!availVariant) return;
+    if (!availVariant || added) return;
     addItem({
       variantId: availVariant.id,
       productId: product.id,
@@ -45,6 +48,9 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       variantInfo:
         availVariant.size?.labelAr ?? availVariant.color?.nameAr ?? undefined,
     });
+    setAdded(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setAdded(false), 2000);
   }
 
   if (layout === "row") {
@@ -148,14 +154,15 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               href={`/products/${product.slug}`}
               className="block w-full rounded-lg bg-brand-pink py-2 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
-              اختاري المقاس
+              اختاري المقاس من صفحة المنتج
             </Link>
           ) : (
             <button
+              disabled={added}
               onClick={handleAddToCart}
-              className="w-full rounded-lg bg-brand-pink py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="w-full rounded-lg bg-brand-pink py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-70 hover:opacity-90"
             >
-              أضف للسلة
+              {added ? "تم ✓" : "أضف للسلة"}
             </button>
           )
         ) : (
