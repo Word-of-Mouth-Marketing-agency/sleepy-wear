@@ -24,7 +24,7 @@ export default async function HomePage() {
       <MarqueeStrip
         text="توصيل مجاني للطلبات فوق 999 جنيه ★ خصم 10% لأول طلب ★ ضمان استبدال خلال 14 يوم ★"
         direction="rtl"
-        bgClass="bg-brand-light-pink"
+        bgClass="bg-brand-pink"
       />
 
       <section className="container py-10 sm:py-14">
@@ -40,7 +40,7 @@ export default async function HomePage() {
       <MarqueeStrip
         text="من المصنع مباشرة ★ جودة عالية ★ أسعار لا تقبل المنافسة ★ توصيل لجميع المحافظات ★"
         direction="ltr"
-        bgClass="bg-brand-light-blue"
+        bgClass="bg-brand-black"
       />
 
       <section className="container py-10 sm:py-14">
