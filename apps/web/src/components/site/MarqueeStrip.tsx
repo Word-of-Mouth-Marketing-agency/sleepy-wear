@@ -18,14 +18,15 @@ const defaultItems = [
 ];
 
 export function MarqueeStrip({
-  items = defaultItems,
+  text,
+  items,
   direction = "rtl",
   reverse = false,
   bgClass = "bg-brand-pink",
   speedSeconds = 24,
 }: MarqueeStripProps) {
   const shouldReverse = reverse || direction === "ltr";
-  const content = [...items, ...items];
+  const content = items && items.length > 0 ? items : getTextItems(text);
   const style = {
     "--sleepy-marquee-duration": `${speedSeconds}s`,
     "--sleepy-marquee-mobile-duration": `${Math.round(speedSeconds * (20 / 24))}s`,
@@ -44,6 +45,17 @@ export function MarqueeStrip({
       </div>
     </div>
   );
+}
+
+function getTextItems(text?: string) {
+  if (!text) return defaultItems;
+
+  const textItems = text
+    .split(/[★✦]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return textItems.length > 0 ? textItems : defaultItems;
 }
 
 function MarqueeContent({

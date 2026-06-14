@@ -13,6 +13,10 @@ async function getCategories() {
 export async function SiteHeader() {
   const categories = await getCategories();
 
+  return <SiteHeaderContent categories={categories} />;
+}
+
+export function SiteHeaderContent({ categories }: { categories: Category[] }) {
   return (
     <header className="shadow-sm">
       <div className="bg-brand-blue text-white text-center py-1.5 text-xs sm:text-sm px-2">
@@ -54,10 +58,9 @@ export async function SiteHeader() {
         </div>
       </div>
 
-      {categories.length > 0 ? (
-        <nav className="border-t border-[var(--line)] bg-white">
-          <div className="container">
-            <ul className="flex justify-center gap-6 overflow-x-auto whitespace-nowrap py-2.5 text-sm hide-scrollbar">
+      <nav className="border-t border-[var(--line)] bg-white">
+        <div className="container">
+          <ul className="flex justify-center gap-6 overflow-x-auto whitespace-nowrap py-2.5 text-sm hide-scrollbar">
               <li>
                 <Link
                   href="/"
@@ -84,10 +87,9 @@ export async function SiteHeader() {
                   </Link>
                 </li>
               ))}
-            </ul>
-          </div>
-        </nav>
-      ) : null}
+          </ul>
+        </div>
+      </nav>
     </header>
   );
 }

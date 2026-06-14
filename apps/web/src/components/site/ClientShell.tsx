@@ -1,11 +1,16 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { SiteHeader } from "./Header";
 import { SiteFooter } from "./Footer";
 import { FloatingWhatsApp } from "./FloatingWhatsApp";
 
-export function ClientShell({ children }: { children: React.ReactNode }) {
+export function ClientShell({
+  children,
+  header,
+}: {
+  children: React.ReactNode;
+  header: React.ReactNode;
+}) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
@@ -13,7 +18,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <SiteHeader />
+      {header}
       <main className="min-h-screen">{children}</main>
       <SiteFooter />
       <FloatingWhatsApp />
