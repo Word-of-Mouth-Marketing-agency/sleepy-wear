@@ -17,19 +17,17 @@ const defaultItems = [
   "أسعار المصنع مباشرة",
 ];
 
-const CYCLES = 20;
-
 export function MarqueeStrip({
   text,
   items,
   direction = "rtl",
   reverse = false,
   bgClass = "bg-brand-pink",
-  speedSeconds = 30,
+  speedSeconds = 24,
 }: MarqueeStripProps) {
   const content = items && items.length > 0 ? items : getTextItems(text);
   const shouldReverse = reverse || direction === "ltr";
-  const contentElements = buildLongContent(content);
+  const spans = buildSpans(content);
 
   return (
     <div className={`sleepy-marquee ${bgClass}`}>
@@ -37,32 +35,30 @@ export function MarqueeStrip({
         className="sleepy-marquee__track"
         style={{
           animationDuration: `${speedSeconds}s`,
-          animationDirection: shouldReverse ? "reverse" : "normal",
+          animationDirection: shouldReverse ? undefined : "normal",
         }}
       >
-        <div className="sleepy-marquee__content">{contentElements}</div>
+        <div className="sleepy-marquee__content">{spans}</div>
         <div className="sleepy-marquee__content" aria-hidden="true">
-          {contentElements}
+          {spans}
         </div>
       </div>
     </div>
   );
 }
 
-function buildLongContent(items: string[]) {
+function buildSpans(items: string[]) {
   const spans: ReactNode[] = [];
-
-  for (let c = 0; c < CYCLES; c++) {
+  for (let cycle = 0; cycle < 2; cycle++) {
     for (let i = 0; i < items.length; i++) {
-      spans.push(<span key={`c${c}-i${i}`}>{items[i]}</span>);
+      spans.push(<span key={`t${cycle}-${i}`}>{items[i]}</span>);
       spans.push(
-        <span key={`c${c}-s${i}`} className="sleepy-marquee__icon">
+        <span key={`s${cycle}-${i}`} className="sleepy-marquee__icon">
           ✦
         </span>,
       );
     }
   }
-
   return spans;
 }
 
