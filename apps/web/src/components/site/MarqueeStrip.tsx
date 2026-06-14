@@ -27,6 +27,7 @@ export function MarqueeStrip({
 }: MarqueeStripProps) {
   const shouldReverse = reverse || direction === "ltr";
   const content = items && items.length > 0 ? items : getTextItems(text);
+  const repeatedContent = repeatItems(content, 4);
   const style = {
     "--sleepy-marquee-duration": `${speedSeconds}s`,
     "--sleepy-marquee-mobile-duration": `${Math.round(speedSeconds * (20 / 24))}s`,
@@ -40,11 +41,15 @@ export function MarqueeStrip({
           animationDirection: shouldReverse ? "reverse" : "normal",
         }}
       >
-        <MarqueeContent items={content} />
-        <MarqueeContent items={content} ariaHidden />
+        <MarqueeContent items={repeatedContent} />
+        <MarqueeContent items={repeatedContent} ariaHidden />
       </div>
     </div>
   );
+}
+
+function repeatItems(items: string[], times: number) {
+  return Array.from({ length: times }, () => items).flat();
 }
 
 function getTextItems(text?: string) {
