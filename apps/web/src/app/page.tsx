@@ -14,8 +14,8 @@ export default async function HomePage() {
 
   const products = productsRes?.items ?? [];
   const categories = categoriesRes ?? [];
-  const bestSellers = products.slice(0, 6);
-  const latest = [...products].reverse().slice(0, 6);
+  const bestSellers = products.slice(0, 4);
+  const latest = [...products].reverse().slice(0, 4);
 
   return (
     <div>
@@ -97,30 +97,35 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="container py-10 sm:py-14">
-        <div className="mb-6">
-          <SectionHeading title="ليه SleepyWear؟" />
+      <section className="container py-10 text-center sm:py-14">
+        <div className="mb-10">
+          <h2 className="text-2xl font-black text-brand-black sm:text-3xl">
+            ليه SleepyWear؟
+          </h2>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            كل اللي تحتاجيه لراحة البيت وأناقة كل يوم
+          </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <BenefitCard
             icon={<FactoryIcon />}
-            title="من المصنع مباشرة"
-            desc="نبيع بأسعار المصنع بدون وسيط — جودة عالية بسعر منافس"
-          />
-          <BenefitCard
-            icon={<TruckIcon />}
-            title="توصيل سريع"
-            desc="نوصل لكل المحافظات في 3-7 أيام عمل"
+            title="أسعار المصنع مباشرة"
+            desc="اختيارات حقيقية بسعر قريب من المصنع من غير طبقات زيادة."
           />
           <BenefitCard
             icon={<RefreshIcon />}
-            title="استبدال مجاني"
-            desc="ضمان استبدال خلال 14 يوم من الاستلام"
+            title="خامات مريحة وجودة عالية"
+            desc="ملابس بيت ولانچيري بخامات ناعمة ومناسبة للاستخدام اليومي."
           />
           <BenefitCard
             icon={<ChatIcon />}
-            title="دعم متواصل"
-            desc="خدمة عملاء عبر واتساب طوال أيام الأسبوع"
+            title="تشكيلات متنوعة لكل الأذواق"
+            desc="بيچامات، ساتان، كيرفي، لانچيري وكوليكشنات تتجدد باستمرار."
+          />
+          <BenefitCard
+            icon={<TruckIcon />}
+            title="توصيل سريع لكل المحافظات"
+            desc="نوصل طلبك لباب البيت مع متابعة واضحة لحد الاستلام."
           />
         </div>
       </section>
@@ -138,10 +143,14 @@ function BenefitCard({
   desc: string;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--line)] bg-white p-5 text-center sm:p-6 shadow-sm">
-      <div className="mb-3 inline-flex text-brand-pink">{icon}</div>
-      <h3 className="text-sm font-bold">{title}</h3>
-      <p className="mt-1 text-xs text-[var(--muted)]">{desc}</p>
+    <div className="text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-light-pink text-brand-pink">
+        {icon}
+      </div>
+      <h3 className="mt-4 font-bold text-brand-black">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+        {desc}
+      </p>
     </div>
   );
 }
