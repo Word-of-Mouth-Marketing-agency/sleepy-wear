@@ -5,12 +5,17 @@ import { MarqueeBanner } from "@/components/site/MarqueeBanner";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { CategorySlider } from "@/components/site/CategorySlider";
 import { ProductCard } from "@/components/site/ProductCard";
-import { apiGet } from "@/lib/api";
+import { API_URL, apiGet } from "@/lib/api";
 
 export default async function HomePage() {
-  const [productsRes, categoriesRes] = await Promise.all([
+  const [categoriesRes, productsRes] = await Promise.all([
+    fetch(`${API_URL}/categories`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? (r.json() as Promise<Category[]>) : null))
+      .catch(() => null),
     apiGet<PaginatedResponse<Product>>("/products?limit=20").catch(() => null),
-    apiGet<Category[]>("/categories").catch(() => null),
   ]);
 
   const products = productsRes?.items ?? [];
