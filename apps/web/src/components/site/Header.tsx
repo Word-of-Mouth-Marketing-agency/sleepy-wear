@@ -29,21 +29,21 @@ export function SiteHeaderContent({ categories }: { categories: Category[] }) {
       </NoticeBar>
 
       <div className="bg-white">
-        <div className="container flex items-center justify-between py-3">
-          <div className="flex items-center gap-3">
+        <div className="container grid grid-cols-3 items-center py-3">
+          <div className="flex items-center gap-3 justify-self-start text-black">
             <CartIcon />
             <HeaderSearch />
           </div>
 
-          <Link href="/">
+          <Link href="/" className="justify-self-center">
             <img
               alt="SleepyWear"
               className="h-10 w-auto sm:h-12"
-              src="/brand/blue-logo.png"
+              src="/brand/pink-logo.png"
             />
           </Link>
 
-          <div className="flex items-center gap-3 text-lg">
+          <div className="flex items-center gap-3 justify-self-end text-lg">
             <SocialIcon href="#" label="Instagram">
               <InstagramSvg />
             </SocialIcon>
@@ -111,7 +111,7 @@ function SocialIcon({
       aria-label={label}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-[var(--muted)] transition-colors hover:text-brand-pink"
+      className="text-black transition-colors hover:text-brand-pink"
     >
       {children}
     </a>
