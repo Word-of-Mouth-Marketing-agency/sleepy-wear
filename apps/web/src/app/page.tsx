@@ -1,5 +1,6 @@
 import type { Category, PaginatedResponse, Product } from "@sleepywear/shared";
 import { HeroSlider } from "@/components/site/HeroSlider";
+import { FullWidthBanner } from "@/components/site/FullWidthBanner";
 import { MarqueeBanner } from "@/components/site/MarqueeBanner";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { CategorySlider } from "@/components/site/CategorySlider";
@@ -52,31 +53,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="container py-10 sm:py-14">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl bg-brand-pink p-6 sm:p-8 text-white">
-            <p className="text-sm font-semibold opacity-80">عرض خاص</p>
-            <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl">
-              خصم 10% على أول طلب
-            </h2>
-            <p className="mt-2 text-sm opacity-80">
-              استخدم كود الخصم عند الدفع
-            </p>
-            <div className="mt-4 inline-block rounded-lg border border-white/30 px-4 py-1.5 text-lg font-mono font-bold tracking-wider">
-              BF10
-            </div>
-          </div>
-          <div className="rounded-xl bg-brand-blue p-6 sm:p-8 text-white">
-            <p className="text-sm font-semibold opacity-80">توصيل مجاني</p>
-            <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl">
-              للطلبات فوق 999 جنيه
-            </h2>
-            <p className="mt-2 text-sm opacity-80">
-              نوصل لكل المحافظات في 3-7 أيام
-            </p>
-          </div>
-        </div>
-      </section>
+      <FullWidthBanner />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">
