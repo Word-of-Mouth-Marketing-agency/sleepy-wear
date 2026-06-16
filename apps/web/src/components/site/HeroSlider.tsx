@@ -33,7 +33,7 @@ export function HeroSlider() {
   if (!loaded) return null;
   if (banners.length === 0) {
     return (
-      <section className="flex min-h-[40vh] items-center justify-center bg-brand-light-pink sm:min-h-[50vh]">
+      <section className="flex aspect-[1916/821] w-full items-center justify-center bg-brand-light-pink">
         <p className="text-sm text-[var(--muted)]">—</p>
       </section>
     );
@@ -41,7 +41,7 @@ export function HeroSlider() {
 
   return (
     <section className="relative overflow-hidden">
-      <div className="relative min-h-[50vh] sm:h-[80vh]">
+      <div className="relative aspect-[1916/821] w-full max-h-[90vh]">
         {banners.map((banner, i) => (
           <div
             key={banner.id}
@@ -53,14 +53,14 @@ export function HeroSlider() {
                 <img
                   src={getMediaUrl(banner.imageUrl)}
                   alt={banner.titleAr}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
               </Link>
             ) : (
               <img
                 src={getMediaUrl(banner.imageUrl)}
                 alt={banner.titleAr}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             )}
           </div>
