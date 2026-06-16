@@ -33,4 +33,11 @@ export class UploadsController {
   deleteProductImage(@Param("id") id: string) {
     return this.uploadsService.deleteProductImage(id);
   }
+
+  @Post("banner-image")
+  @UseInterceptors(FileInterceptor("file"))
+  uploadBannerImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException("No file uploaded");
+    return this.uploadsService.uploadBannerImage(file);
+  }
 }

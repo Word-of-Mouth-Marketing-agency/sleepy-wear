@@ -8,6 +8,7 @@ import {
   Package,
   Grid3X3,
   ShoppingCart,
+  FileText,
   LogOut,
   Menu,
   X,
@@ -18,6 +19,7 @@ const NAV = [
   { href: "/admin/products", label: "المنتجات", icon: Package },
   { href: "/admin/categories", label: "التصنيفات", icon: Grid3X3 },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingCart },
+  { href: "/admin/pages", label: "الصفحات", icon: FileText },
 ];
 
 export default function AdminLayout({

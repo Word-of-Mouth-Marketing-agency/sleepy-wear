@@ -37,23 +37,6 @@ a {
   padding-inline: 16px;
 }
 
-@keyframes hero-slide {
-  0%, 28% { opacity: 1; }
-  33%, 94% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-.hero-slide-anim {
-  animation: hero-slide 12s infinite;
-}
-
-.hero-slide-anim:nth-child(2) {
-  animation-delay: 4s;
-}
-
-.hero-slide-anim:nth-child(3) {
-  animation-delay: 8s;
-}
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;

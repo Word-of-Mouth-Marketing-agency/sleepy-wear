@@ -138,6 +138,16 @@ export type Order = {
   updatedAt?: string;
 };
 
+export type Banner = {
+  id: string;
+  titleAr: string;
+  titleEn?: string | null;
+  imageUrl: string;
+  href?: string | null;
+  isActive: boolean;
+  sortOrder: number;
+};
+
 export type CategoryDetails = {
   category: Category;
   products: PaginatedResponse<Product>;

@@ -1,75 +1,86 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { Banner } from "@sleepywear/shared";
+import { getMediaUrl } from "@/lib/media";
 
-type Slide = {
-  title: string;
-  subtitle?: string;
-  href: string;
-  cta: string;
-  bg: string;
-};
-
-const slides: Slide[] = [
-  {
-    title: "تشكيلة الشتاء",
-    subtitle: "أجمل أطقم المنزل بأفضل سعر",
-    href: "/products",
-    cta: "تسوق الآن",
-    bg: "#F389D4",
-  },
-  {
-    title: "خصم 10% لأول طلب",
-    subtitle: "استخدم كود BF10 عند الدفع",
-    href: "/products",
-    cta: "استخدم الكود",
-    bg: "#00AEEF",
-  },
-  {
-    title: "جودة من المصنع",
-    subtitle: "أسعار لا تقبل المنافسة",
-    href: "/products",
-    cta: "تصفح المنتجات",
-    bg: "#000000",
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
 export function HeroSlider() {
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [current, setCurrent] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_URL}/banners`, { headers: { Accept: "application/json" } })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => {
+        setBanners(data);
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    if (banners.length < 2) return;
+    const timer = setInterval(() => {
+      setCurrent((c) => (c + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
+
+  if (!loaded) return null;
+  if (banners.length === 0) {
+    return (
+      <section className="flex min-h-[40vh] items-center justify-center bg-brand-light-pink sm:min-h-[50vh]">
+        <p className="text-sm text-[var(--muted)]">—</p>
+      </section>
+    );
+  }
+
   return (
     <section className="relative overflow-hidden">
       <div className="relative min-h-[50vh] sm:h-[80vh]">
-        {slides.map((slide, index) => (
+        {banners.map((banner, i) => (
           <div
-            key={index}
-            className="hero-slide-anim absolute inset-0 flex items-center"
-            style={{ backgroundColor: slide.bg }}
+            key={banner.id}
+            className="absolute inset-0 transition-opacity duration-700"
+            style={{ opacity: i === current ? 1 : 0 }}
           >
-            <div className="container">
-              <div className="max-w-md space-y-3">
-                <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
-                  {slide.title}
-                </h1>
-                {slide.subtitle ? (
-                  <p className="text-white/80 text-lg">{slide.subtitle}</p>
-                ) : null}
-                <Link
-                  href={slide.href}
-                  className="inline-block rounded-lg bg-white px-6 py-2.5 text-sm font-bold text-brand-pink hover:bg-brand-light-pink transition-colors"
-                >
-                  {slide.cta}
-                </Link>
-              </div>
-            </div>
+            {banner.href ? (
+              <Link href={banner.href} className="block h-full w-full">
+                <img
+                  src={getMediaUrl(banner.imageUrl)}
+                  alt={banner.titleAr}
+                  className="h-full w-full object-cover"
+                />
+              </Link>
+            ) : (
+              <img
+                src={getMediaUrl(banner.imageUrl)}
+                alt={banner.titleAr}
+                className="h-full w-full object-cover"
+              />
+            )}
           </div>
         ))}
       </div>
 
-      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-        {slides.map((_, i) => (
-          <div
-            key={i}
-            className="h-2 w-2 rounded-full bg-white/60"
-          />
-        ))}
-      </div>
+      {banners.length > 1 ? (
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+          {banners.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setCurrent(i)}
+              className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                i === current ? "bg-white" : "bg-white/50"
+              }`}
+            />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
