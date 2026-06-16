@@ -4,12 +4,15 @@ import { useState, useMemo } from "react";
 import type { Product } from "@sleepywear/shared";
 import { useCartStore } from "@/stores/cart-store";
 import { getMediaUrl, getThumbUrl } from "@/lib/media";
+import { ProductCard } from "./ProductCard";
+import { SectionHeading } from "./SectionHeading";
 
 type Props = {
   product: Product;
+  relatedProducts: Product[];
 };
 
-export default function ProductDetailsClient({ product }: Props) {
+export default function ProductDetailsClient({ product, relatedProducts }: Props) {
   const addItem = useCartStore((s) => s.addItem);
 
   const images = product.images;
@@ -330,6 +333,19 @@ export default function ProductDetailsClient({ product }: Props) {
           </div>
         </div>
       </div>
+
+      {relatedProducts.length > 0 ? (
+        <section className="mt-14 sm:mt-20">
+          <div className="mb-6">
+            <SectionHeading title="منتجات مشابهة" />
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {relatedProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
