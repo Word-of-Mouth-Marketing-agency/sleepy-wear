@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
 import { Prisma, ProductStatus } from "@prisma/client";
 import { PaginationQueryDto } from "../common/dto/pagination-query.dto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -101,6 +105,14 @@ export class CategoriesService {
 
   async remove(id: string) {
     await this.ensureCategory(id);
+
+    const count = await this.prisma.product.count({ where: { categoryId: id } });
+    if (count > 0) {
+      throw new ConflictException(
+        "لا يمكن حذف التصنيف لأنه يحتوي على منتجات. يمكنك تعطيله بدلاً من الحذف.",
+      );
+    }
+
     await this.prisma.category.delete({ where: { id } });
     return { id, deleted: true };
   }
