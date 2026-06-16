@@ -14,7 +14,7 @@ export function HeroSlider() {
 
   useEffect(() => {
     fetch(`${API_URL}/banners`, { headers: { Accept: "application/json" } })
-      .then((r) => r.ok ? r.json() : [])
+      .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         setBanners(data);
         setLoaded(true);
@@ -30,13 +30,9 @@ export function HeroSlider() {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  if (!loaded) return null;
+  if (!loaded) return <HeroPlaceholder label="جاري تحميل العروض" />;
   if (banners.length === 0) {
-    return (
-      <section className="flex aspect-[1916/821] w-full items-center justify-center bg-brand-light-pink">
-        <p className="text-sm text-[var(--muted)]">—</p>
-      </section>
-    );
+    return <HeroPlaceholder label="لا توجد عروض حالياً" />;
   }
 
   return (
@@ -73,6 +69,8 @@ export function HeroSlider() {
             <button
               key={i}
               type="button"
+              aria-label={`عرض البانر ${i + 1} من ${banners.length}`}
+              aria-current={i === current ? "true" : undefined}
               onClick={() => setCurrent(i)}
               className={`h-2.5 w-2.5 rounded-full transition-colors ${
                 i === current ? "bg-white" : "bg-white/50"
@@ -81,6 +79,20 @@ export function HeroSlider() {
           ))}
         </div>
       ) : null}
+    </section>
+  );
+}
+
+function HeroPlaceholder({ label }: { label: string }) {
+  return (
+    <section
+      className="flex aspect-[1916/821] w-full items-center justify-center bg-brand-light-pink"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-brand-pink shadow-sm">
+        <span className="h-2 w-2 rounded-full bg-brand-blue" />
+        <span>{label}</span>
+      </div>
     </section>
   );
 }

@@ -28,7 +28,7 @@ export default async function HomePage() {
       <HeroSlider />
       <MarqueeBanner bgColor="#FBE8F5" />
 
-      <section className="container py-10 sm:py-14">
+      <section className="container py-12 sm:py-16">
         <div className="mb-6">
           <SectionHeading
             title="تسوق حسب القسم"
@@ -40,7 +40,7 @@ export default async function HomePage() {
 
       <MarqueeBanner bgColor="#FBE8F5" reverse />
 
-      <section className="container py-10 sm:py-14">
+      <section className="container py-12 sm:py-16">
         <div className="mb-6">
           <SectionHeading
             title="الأكثر مبيعاً"
@@ -60,7 +60,7 @@ export default async function HomePage() {
 
       <FullWidthBanner />
 
-      <section className="container py-10 sm:py-14">
+      <section className="container py-12 sm:py-16">
         <div className="mb-6">
           <SectionHeading
             title="آخر المنتجات"
@@ -78,7 +78,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="container py-10 text-center sm:py-14">
+      <section className="container py-12 text-center sm:py-16">
         <div className="mb-10">
           <h2 className="text-2xl font-black text-brand-black sm:text-3xl">
             ليه SleepyWear؟

@@ -97,10 +97,10 @@ export function CategorySlider({ categories }: CategorySliderProps) {
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-pink via-white to-brand-blue p-4 text-center text-white transition-transform duration-300 group-hover:scale-105">
-                  <span className="text-sm font-bold leading-relaxed drop-shadow-sm sm:text-base">
-                    {cat.nameAr}
-                  </span>
+                <div className="flex h-full w-full items-center justify-center bg-brand-light-pink p-4 transition-transform duration-300 group-hover:scale-105">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-brand-pink/25 bg-white text-2xl text-brand-pink shadow-sm">
+                    ✦
+                  </div>
                 </div>
               )}
             </div>
