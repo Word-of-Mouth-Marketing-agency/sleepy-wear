@@ -1,5 +1,6 @@
 import type { Category, PaginatedResponse, Product } from "@sleepywear/shared";
 import { HeroSlider } from "@/components/site/HeroSlider";
+import { MarqueeBanner } from "@/components/site/MarqueeBanner";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { CategorySlider } from "@/components/site/CategorySlider";
 import { ProductCard } from "@/components/site/ProductCard";
@@ -19,6 +20,7 @@ export default async function HomePage() {
   return (
     <div>
       <HeroSlider />
+      <MarqueeBanner bgColor="#000000" />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">
