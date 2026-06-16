@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import type { Category } from "@sleepywear/shared";
 import { getMediaUrl } from "@/lib/media";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type CategorySliderProps = {
   categories: Category[];
@@ -11,6 +12,24 @@ type CategorySliderProps = {
 
 export function CategorySlider({ categories }: CategorySliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const { scrollLeft, scrollWidth, clientWidth } = track;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    updateScrollState();
+    track.addEventListener("scroll", updateScrollState, { passive: true });
+    return () => track.removeEventListener("scroll", updateScrollState);
+  }, [updateScrollState]);
 
   if (categories.length === 0) return null;
 
@@ -20,7 +39,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
 
     const card = track.querySelector<HTMLElement>("[data-category-card]");
     const cardWidth = card?.offsetWidth ?? track.clientWidth;
-    const gap = 16;
+    const gap = 8;
     const distance = (cardWidth + gap) * 2;
 
     track.scrollBy({
@@ -29,20 +48,24 @@ export function CategorySlider({ categories }: CategorySliderProps) {
     });
   }
 
+  const arrowBase =
+    "absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 transition-all duration-200";
+
   return (
     <div className="relative">
       <button
         type="button"
         aria-label="التصنيفات السابقة"
-        onClick={() => scrollCategories("previous")}
-        className="absolute right-0 top-[42%] z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--line)] bg-white text-lg font-bold text-brand-pink shadow-sm transition-colors hover:bg-brand-light-pink"
+        disabled={!canScrollRight}
+        onClick={() => scrollCategories("next")}
+        className={`${arrowBase} right-1 border-brand-pink bg-white text-brand-pink hover:bg-brand-pink hover:text-white disabled:pointer-events-none disabled:opacity-30 sm:right-2`}
       >
-        ›
+        <ChevronRight className="h-5 w-5" />
       </button>
 
       <div
         ref={trackRef}
-        className="grid auto-cols-[minmax(150px,1fr)] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-12 pb-2 hide-scrollbar sm:auto-cols-[minmax(190px,1fr)] lg:auto-cols-[calc((100%_-_144px)_/_4)]"
+        className="grid auto-cols-[minmax(135px,1fr)] grid-flow-col gap-2 overflow-x-auto scroll-smooth px-12 pb-1 hide-scrollbar sm:auto-cols-[calc((100%_-_112px)_/_3)] lg:auto-cols-[calc((100%_-_120px)_/_4)]"
       >
         {categories.map((cat) => (
           <Link
@@ -51,7 +74,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
             data-category-card
             className="group block min-w-0"
           >
-            <div className="aspect-square overflow-hidden rounded-lg border border-[var(--line)] bg-brand-light-pink">
+            <div className="overflow-hidden rounded-lg border border-[var(--line)] bg-brand-light-pink aspect-[3/4]">
               {cat.imageUrl ? (
                 <img
                   src={getMediaUrl(cat.imageUrl)}
@@ -66,7 +89,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
                 </div>
               )}
             </div>
-            <span className="mt-3 block truncate text-center text-sm font-semibold text-brand-black">
+            <span className="mt-2 block truncate text-center text-sm font-semibold text-brand-black">
               {cat.nameAr}
             </span>
           </Link>
@@ -76,10 +99,11 @@ export function CategorySlider({ categories }: CategorySliderProps) {
       <button
         type="button"
         aria-label="التصنيفات التالية"
-        onClick={() => scrollCategories("next")}
-        className="absolute left-0 top-[42%] z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--line)] bg-white text-lg font-bold text-brand-pink shadow-sm transition-colors hover:bg-brand-light-pink"
+        disabled={!canScrollLeft}
+        onClick={() => scrollCategories("previous")}
+        className={`${arrowBase} left-1 border-brand-blue bg-white text-brand-blue hover:bg-brand-blue hover:text-white disabled:pointer-events-none disabled:opacity-30 sm:left-2`}
       >
-        ‹
+        <ChevronLeft className="h-5 w-5" />
       </button>
     </div>
   );
