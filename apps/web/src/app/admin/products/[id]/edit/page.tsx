@@ -20,7 +20,7 @@ export default async function EditProductPage({
   ]);
 
   return (
-    <PageShell title="تعديل منتج" eyebrow="Admin">
+    <PageShell title="تعديل منتج" eyebrow="Admin" noContainer>
       {!product || !categories || !sizes || !colors ? (
         <p className="text-red-700">تعذر تحميل بيانات المنتج.</p>
       ) : (

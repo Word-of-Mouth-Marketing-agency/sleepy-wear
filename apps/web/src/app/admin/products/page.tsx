@@ -38,7 +38,7 @@ export default async function AdminProductsPage() {
   ).catch(() => null);
 
   return (
-    <PageShell title="إدارة المنتجات" eyebrow="Admin">
+    <PageShell title="إدارة المنتجات" eyebrow="Admin" noContainer>
       <div className="mb-4 flex justify-end">
         <Link
           className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"

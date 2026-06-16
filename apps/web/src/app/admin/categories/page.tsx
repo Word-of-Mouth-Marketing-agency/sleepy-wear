@@ -9,7 +9,7 @@ export default async function AdminCategoriesPage() {
   ).catch(() => null);
 
   return (
-    <PageShell title="إدارة التصنيفات" eyebrow="Admin">
+    <PageShell title="إدارة التصنيفات" eyebrow="Admin" noContainer>
       {!categories ? (
         <p className="text-red-700">تعذر تحميل التصنيفات.</p>
       ) : (

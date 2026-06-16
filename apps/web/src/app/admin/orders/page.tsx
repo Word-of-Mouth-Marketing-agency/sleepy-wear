@@ -22,7 +22,7 @@ export default function AdminOrdersPage() {
   }, []);
 
   return (
-    <PageShell title="إدارة الطلبات" eyebrow="Admin">
+    <PageShell title="إدارة الطلبات" eyebrow="Admin" noContainer>
       {error ? <p className="text-red-700">تعذر تحميل الطلبات.</p> : null}
       {!error && orders?.items.length === 0 ? (
         <p className="text-[var(--muted)]">لا توجد طلبات حتى الآن.</p>

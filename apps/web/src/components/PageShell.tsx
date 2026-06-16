@@ -2,11 +2,17 @@ type PageShellProps = {
   title: string;
   eyebrow?: string;
   children: React.ReactNode;
+  noContainer?: boolean;
 };
 
-export function PageShell({ title, eyebrow, children }: PageShellProps) {
+export function PageShell({
+  title,
+  eyebrow,
+  children,
+  noContainer,
+}: PageShellProps) {
   return (
-    <section className="container py-10 space-y-6">
+    <section className={`${noContainer ? "" : "container"} space-y-6`}>
       <div className="space-y-2">
         {eyebrow ? (
           <p className="text-sm font-semibold text-brand-pink">

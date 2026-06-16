@@ -9,7 +9,7 @@ export default async function NewProductPage() {
   ).catch(() => null);
 
   return (
-    <PageShell title="إضافة منتج" eyebrow="Admin">
+    <PageShell title="إضافة منتج" eyebrow="Admin" noContainer>
       {!categories ? (
         <p className="text-red-700">تعذر تحميل التصنيفات.</p>
       ) : (
