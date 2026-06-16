@@ -40,4 +40,11 @@ export class UploadsController {
     if (!file) throw new BadRequestException("No file uploaded");
     return this.uploadsService.uploadBannerImage(file);
   }
+
+  @Post("category-image")
+  @UseInterceptors(FileInterceptor("file"))
+  uploadCategoryImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException("No file uploaded");
+    return this.uploadsService.uploadCategoryImage(file);
+  }
 }

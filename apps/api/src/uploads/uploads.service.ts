@@ -124,6 +124,33 @@ export class UploadsService {
     return { url: `/media/banners/${baseName}.webp` };
   }
 
+  async uploadCategoryImage(file: Express.Multer.File) {
+    this.validateFile(file);
+
+    const dir = join(this.uploadRoot, "categories");
+    await mkdir(dir, { recursive: true });
+
+    const baseName = `cat-${Date.now()}`;
+    const image = sharp(file.buffer);
+
+    const sizes: SizeVariant[] = [
+      { suffix: "", width: 600 },
+      { suffix: "-thumb", width: 150 },
+    ];
+
+    for (const size of sizes) {
+      const filename = `${baseName}${size.suffix}.webp`;
+      const filepath = join(dir, filename);
+      const resized = image.clone().resize(size.width, undefined, {
+        fit: "inside",
+        withoutEnlargement: true,
+      });
+      await writeFile(filepath, await resized.webp().toBuffer());
+    }
+
+    return { url: `/media/categories/${baseName}.webp` };
+  }
+
   private validateFile(file: Express.Multer.File) {
     if (!ALLOWED_TYPES.includes(file.mimetype as AllowedMime)) {
       throw new BadRequestException(

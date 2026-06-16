@@ -1,32 +1,40 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Plus, Trash2, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
-import type { Banner } from "@sleepywear/shared";
+import { Plus, Trash2, GripVertical, ArrowUp, ArrowDown, Upload } from "lucide-react";
+import type { Banner, Category } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { getMediaUrl } from "@/lib/media";
 import { API_URL, getAdminHeaders } from "@/lib/api";
 
 export default function AdminHomePageEditor() {
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [catUploading, setCatUploading] = useState<string | null>(null);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const fetchBanners = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch(`${API_URL}/banners/admin`, {
-        headers: { ...getAdminHeaders(), Accept: "application/json" },
-      });
-      if (!res.ok) throw new Error("Failed");
-      setBanners((await res.json()) as Banner[]);
+      const [bannerRes, catRes] = await Promise.all([
+        fetch(`${API_URL}/banners/admin`, {
+          headers: { ...getAdminHeaders(), Accept: "application/json" },
+        }),
+        fetch(`${API_URL}/categories?includeInactive=true`, {
+          headers: { Accept: "application/json" },
+        }),
+      ]);
+      if (!bannerRes.ok || !catRes.ok) throw new Error("Failed");
+      setBanners((await bannerRes.json()) as Banner[]);
+      setCategories((await catRes.json()) as Category[]);
     } catch {
       setError(true);
     } finally {
@@ -35,8 +43,8 @@ export default function AdminHomePageEditor() {
   }, []);
 
   useEffect(() => {
-    fetchBanners();
-  }, [fetchBanners]);
+    fetchData();
+  }, [fetchData]);
 
   function showMessage(type: "success" | "error", text: string) {
     setMessage({ type, text });
@@ -72,7 +80,7 @@ export default function AdminHomePageEditor() {
 
       showMessage("success", "تمت إضافة البانر بنجاح");
       fileRef.current!.value = "";
-      fetchBanners();
+      fetchData();
     } catch {
       showMessage("error", "فشل رفع الصورة. يرجى المحاولة مرة أخرى.");
     } finally {
@@ -88,7 +96,7 @@ export default function AdminHomePageEditor() {
       });
       if (!res.ok) throw new Error("Delete failed");
       showMessage("success", "تم حذف البانر");
-      fetchBanners();
+      fetchData();
     } catch {
       showMessage("error", "فشل حذف البانر");
     }
@@ -105,7 +113,7 @@ export default function AdminHomePageEditor() {
         body: JSON.stringify({ isActive: !banner.isActive }),
       });
       if (!res.ok) throw new Error("Toggle failed");
-      fetchBanners();
+      fetchData();
     } catch {
       showMessage("error", "فشل تغيير الحالة");
     }
@@ -135,7 +143,7 @@ export default function AdminHomePageEditor() {
           body: JSON.stringify({ sortOrder: prev.sortOrder + 1 }),
         }),
       ]);
-      fetchBanners();
+      fetchData();
     } catch {
       showMessage("error", "فشل تغيير الترتيب");
     }
@@ -165,9 +173,59 @@ export default function AdminHomePageEditor() {
           body: JSON.stringify({ sortOrder: next.sortOrder - 1 }),
         }),
       ]);
-      fetchBanners();
+      fetchData();
     } catch {
       showMessage("error", "فشل تغيير الترتيب");
+    }
+  }
+
+  async function handleCategoryImageUpload(catId: string, file: File) {
+    setCatUploading(catId);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const uploadRes = await fetch(`${API_URL}/uploads/category-image`, {
+        method: "POST",
+        headers: { ...getAdminHeaders() },
+        body: form,
+      });
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const { url } = (await uploadRes.json()) as { url: string };
+
+      const updateRes = await fetch(`${API_URL}/categories/${catId}`, {
+        method: "PATCH",
+        headers: {
+          ...getAdminHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageUrl: url }),
+      });
+      if (!updateRes.ok) throw new Error("Update failed");
+
+      showMessage("success", "تم تغيير صورة التصنيف بنجاح");
+      fetchData();
+    } catch {
+      showMessage("error", "فشل رفع الصورة. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setCatUploading(null);
+    }
+  }
+
+  async function handleRemoveCategoryImage(catId: string) {
+    try {
+      const res = await fetch(`${API_URL}/categories/${catId}`, {
+        method: "PATCH",
+        headers: {
+          ...getAdminHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageUrl: null }),
+      });
+      if (!res.ok) throw new Error("Remove failed");
+      showMessage("success", "تم إزالة الصورة");
+      fetchData();
+    } catch {
+      showMessage("error", "فشل إزالة الصورة");
     }
   }
 
@@ -193,12 +251,15 @@ export default function AdminHomePageEditor() {
 
       {error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          تعذر تحميل البانرات. يرجى المحاولة مرة أخرى.
+          تعذر تحميل البيانات. يرجى المحاولة مرة أخرى.
         </div>
       ) : null}
 
       {!loading && !error ? (
         <>
+          {/* ── Hero Banners ── */}
+          <h2 className="mb-4 text-lg font-bold">بانرات الهيرو</h2>
+
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-[var(--muted)]">
               {banners.length} بانر{banners.length !== 1 ? "ات" : ""}
@@ -221,17 +282,17 @@ export default function AdminHomePageEditor() {
           </div>
 
           {uploading ? (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
               جاري رفع الصورة…
             </div>
           ) : null}
 
           {banners.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[var(--line)] p-10 text-center text-sm text-[var(--muted)]">
+            <div className="mb-8 rounded-lg border border-dashed border-[var(--line)] p-10 text-center text-sm text-[var(--muted)]">
               لا توجد بانرات بعد. اضف بانر جديد من زر &quot;إضافة بانر&quot;
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="mb-8 space-y-3">
               {banners.map((banner, index) => (
                 <div
                   key={banner.id}
@@ -297,6 +358,73 @@ export default function AdminHomePageEditor() {
                   >
                     <Trash2 size={14} />
                   </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Category Images ── */}
+          <h2 className="mb-4 text-lg font-bold">صور تصنيفات الصفحة الرئيسية</h2>
+
+          {categories.length === 0 ? (
+            <div className="mb-8 rounded-lg border border-dashed border-[var(--line)] p-10 text-center text-sm text-[var(--muted)]">
+              لا توجد تصنيفات
+            </div>
+          ) : (
+            <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="flex items-center gap-3 rounded-lg border bg-white p-3"
+                >
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-brand-light-pink">
+                    {cat.imageUrl ? (
+                      <img
+                        src={getMediaUrl(cat.imageUrl)}
+                        alt={cat.nameAr}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-pink via-white to-brand-blue text-center text-[8px] font-bold text-white">
+                        {cat.nameAr}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {cat.nameAr}
+                    </p>
+                    <p className="mt-0.5 text-xs text-[var(--muted)]">
+                      {cat.productCount ?? 0} منتج
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 gap-1">
+                    <label className="flex cursor-pointer items-center gap-1 rounded-md border border-[var(--line)] px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-[var(--line)]">
+                      <Upload size={12} />
+                      تغيير
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        className="hidden"
+                        disabled={catUploading === cat.id}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleCategoryImageUpload(cat.id, file);
+                        }}
+                      />
+                    </label>
+                    {cat.imageUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCategoryImage(cat.id)}
+                        className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+                      >
+                        إزالة
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>

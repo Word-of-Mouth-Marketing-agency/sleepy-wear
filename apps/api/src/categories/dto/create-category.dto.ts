@@ -16,6 +16,10 @@ export class CreateCategoryDto {
   descriptionAr?: string;
 
   @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }

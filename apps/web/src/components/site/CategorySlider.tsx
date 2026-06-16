@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef } from "react";
 import type { Category } from "@sleepywear/shared";
+import { getMediaUrl } from "@/lib/media";
 
 type CategorySliderProps = {
   categories: Category[];
@@ -51,11 +52,19 @@ export function CategorySlider({ categories }: CategorySliderProps) {
             className="group block min-w-0"
           >
             <div className="aspect-square overflow-hidden rounded-lg border border-[var(--line)] bg-brand-light-pink">
-              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#F389D4_0%,#FFFFFF_52%,#00AEEF_100%)] p-4 text-center text-white transition-transform duration-300 group-hover:scale-105">
-                <span className="text-sm font-bold leading-relaxed drop-shadow-sm sm:text-base">
-                  {cat.nameAr}
-                </span>
-              </div>
+              {cat.imageUrl ? (
+                <img
+                  src={getMediaUrl(cat.imageUrl)}
+                  alt={cat.nameAr}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-pink via-white to-brand-blue p-4 text-center text-white transition-transform duration-300 group-hover:scale-105">
+                  <span className="text-sm font-bold leading-relaxed drop-shadow-sm sm:text-base">
+                    {cat.nameAr}
+                  </span>
+                </div>
+              )}
             </div>
             <span className="mt-3 block truncate text-center text-sm font-semibold text-brand-black">
               {cat.nameAr}
