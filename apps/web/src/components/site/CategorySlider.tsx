@@ -61,7 +61,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
   }
 
   const arrowBase =
-    "absolute top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 transition-all duration-200";
+    "absolute top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-brand-pink text-white shadow-md transition-all duration-200 hover:bg-brand-blue disabled:opacity-30";
 
   return (
     <div className="relative">
@@ -73,7 +73,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
           scrollCategories("next");
         }}
         disabled={!hasNext}
-        className={`${arrowBase} right-0 border-brand-pink bg-white text-brand-pink hover:bg-brand-pink hover:text-white disabled:opacity-30`}
+        className={`${arrowBase} left-0`}
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -119,7 +119,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
           scrollCategories("previous");
         }}
         disabled={!hasPrev}
-        className={`${arrowBase} left-0 border-brand-blue bg-white text-brand-blue hover:bg-brand-blue hover:text-white disabled:opacity-30`}
+        className={`${arrowBase} right-0`}
       >
         <ChevronRight className="h-5 w-5" />
       </button>
