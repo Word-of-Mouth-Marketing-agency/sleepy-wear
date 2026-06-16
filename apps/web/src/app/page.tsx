@@ -20,7 +20,7 @@ export default async function HomePage() {
   return (
     <div>
       <HeroSlider />
-      <MarqueeBanner bgColor="#000000" />
+      <MarqueeBanner bgColor="#FBE8F5" />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">
@@ -31,6 +31,8 @@ export default async function HomePage() {
         </div>
         <CategorySlider categories={categories} />
       </section>
+
+      <MarqueeBanner bgColor="#FBE8F5" reverse />
 
       <section className="container py-10 sm:py-14">
         <div className="mb-6">

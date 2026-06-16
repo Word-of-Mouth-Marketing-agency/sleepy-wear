@@ -1,11 +1,12 @@
 type MarqueeBannerProps = {
   bgColor?: string;
+  reverse?: boolean;
 };
 
 const items = [
-  "Premium Packaging",
-  "Fast & Reliable Supply",
-  "Wholesale Prices",
+  "توصيل مجاني",
+  "خصم 10%",
+  "جودة من المصنع",
 ];
 
 const STAR = '\u2726';
@@ -30,10 +31,10 @@ function buildMarqueeContent(startIdx: number) {
   return parts;
 }
 
-export function MarqueeBanner({ bgColor = "transparent" }: MarqueeBannerProps) {
+export function MarqueeBanner({ bgColor = "transparent", reverse }: MarqueeBannerProps) {
   return (
     <section className="wom-marquee" style={{ background: bgColor }}>
-      <div className="wom-marquee__track">
+      <div className={`wom-marquee__track${reverse ? " wom-marquee__track--reverse" : ""}`}>
         <div className="wom-marquee__content">
           {buildMarqueeContent(0)}
         </div>
