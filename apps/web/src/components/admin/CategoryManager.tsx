@@ -17,13 +17,14 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
   async function save(event: FormEvent<HTMLFormElement>, categoryId?: string) {
     event.preventDefault();
     setError(null);
-    const form = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const data = new FormData(form);
     const payload = {
-      nameAr: String(form.get("nameAr") ?? ""),
-      nameEn: String(form.get("nameEn") ?? "") || undefined,
-      slug: String(form.get("slug") ?? ""),
-      descriptionAr: String(form.get("descriptionAr") ?? "") || undefined,
-      isActive: form.get("isActive") === "on",
+      nameAr: String(data.get("nameAr") ?? ""),
+      nameEn: String(data.get("nameEn") ?? "") || undefined,
+      slug: String(data.get("slug") ?? ""),
+      descriptionAr: String(data.get("descriptionAr") ?? "") || undefined,
+      isActive: data.get("isActive") === "on",
     };
 
     const response = await fetch(
@@ -46,11 +47,12 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
     }
 
     setEditingId(null);
-    event.currentTarget.reset();
+    form.reset();
     router.refresh();
   }
 
   async function remove(categoryId: string) {
+    if (!window.confirm("هل أنت متأكد من حذف هذا التصنيف؟")) return;
     setError(null);
     const response = await fetch(`${API_URL}/categories/${categoryId}`, {
       method: "DELETE",
@@ -60,6 +62,7 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
       setError(await readError(response));
       return;
     }
+    setError(null);
     router.refresh();
   }
 
