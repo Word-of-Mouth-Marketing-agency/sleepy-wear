@@ -1,19 +1,33 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Order, PaginatedResponse } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
-import { apiGet } from "@/lib/api";
+import { API_URL, getAdminHeaders } from "@/lib/api";
 
-export default async function AdminOrdersPage() {
-  const orders = await apiGet<PaginatedResponse<Order>>(
-    "/orders?limit=50",
-  ).catch(() => null);
+export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<PaginatedResponse<Order> | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_URL}/orders?limit=50`, {
+      headers: { Accept: "application/json", ...getAdminHeaders() },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json() as Promise<PaginatedResponse<Order>>;
+      })
+      .then(setOrders)
+      .catch(() => setError(true));
+  }, []);
 
   return (
     <PageShell title="إدارة الطلبات" eyebrow="Admin">
-      {!orders ? <p className="text-red-700">تعذر تحميل الطلبات.</p> : null}
-      {orders && orders.items.length === 0 ? (
+      {error ? <p className="text-red-700">تعذر تحميل الطلبات.</p> : null}
+      {!error && orders?.items.length === 0 ? (
         <p className="text-[var(--muted)]">لا توجد طلبات حتى الآن.</p>
       ) : null}
-      {orders && orders.items.length > 0 ? (
+      {!error && orders && orders.items.length > 0 ? (
         <div className="space-y-3">
           {orders.items.map((order) => (
             <div
