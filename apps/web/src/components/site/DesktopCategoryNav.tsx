@@ -23,8 +23,8 @@ export function DesktopCategoryNav({
     [
       "relative px-2.5 py-1 rounded-full font-semibold transition-all duration-200",
       isActive
-        ? "bg-brand-pink text-white"
-        : "text-[var(--muted)] hover:bg-[#FCE7F6] hover:text-brand-black hover:-translate-y-[1px]",
+        ? "bg-brand-blue text-white"
+        : "text-[var(--muted)] hover:bg-brand-pink hover:text-white hover:-translate-y-[1px]",
     ].join(" ");
 
   return (
