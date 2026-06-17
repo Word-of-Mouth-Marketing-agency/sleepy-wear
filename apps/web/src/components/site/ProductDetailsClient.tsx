@@ -19,33 +19,82 @@ export default function ProductDetailsClient({
   const addItem = useCartStore((s) => s.addItem);
 
   const images = product.images;
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const galleryImages = useMemo(() => {
+    if (!images.length) return [];
+
+    const variantImages = images.filter((img) =>
+      img.altAr?.startsWith("EO-VAR-"),
+    );
+
+    if (variantImages.length === 0) {
+      // No variant images: use main product image only
+      const mainImage = images.find((img) => !img.altAr?.startsWith("EO-VAR-"));
+      return mainImage ? [mainImage] : [];
+    }
+
+    // Has variant images: show only variant images, deduped by color
+    // Map active variant SKUs to their colorId
+    const skuToColor = new Map<string, string>();
+    for (const v of product.variants) {
+      if (v.stock > 0 && v.color?.id) {
+        skuToColor.set(v.sku, v.color.id);
+      }
+    }
+
+    // Dedupe variant images: one per color
+    const seenUrl = new Set<string>();
+    const seenColor = new Set<string>();
+    const uniqueVariants: typeof images = [];
+
+    for (const img of variantImages) {
+      if (seenUrl.has(img.url)) continue;
+      const skuMatch = img.altAr?.match(/^(EO-VAR-[a-f0-9-]+)/);
+      if (!skuMatch) continue;
+      const sku = skuMatch[1];
+      const colorId = skuToColor.get(sku);
+      if (!colorId) continue;
+      if (seenColor.has(colorId)) continue;
+      seenColor.add(colorId);
+      seenUrl.add(img.url);
+      uniqueVariants.push(img);
+    }
+
+    return uniqueVariants;
+  }, [images, product.variants]);
+
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [mainImageError, setMainImageError] = useState(false);
+
+  const activeVariants = useMemo(
+    () => product.variants.filter((v) => v.stock > 0),
+    [product.variants],
+  );
 
   const sizes = useMemo(() => {
     const map = new Map<
       string,
       NonNullable<(typeof product.variants)[0]["size"]>
     >();
-    for (const v of product.variants) {
+    for (const v of activeVariants) {
       if (v.size) map.set(v.size.id, v.size);
     }
     return Array.from(map.values());
-  }, [product.variants]);
+  }, [activeVariants]);
 
   const colors = useMemo(() => {
     const map = new Map<
       string,
       NonNullable<(typeof product.variants)[0]["color"]>
     >();
-    for (const v of product.variants) {
+    for (const v of activeVariants) {
       if (v.color) map.set(v.color.id, v.color);
     }
     return Array.from(map.values());
-  }, [product.variants]);
+  }, [activeVariants]);
 
-  const hasSizes = sizes.length > 0;
-  const hasColors = colors.length > 0;
+  const hasSizes = sizes.length > 1;
+  const hasColors = colors.length > 1;
 
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(
     sizes.length === 1 ? sizes[0].id : null,
@@ -57,7 +106,7 @@ export default function ProductDetailsClient({
   const selectedVariant = useMemo(() => {
     if (hasSizes && hasColors) {
       return (
-        product.variants.find(
+        activeVariants.find(
           (v) =>
             v.size?.id === selectedSizeId && v.color?.id === selectedColorId,
         ) ?? null
@@ -65,23 +114,23 @@ export default function ProductDetailsClient({
     }
     if (hasSizes) {
       return (
-        product.variants.find((v) => v.size?.id === selectedSizeId) ?? null
+        activeVariants.find((v) => v.size?.id === selectedSizeId) ?? null
       );
     }
     if (hasColors) {
       return (
-        product.variants.find((v) => v.color?.id === selectedColorId) ?? null
+        activeVariants.find((v) => v.color?.id === selectedColorId) ?? null
       );
     }
-    return product.variants[0] ?? null;
-  }, [product.variants, selectedSizeId, selectedColorId, hasSizes, hasColors]);
+    return activeVariants[0] ?? null;
+  }, [activeVariants, selectedSizeId, selectedColorId, hasSizes, hasColors]);
 
-  const hasSale = product.variants.some((v) => v.salePrice !== null);
-  const allOutOfStock = product.variants.every((v) => v.stock === 0);
+  const hasSale = activeVariants.some((v) => v.salePrice !== null);
+  const allOutOfStock = activeVariants.length === 0;
   const minPrice = Math.min(
-    ...product.variants.map((v) => v.salePrice ?? v.price),
+    ...activeVariants.map((v) => v.salePrice ?? v.price),
   );
-  const maxPrice = Math.max(...product.variants.map((v) => v.price));
+  const maxPrice = Math.max(...activeVariants.map((v) => v.price));
 
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -126,19 +175,27 @@ export default function ProductDetailsClient({
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  const mainImage = images[currentImageIndex];
+  const displayUrl = selectedImageUrl ?? galleryImages[0]?.url ?? null;
+
+  const displayImage = useMemo(
+    () => galleryImages.find((img) => img.url === displayUrl) ?? null,
+    [galleryImages, displayUrl],
+  );
+
+  const isActiveThumbnail = (img: (typeof galleryImages)[number]) =>
+    img.url === displayUrl;
 
   return (
     <div className="bg-white">
       <div className="container py-8 sm:py-10">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] lg:items-start">
-          <section className="space-y-3">
-            <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-3xl border border-[var(--line)] bg-brand-light-pink sm:aspect-[4/3]">
-              {mainImage && !mainImageError ? (
+          <section className="flex min-w-0 w-full flex-col gap-3 lg:flex-row-reverse">
+            <div className="relative flex h-[420px] w-full items-center justify-center overflow-hidden rounded-3xl border border-[var(--line)] bg-brand-light-pink sm:h-[520px] lg:h-[700px] lg:flex-1">
+              {displayImage && !mainImageError ? (
                 <img
-                  alt={mainImage.altAr ?? product.nameAr}
-                  className="h-full w-full object-cover"
-                  src={getMediaUrl(mainImage.url)}
+                  alt={displayImage.altAr ?? product.nameAr}
+                  className="h-full w-full object-contain p-4"
+                  src={getMediaUrl(displayImage.url)}
                   onError={() => setMainImageError(true)}
                 />
               ) : (
@@ -158,19 +215,27 @@ export default function ProductDetailsClient({
               ) : null}
             </div>
 
-            {images.length > 1 ? (
-              <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                {images.map((img, i) => (
+            {galleryImages.length > 1 ? (
+              <div className="flex w-full max-w-full gap-2 overflow-x-auto overflow-y-hidden pb-1 lg:w-auto lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:pb-0 lg:pr-0 hide-scrollbar">
+                {galleryImages.map((img, i) => (
                   <button
                     key={img.id}
                     type="button"
                     aria-label={`صورة المنتج ${i + 1}`}
                     onClick={() => {
-                      setCurrentImageIndex(i);
+                      setSelectedImageUrl(img.url);
                       setMainImageError(false);
+                      const skuMatch = img.altAr?.match(/^(EO-VAR-[a-f0-9-]+)/);
+                      if (skuMatch) {
+                        const v = activeVariants.find((v) => v.sku === skuMatch[1]);
+                        if (v) {
+                          if (hasSizes) setSelectedSizeId(v.size?.id ?? null);
+                          if (hasColors) setSelectedColorId(v.color?.id ?? null);
+                        }
+                      }
                     }}
-                    className={`h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-brand-light-pink transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/40 ${
-                      i === currentImageIndex
+                    className={`h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-brand-light-pink transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/40 lg:h-24 lg:w-24 ${
+                      isActiveThumbnail(img)
                         ? "border-brand-pink"
                         : "border-transparent hover:border-brand-pink/50"
                     }`}
@@ -231,7 +296,7 @@ export default function ProductDetailsClient({
                 {hasSizes ? (
                   <VariantGroup title="المقاس">
                     {sizes.map((size) => {
-                      const hasStock = product.variants.some(
+                      const hasStock = activeVariants.some(
                         (v) => v.size?.id === size.id && v.stock > 0,
                       );
                       const isSelected = selectedSizeId === size.id;
@@ -240,7 +305,20 @@ export default function ProductDetailsClient({
                           key={size.id}
                           type="button"
                           disabled={!hasStock}
-                          onClick={() => setSelectedSizeId(size.id)}
+                          onClick={() => {
+                            setSelectedSizeId(size.id);
+                            const v = activeVariants.find(
+                              (v) =>
+                                v.size?.id === size.id &&
+                                (!hasColors || v.color?.id === selectedColorId),
+                            );
+                            if (v) {
+                              const img = galleryImages.find((img) =>
+                                img.altAr?.startsWith(v.sku),
+                              );
+                              if (img) setSelectedImageUrl(img.url);
+                            }
+                          }}
                           className={`min-h-11 min-w-[52px] rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
                             isSelected
                               ? "border-brand-pink bg-brand-pink text-white"
@@ -259,7 +337,7 @@ export default function ProductDetailsClient({
                 {hasColors ? (
                   <VariantGroup title="اللون">
                     {colors.map((color) => {
-                      const hasStock = product.variants.some(
+                      const hasStock = activeVariants.some(
                         (v) => v.color?.id === color.id && v.stock > 0,
                       );
                       const isSelected = selectedColorId === color.id;
@@ -268,7 +346,20 @@ export default function ProductDetailsClient({
                           key={color.id}
                           type="button"
                           disabled={!hasStock}
-                          onClick={() => setSelectedColorId(color.id)}
+                          onClick={() => {
+                            setSelectedColorId(color.id);
+                            const v = activeVariants.find(
+                              (v) =>
+                                v.color?.id === color.id &&
+                                (!hasSizes || v.size?.id === selectedSizeId),
+                            );
+                            if (v) {
+                              const img = galleryImages.find((img) =>
+                                img.altAr?.startsWith(v.sku),
+                              );
+                              if (img) setSelectedImageUrl(img.url);
+                            }
+                          }}
                           className={`flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
                             isSelected
                               ? "border-brand-pink bg-brand-pink text-white"
@@ -292,7 +383,7 @@ export default function ProductDetailsClient({
                   selectedVariant={selectedVariant}
                   allOutOfStock={allOutOfStock}
                   hasOptions={hasSizes || hasColors}
-                  hasVariants={product.variants.length > 0}
+                  hasVariants={activeVariants.length > 0}
                 />
 
                 <div className="space-y-3">
