@@ -36,8 +36,8 @@ export function HeroSlider() {
   }
 
   return (
-    <section className="relative overflow-hidden">
-      <div className="relative aspect-[1916/821] w-full max-h-[90vh]">
+    <section className="relative overflow-hidden bg-white">
+      <div className="relative h-[clamp(210px,62vw,330px)] w-full md:aspect-[1916/821] md:h-auto md:max-h-[90vh]">
         {banners.map((banner, i) => (
           <div
             key={banner.id}
@@ -86,7 +86,7 @@ export function HeroSlider() {
 function HeroPlaceholder({ label }: { label: string }) {
   return (
     <section
-      className="flex aspect-[1916/821] w-full items-center justify-center bg-brand-light-pink"
+      className="flex h-[clamp(210px,62vw,330px)] w-full items-center justify-center bg-brand-light-pink md:aspect-[1916/821] md:h-auto"
       aria-live="polite"
     >
       <div className="flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-brand-pink shadow-sm">

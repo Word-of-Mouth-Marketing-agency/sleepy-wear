@@ -37,6 +37,19 @@ a {
   padding-inline: 16px;
 }
 
+.desktop-header-social {
+  display: flex;
+}
+
+.desktop-category-nav {
+  display: block;
+}
+
+.mobile-menu-button,
+.mobile-menu-overlay,
+.mobile-menu-drawer {
+  display: none;
+}
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
@@ -125,6 +138,23 @@ a {
 }
 
 @media only screen and (max-width: 767px) {
+  .desktop-header-social,
+  .desktop-category-nav {
+    display: none !important;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .mobile-menu-overlay {
+    display: block;
+  }
+
+  .mobile-menu-drawer {
+    display: flex;
+  }
+
   .wom-marquee {
     padding: 6px 0;
   }

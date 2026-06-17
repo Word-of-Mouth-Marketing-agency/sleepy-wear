@@ -4,6 +4,7 @@ import { apiGet } from "@/lib/api";
 import { HeaderSearch } from "./HeaderSearch";
 import { NoticeBar } from "./NoticeBar";
 import { CartIcon } from "./CartIcon";
+import { MobileHeaderMenu } from "./MobileHeaderMenu";
 
 async function getCategories() {
   try {
@@ -43,7 +44,7 @@ export function SiteHeaderContent({ categories }: { categories: Category[] }) {
             />
           </Link>
 
-          <div className="flex items-center gap-3 justify-self-end text-lg">
+          <div className="desktop-header-social items-center gap-3 justify-self-end text-lg">
             <SocialIcon href="#" label="Instagram">
               <InstagramSvg />
             </SocialIcon>
@@ -57,10 +58,13 @@ export function SiteHeaderContent({ categories }: { categories: Category[] }) {
               <TelegramSvg />
             </SocialIcon>
           </div>
+          <div className="justify-self-end">
+            <MobileHeaderMenu categories={categories} />
+          </div>
         </div>
       </div>
 
-      <nav className="border-t border-[var(--line)] bg-white">
+      <nav className="desktop-category-nav border-t border-[var(--line)] bg-white">
         <div className="container">
           <ul className="flex justify-center gap-6 overflow-x-auto whitespace-nowrap py-2.5 text-sm hide-scrollbar">
               <li>
