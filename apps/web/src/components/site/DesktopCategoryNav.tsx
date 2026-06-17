@@ -21,16 +21,16 @@ export function DesktopCategoryNav({
 
   const linkClass = (isActive: boolean) =>
     [
-      "relative px-3 py-1.5 rounded-full font-semibold transition-all duration-200",
+      "relative px-2.5 py-1 rounded-full font-semibold transition-all duration-200",
       isActive
         ? "bg-brand-pink text-white"
-        : "text-[var(--muted)] hover:bg-brand-light-pink hover:text-brand-black hover:-translate-y-[1px]",
+        : "text-[var(--muted)] hover:bg-[#FCE7F6] hover:text-brand-black hover:-translate-y-[1px]",
     ].join(" ");
 
   return (
     <nav className="desktop-category-nav border-t border-[var(--line)] bg-white">
       <div className="container">
-        <ul className="flex justify-center gap-6 overflow-x-auto whitespace-nowrap py-2.5 text-sm hide-scrollbar">
+        <ul className="flex justify-center gap-1 overflow-x-auto whitespace-nowrap py-2.5 text-sm hide-scrollbar">
           <li>
             <Link href="/" className={linkClass(isHome)}>
               الرئيسية
@@ -41,7 +41,7 @@ export function DesktopCategoryNav({
               جميع المنتجات
             </Link>
           </li>
-          {categories.slice(0, 8).map((cat) => (
+          {categories.map((cat) => (
             <li key={cat.id}>
               <Link
                 href={`/categories/${cat.slug}`}
