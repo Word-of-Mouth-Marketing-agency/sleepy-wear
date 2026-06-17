@@ -1,0 +1,248 @@
+{
+  "generatedAt": "2026-06-14T13:01:23.025Z",
+  "databaseUrl": "postgresql://sleepywear:***@127.0.0.1:5433/sleepywear?schema=public",
+  "summary": {
+    "categoryCount": 15,
+    "activeCategoryCount": 15,
+    "inactiveCategoryCount": 0,
+    "totalProducts": 252,
+    "activeProducts": 230,
+    "draftInactiveProducts": 22,
+    "productStatusSummary": {
+      "DRAFT": 22,
+      "ACTIVE": 230
+    },
+    "weirdCategoryCount": 3,
+    "uncategorizedCategoryCount": 1,
+    "uncategorizedProductCount": 3
+  },
+  "categories": [
+    {
+      "id": "cmq9hd2bf0000u9gc9psj4x8l",
+      "nameAr": "????? ?????? ?????",
+      "nameEn": "Admin Test",
+      "slug": "admin-test-153509",
+      "isActive": true,
+      "productCount": 1,
+      "activeProductCount": 1,
+      "suspiciousReasons": [
+        "Test/admin name",
+        "Arabic name has no Arabic letters",
+        "Question-mark replacement text"
+      ]
+    },
+    {
+      "id": "cmq9ky4ye002uu9ugj5as5lm3",
+      "nameAr": "VIP - عرائس و هوانم",
+      "nameEn": "VIP Collection",
+      "slug": "vipcollection",
+      "isActive": true,
+      "productCount": 10,
+      "activeProductCount": 8,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9fd0u70001u9lwo519udhb",
+      "nameAr": "بيجامات",
+      "nameEn": "Pajamas",
+      "slug": "pajamas",
+      "isActive": true,
+      "productCount": 2,
+      "activeProductCount": 2,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9l5qws00a8u930iy70e5x7",
+      "nameAr": "بيچامات دلع",
+      "nameEn": "Sexy Pajamas",
+      "slug": "sexypajamas",
+      "isActive": true,
+      "productCount": 0,
+      "activeProductCount": 0,
+      "suspiciousReasons": [
+        "Empty category"
+      ]
+    },
+    {
+      "id": "cmq9kxuy8000su9ugq6qbl3ux",
+      "nameAr": "سـاتـان حريـر - Silky Satin",
+      "nameEn": "Satin",
+      "slug": "satin",
+      "isActive": true,
+      "productCount": 3,
+      "activeProductCount": 3,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9kxvjc000zu9uggwbezvd3",
+      "nameAr": "ملابس داخلية",
+      "nameEn": "Under Wear",
+      "slug": "under-wear",
+      "isActive": true,
+      "productCount": 6,
+      "activeProductCount": 4,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9kxzsi001ou9ugmdu95x46",
+      "nameAr": "الكيرفي & مقاسـات كبيره",
+      "nameEn": "Curvy",
+      "slug": "curvy",
+      "isActive": true,
+      "productCount": 23,
+      "activeProductCount": 23,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9ksg8d000gu9606q4kimue",
+      "nameAr": "بيجامات شي إن",
+      "nameEn": "Shein Pijama",
+      "slug": "sheinpijama",
+      "isActive": true,
+      "productCount": 5,
+      "activeProductCount": 5,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9ksdzv0000u960186ozb7d",
+      "nameAr": "كاشـات و فساتيـن",
+      "nameEn": "Cashmaillot",
+      "slug": "cashmaillot",
+      "isActive": true,
+      "productCount": 114,
+      "activeProductCount": 100,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9fd0tt0000u9lwg82izw1x",
+      "nameAr": "لانجري",
+      "nameEn": "Lingerie",
+      "slug": "lingerie",
+      "isActive": true,
+      "productCount": 23,
+      "activeProductCount": 20,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9ky1zh0023u9ugz4vsxa1l",
+      "nameAr": "الرقص الشرقي",
+      "nameEn": "Belly Dance",
+      "slug": "bellydance",
+      "isActive": true,
+      "productCount": 13,
+      "activeProductCount": 13,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9fd0u80002u9lwl31si1ic",
+      "nameAr": "روب منزلي",
+      "nameEn": "Robes",
+      "slug": "robes",
+      "isActive": true,
+      "productCount": 1,
+      "activeProductCount": 1,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9ksg86000fu960ddejv30r",
+      "nameAr": "كوليكشن الشتوي",
+      "nameEn": "Winter Pajamas",
+      "slug": "winterpajamas",
+      "isActive": true,
+      "productCount": 34,
+      "activeProductCount": 34,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9ky6ki003du9ugp011hr91",
+      "nameAr": "بيچامات ",
+      "nameEn": "Pajames",
+      "slug": "pajames",
+      "isActive": true,
+      "productCount": 14,
+      "activeProductCount": 13,
+      "suspiciousReasons": []
+    },
+    {
+      "id": "cmq9l1gfq0000u9dw2tc30hu9",
+      "nameAr": "غير مصنف",
+      "nameEn": "Uncategorized",
+      "slug": "uncategorized",
+      "isActive": true,
+      "productCount": 3,
+      "activeProductCount": 3,
+      "suspiciousReasons": [
+        "Uncategorized-like"
+      ]
+    }
+  ],
+  "weirdCategories": [
+    {
+      "id": "cmq9hd2bf0000u9gc9psj4x8l",
+      "nameAr": "????? ?????? ?????",
+      "nameEn": "Admin Test",
+      "slug": "admin-test-153509",
+      "isActive": true,
+      "productCount": 1,
+      "activeProductCount": 1,
+      "suspiciousReasons": [
+        "Test/admin name",
+        "Arabic name has no Arabic letters",
+        "Question-mark replacement text"
+      ]
+    },
+    {
+      "id": "cmq9l5qws00a8u930iy70e5x7",
+      "nameAr": "بيچامات دلع",
+      "nameEn": "Sexy Pajamas",
+      "slug": "sexypajamas",
+      "isActive": true,
+      "productCount": 0,
+      "activeProductCount": 0,
+      "suspiciousReasons": [
+        "Empty category"
+      ]
+    },
+    {
+      "id": "cmq9l1gfq0000u9dw2tc30hu9",
+      "nameAr": "غير مصنف",
+      "nameEn": "Uncategorized",
+      "slug": "uncategorized",
+      "isActive": true,
+      "productCount": 3,
+      "activeProductCount": 3,
+      "suspiciousReasons": [
+        "Uncategorized-like"
+      ]
+    }
+  ],
+  "uncategorizedProducts": [
+    {
+      "nameAr": "Diva Spark - 495",
+      "slug": "DivaSpark",
+      "status": "ACTIVE",
+      "category": {
+        "nameAr": "غير مصنف",
+        "slug": "uncategorized"
+      }
+    },
+    {
+      "nameAr": "Navy Owl Jumpsuit - 4463",
+      "slug": "NavyOwlJumpsuit",
+      "status": "ACTIVE",
+      "category": {
+        "nameAr": "غير مصنف",
+        "slug": "uncategorized"
+      }
+    },
+    {
+      "nameAr": "Savage Cuts - A216",
+      "slug": "SavageCuts",
+      "status": "ACTIVE",
+      "category": {
+        "nameAr": "غير مصنف",
+        "slug": "uncategorized"
+      }
+    }
+  ]
+}

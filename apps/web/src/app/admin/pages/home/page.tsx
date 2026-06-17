@@ -1,7 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Plus, Trash2, GripVertical, ArrowUp, ArrowDown, Upload } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  GripVertical,
+  ImagePlus,
+  Plus,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import type { Banner, Category } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { getMediaUrl } from "@/lib/media";
@@ -79,7 +88,7 @@ export default function AdminHomePageEditor() {
       if (!createRes.ok) throw new Error("Create failed");
 
       showMessage("success", "تمت إضافة البانر بنجاح");
-      fileRef.current!.value = "";
+      if (fileRef.current) fileRef.current.value = "";
       fetchData();
     } catch {
       showMessage("error", "فشل رفع الصورة. يرجى المحاولة مرة أخرى.");
@@ -230,10 +239,16 @@ export default function AdminHomePageEditor() {
   }
 
   return (
-    <PageShell title="تعديل الصفحة الرئيسية" eyebrow="Admin" noContainer>
+    <PageShell
+      title="تعديل الصفحة الرئيسية"
+      eyebrow="Admin"
+      description="إدارة بانرات الهيرو وصور التصنيفات التي تظهر في واجهة المتجر."
+      noContainer
+      surface="plain"
+    >
       {message ? (
         <div
-          className={`mb-4 rounded-lg border p-3 text-sm ${
+          className={`mb-4 rounded-2xl border p-4 text-sm font-semibold ${
             message.type === "success"
               ? "border-green-200 bg-green-50 text-green-700"
               : "border-red-200 bg-red-50 text-red-700"
@@ -244,193 +259,232 @@ export default function AdminHomePageEditor() {
       ) : null}
 
       {loading ? (
-        <p className="py-10 text-center text-sm text-[var(--muted)]">
-          جاري التحميل…
-        </p>
+        <div className="rounded-2xl border border-[var(--line)] bg-white p-10 text-center text-sm font-semibold text-[var(--muted)] shadow-sm">
+          جاري التحميل...
+        </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
           تعذر تحميل البيانات. يرجى المحاولة مرة أخرى.
         </div>
       ) : null}
 
       {!loading && !error ? (
-        <>
-          {/* ── Hero Banners ── */}
-          <h2 className="mb-4 text-lg font-bold">بانرات الهيرو</h2>
-
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-[var(--muted)]">
-              {banners.length} بانر{banners.length !== 1 ? "ات" : ""}
-            </p>
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-brand-pink px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90">
-              <Plus size={16} />
-              إضافة بانر
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/avif"
-                className="hidden"
-                disabled={uploading}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleUpload(file);
-                }}
-              />
-            </label>
-          </div>
-
-          {uploading ? (
-            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-              جاري رفع الصورة…
+        <div className="grid gap-5">
+          <section className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-pink">
+                  Hero
+                </p>
+                <h2 className="mt-1 text-xl font-extrabold">بانرات الهيرو</h2>
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  {banners.length} بانر في الصفحة الرئيسية
+                </p>
+              </div>
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand-pink px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-pink/90">
+                <Plus size={17} />
+                إضافة بانر
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpload(file);
+                  }}
+                />
+              </label>
             </div>
-          ) : null}
 
-          {banners.length === 0 ? (
-            <div className="mb-8 rounded-lg border border-dashed border-[var(--line)] p-10 text-center text-sm text-[var(--muted)]">
-              لا توجد بانرات بعد. اضف بانر جديد من زر &quot;إضافة بانر&quot;
-            </div>
-          ) : (
-            <div className="mb-8 space-y-3">
-              {banners.map((banner, index) => (
-                <div
-                  key={banner.id}
-                  className={`flex items-center gap-4 rounded-lg border bg-white p-3 ${
-                    !banner.isActive ? "opacity-60" : ""
-                  }`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleMoveUp(index)}
-                      disabled={index === 0}
-                      className="rounded p-0.5 text-[var(--muted)] hover:bg-[var(--line)] disabled:opacity-30"
-                    >
-                      <ArrowUp size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMoveDown(index)}
-                      disabled={index === banners.length - 1}
-                      className="rounded p-0.5 text-[var(--muted)] hover:bg-[var(--line)] disabled:opacity-30"
-                    >
-                      <ArrowDown size={14} />
-                    </button>
-                  </div>
+            {uploading ? (
+              <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-brand-blue">
+                جاري رفع الصورة...
+              </div>
+            ) : null}
 
-                  <GripVertical
-                    size={18}
-                    className="shrink-0 text-[var(--muted)]"
-                  />
-
-                  <img
-                    src={getMediaUrl(banner.imageUrl)}
-                    alt=""
-                    className="h-16 w-28 shrink-0 rounded-md object-cover"
-                  />
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {banner.titleAr}
-                    </p>
-                    <p className="mt-0.5 text-xs text-[var(--muted)]">
-                      ترتيب: {banner.sortOrder}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggleActive(banner)}
-                    className={`rounded-md border px-3 py-1 text-xs font-semibold transition-colors ${
-                      banner.isActive
-                        ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                        : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+            {banners.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-pink-200 p-10 text-center text-sm font-semibold text-[var(--muted)]">
+                لا توجد بانرات بعد. أضف بانر جديد من زر إضافة بانر.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {banners.map((banner, index) => (
+                  <div
+                    key={banner.id}
+                    className={`grid gap-4 rounded-2xl border border-[var(--line)] bg-[#fbf7fa] p-3 sm:grid-cols-[auto_auto_180px_1fr_auto] sm:items-center ${
+                      !banner.isActive ? "opacity-60" : ""
                     }`}
                   >
-                    {banner.isActive ? "مفعل" : "غير مفعل"}
-                  </button>
+                    <div className="flex gap-1 sm:flex-col">
+                      <IconButton
+                        label="تحريك لأعلى"
+                        onClick={() => handleMoveUp(index)}
+                        disabled={index === 0}
+                      >
+                        <ArrowUp size={14} />
+                      </IconButton>
+                      <IconButton
+                        label="تحريك لأسفل"
+                        onClick={() => handleMoveDown(index)}
+                        disabled={index === banners.length - 1}
+                      >
+                        <ArrowDown size={14} />
+                      </IconButton>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(banner.id)}
-                    className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+                    <GripVertical
+                      size={18}
+                      className="hidden shrink-0 text-[var(--muted)] sm:block"
+                    />
 
-          {/* ── Category Images ── */}
-          <h2 className="mb-4 text-lg font-bold">صور تصنيفات الصفحة الرئيسية</h2>
+                    <img
+                      src={getMediaUrl(banner.imageUrl)}
+                      alt=""
+                      className="aspect-[16/7] w-full rounded-2xl object-cover sm:h-24"
+                    />
 
-          {categories.length === 0 ? (
-            <div className="mb-8 rounded-lg border border-dashed border-[var(--line)] p-10 text-center text-sm text-[var(--muted)]">
-              لا توجد تصنيفات
-            </div>
-          ) : (
-            <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="flex items-center gap-3 rounded-lg border bg-white p-3"
-                >
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-brand-light-pink">
-                    {cat.imageUrl ? (
-                      <img
-                        src={getMediaUrl(cat.imageUrl)}
-                        alt={cat.nameAr}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-pink via-white to-brand-blue text-center text-[8px] font-bold text-white">
-                        {cat.nameAr}
-                      </div>
-                    )}
-                  </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-extrabold">{banner.titleAr}</p>
+                      <p className="mt-1 text-sm text-[var(--muted)]">
+                        ترتيب: {banner.sortOrder}
+                      </p>
+                    </div>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {cat.nameAr}
-                    </p>
-                    <p className="mt-0.5 text-xs text-[var(--muted)]">
-                      {cat.productCount ?? 0} منتج
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 gap-1">
-                    <label className="flex cursor-pointer items-center gap-1 rounded-md border border-[var(--line)] px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-[var(--line)]">
-                      <Upload size={12} />
-                      تغيير
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/avif"
-                        className="hidden"
-                        disabled={catUploading === cat.id}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleCategoryImageUpload(cat.id, file);
-                        }}
-                      />
-                    </label>
-                    {cat.imageUrl ? (
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handleRemoveCategoryImage(cat.id)}
-                        className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+                        onClick={() => handleToggleActive(banner)}
+                        className={`inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-bold transition ${
+                          banner.isActive
+                            ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                            : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                        }`}
                       >
-                        إزالة
+                        <CheckCircle2 size={14} />
+                        {banner.isActive ? "مفعل" : "غير مفعل"}
                       </button>
-                    ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(banner.id)}
+                        className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                      >
+                        <Trash2 size={14} />
+                        حذف
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
+            <div className="mb-5">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-blue">
+                Categories
+              </p>
+              <h2 className="mt-1 text-xl font-extrabold">
+                صور تصنيفات الصفحة الرئيسية
+              </h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                الصور هنا تتحكم في شكل كروت التصنيفات على الصفحة الرئيسية.
+              </p>
             </div>
-          )}
-        </>
+
+            {categories.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-pink-200 p-10 text-center text-sm font-semibold text-[var(--muted)]">
+                لا توجد تصنيفات
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {categories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[#fbf7fa] p-3"
+                  >
+                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-white">
+                      {cat.imageUrl ? (
+                        <img
+                          src={getMediaUrl(cat.imageUrl)}
+                          alt={cat.nameAr}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-pink-50 text-center text-[10px] font-bold text-brand-pink">
+                          <ImagePlus size={18} />
+                          {cat.nameAr}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-extrabold">{cat.nameAr}</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">
+                        {cat.productCount ?? 0} منتج
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <label className="inline-flex cursor-pointer items-center justify-center gap-1 rounded-full border border-[var(--line)] bg-white px-3 py-2 text-xs font-bold transition hover:border-brand-blue hover:text-brand-blue">
+                        <Upload size={12} />
+                        {catUploading === cat.id ? "رفع..." : "تغيير"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/avif"
+                          className="hidden"
+                          disabled={catUploading === cat.id}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleCategoryImageUpload(cat.id, file);
+                          }}
+                        />
+                      </label>
+                      {cat.imageUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategoryImage(cat.id)}
+                          className="rounded-full border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                        >
+                          إزالة
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       ) : null}
     </PageShell>
+  );
+}
+
+function IconButton({
+  label,
+  children,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-full border border-[var(--line)] bg-white p-1.5 text-[var(--muted)] transition hover:border-brand-pink hover:text-brand-pink disabled:pointer-events-none disabled:opacity-30"
+    >
+      {children}
+    </button>
   );
 }

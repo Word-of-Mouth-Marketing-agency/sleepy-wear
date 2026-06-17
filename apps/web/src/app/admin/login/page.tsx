@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LockKeyhole } from "lucide-react";
 import { API_URL } from "@/lib/api";
 
 export default function AdminLoginPage() {
@@ -45,32 +46,41 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="container flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-sm rounded-lg border border-[var(--line)] bg-white p-6">
-        <h1 className="mb-2 text-2xl font-bold">تسجيل دخول الإدارة</h1>
-        <p className="mb-6 text-sm text-[var(--muted)]">
-          أدخل البريد الإلكتروني وكلمة المرور.
-        </p>
+    <div className="flex min-h-screen items-center justify-center bg-[#fbf7fa] px-4 py-10">
+      <div className="w-full max-w-md rounded-3xl border border-pink-100 bg-white p-6 shadow-xl shadow-pink-100/50 sm:p-8">
+        <div className="mb-7 flex items-center gap-3">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-pink text-white">
+            <LockKeyhole size={22} aria-hidden="true" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-extrabold">تسجيل دخول الإدارة</h1>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              أدخل البريد الإلكتروني وكلمة المرور.
+            </p>
+          </div>
+        </div>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input
-            className="w-full rounded-md border border-[var(--line)] p-3"
+            className="w-full rounded-2xl border border-[var(--line)] bg-[#fbf7fa] p-3.5 text-sm outline-none transition focus:border-brand-pink focus:bg-white focus:ring-4 focus:ring-pink-100"
             name="email"
             placeholder="البريد الإلكتروني"
             required
             type="email"
           />
           <input
-            className="w-full rounded-md border border-[var(--line)] p-3"
+            className="w-full rounded-2xl border border-[var(--line)] bg-[#fbf7fa] p-3.5 text-sm outline-none transition focus:border-brand-pink focus:bg-white focus:ring-4 focus:ring-pink-100"
             name="password"
             placeholder="كلمة المرور"
             required
             type="password"
           />
           {error ? (
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+              {error}
+            </p>
           ) : null}
           <button
-            className="w-full rounded-md bg-[var(--accent)] px-4 py-3 font-semibold text-white disabled:opacity-50"
+            className="w-full rounded-full bg-black px-4 py-3.5 font-bold text-white transition hover:bg-brand-pink disabled:opacity-50"
             disabled={loading}
             type="submit"
           >

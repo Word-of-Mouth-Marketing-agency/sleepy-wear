@@ -90,11 +90,21 @@ export type CartItem = {
   quantity: number;
   price: number;
   variantInfo?: string;
+  imageUrl?: string;
 };
 
 export type CreateOrderItemInput = {
   variantId: string;
   quantity: number;
+};
+
+export type ShippingCity = {
+  id: string;
+  nameAr: string;
+  nameEn?: string | null;
+  price: number;
+  isActive: boolean;
+  sortOrder: number;
 };
 
 export type CreateOrderInput = {
@@ -103,6 +113,7 @@ export type CreateOrderInput = {
   email?: string;
   address: string;
   city: string;
+  shippingCityId?: string;
   notes?: string;
   items: CreateOrderItemInput[];
 };

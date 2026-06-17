@@ -47,6 +47,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       price: availVariant.salePrice ?? availVariant.price,
       variantInfo:
         availVariant.size?.labelAr ?? availVariant.color?.nameAr ?? undefined,
+      imageUrl: image?.url,
     });
     setAdded(true);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -57,123 +58,155 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
     return (
       <Link
         href={`/products/${product.slug}`}
-        className="flex w-[160px] shrink-0 flex-col rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md"
+        className="group flex w-[168px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-pink/35 hover:shadow-md"
       >
-        <div className="relative h-[200px] overflow-hidden rounded-t-xl bg-brand-light-pink">
-          {image ? (
-            <img
-              alt={image.altAr ?? product.nameAr}
-              className="h-full w-full object-cover"
-              src={getCardUrl(image.url)}
-            />
-          ) : (
-            <span className="flex h-full items-center justify-center px-2 text-center text-xs text-[var(--muted)]">
-              {product.nameAr}
-            </span>
-          )}
-          {salePercent != null && salePercent > 0 ? (
-            <span className="absolute right-1.5 top-1.5 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-              خصم {salePercent}%
-            </span>
-          ) : null}
-        </div>
-        <div className="flex flex-col gap-1 p-3">
-          <p className="truncate text-xs text-[var(--muted)]">
+        <ProductImage
+          imageUrl={image?.url}
+          alt={image?.altAr ?? product.nameAr}
+          fallback={product.nameAr}
+          className="h-[210px]"
+          salePercent={salePercent}
+        />
+        <div className="flex flex-col gap-1.5 p-3">
+          <p className="truncate text-xs font-semibold text-brand-pink">
             {product.category?.nameAr}
           </p>
-          <h3 className="truncate text-sm font-semibold">
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-5 text-brand-black transition-colors group-hover:text-brand-pink">
             {product.nameAr}
           </h3>
-          {price ? (
-            <div className="mt-1 flex items-center gap-1.5">
-              {originalPrice ? (
-                <span className="text-xs text-[var(--muted)] line-through">
-                  {originalPrice} ج
-                </span>
-              ) : null}
-              <span className="text-sm font-bold text-brand-pink">
-                {price} ج
-              </span>
-            </div>
-          ) : null}
+          <PriceBlock
+            price={price}
+            originalPrice={originalPrice}
+            size="sm"
+          />
         </div>
       </Link>
     );
   }
 
   return (
-    <div className="flex flex-col rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-pink/35 hover:shadow-md">
       <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative h-[360px] overflow-hidden rounded-t-xl bg-brand-light-pink max-sm:h-[260px]">
-          {image ? (
-            <img
-              alt={image.altAr ?? product.nameAr}
-              className="h-full w-full object-cover"
-              src={getCardUrl(image.url)}
-            />
-          ) : (
-            <span className="flex h-full items-center justify-center px-4 text-center text-sm text-[var(--muted)]">
-              {product.nameAr}
-            </span>
-          )}
-          {salePercent != null && salePercent > 0 ? (
-            <span className="absolute right-2 top-2 rounded bg-red-500 px-2 py-1 text-xs font-bold text-white">
-              خصم {salePercent}%
-            </span>
-          ) : null}
-        </div>
+        <ProductImage
+          imageUrl={image?.url}
+          alt={image?.altAr ?? product.nameAr}
+          fallback={product.nameAr}
+          className="aspect-[3/4]"
+          salePercent={salePercent}
+        />
       </Link>
 
-      <div className="flex flex-col gap-1 p-4">
-        <p className="text-xs text-[var(--muted)]">
+      <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
+        <p className="truncate text-xs font-semibold text-brand-pink">
           {product.category?.nameAr}
         </p>
         <Link href={`/products/${product.slug}`}>
-          <h3 className="font-semibold transition-colors hover:text-brand-pink">
+          <h3 className="line-clamp-2 min-h-[2.75rem] font-bold leading-6 text-brand-black transition-colors hover:text-brand-pink">
             {product.nameAr}
           </h3>
         </Link>
-        {price ? (
-          <div className="mt-1 flex items-center gap-2">
-            {originalPrice ? (
-              <span className="text-sm text-[var(--muted)] line-through">
-                {originalPrice} ج
-              </span>
-            ) : null}
-            <span className="text-base font-bold text-brand-pink">
-              {price} ج
-            </span>
-          </div>
-        ) : null}
+        <PriceBlock price={price} originalPrice={originalPrice} />
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-3 pb-3 sm:px-4 sm:pb-4">
         {availVariant ? (
           hasChoices ? (
             <Link
               href={`/products/${product.slug}`}
-              className="block w-full rounded-lg bg-brand-pink py-2 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="block w-full rounded-xl border border-brand-pink/25 bg-brand-light-pink px-3 py-2.5 text-center text-sm font-bold text-brand-pink transition-colors hover:bg-brand-pink hover:text-white"
             >
-              اختاري المقاس من صفحة المنتج
+              اختاري المقاس
             </Link>
           ) : (
             <button
               disabled={added}
               onClick={handleAddToCart}
-              className="w-full rounded-lg bg-brand-pink py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-70 hover:opacity-90"
+              className="w-full rounded-xl bg-brand-pink px-3 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-blue disabled:opacity-80"
+              type="button"
             >
-              {added ? "تم ✓" : "أضف للسلة"}
+              {added ? "تمت الإضافة ✓" : "أضف للسلة"}
             </button>
           )
         ) : (
           <button
             disabled
-            className="w-full cursor-not-allowed rounded-lg bg-gray-200 py-2 text-sm font-semibold text-gray-400"
+            className="w-full cursor-not-allowed rounded-xl bg-brand-light-pink px-3 py-2.5 text-sm font-bold text-[var(--muted)]"
+            type="button"
           >
             غير متوفر
           </button>
         )}
       </div>
+    </article>
+  );
+}
+
+function ProductImage({
+  imageUrl,
+  alt,
+  fallback,
+  className,
+  salePercent,
+}: {
+  imageUrl?: string;
+  alt: string;
+  fallback: string;
+  className: string;
+  salePercent: number | null;
+}) {
+  return (
+    <div
+      className={`relative flex items-center justify-center overflow-hidden bg-brand-light-pink ${className}`}
+    >
+      {imageUrl ? (
+        <img
+          alt={alt}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          src={getCardUrl(imageUrl)}
+        />
+      ) : (
+        <span className="px-4 text-center text-sm font-semibold text-[var(--muted)]">
+          {fallback}
+        </span>
+      )}
+      {salePercent != null && salePercent > 0 ? (
+        <span className="absolute right-2 top-2 rounded-full bg-brand-pink px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+          خصم {salePercent}%
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function PriceBlock({
+  price,
+  originalPrice,
+  size = "base",
+}: {
+  price: number | null;
+  originalPrice: number | null;
+  size?: "base" | "sm";
+}) {
+  if (!price) return null;
+
+  return (
+    <div className="mt-auto flex flex-wrap items-center gap-2">
+      {originalPrice ? (
+        <span
+          className={`text-[var(--muted)] line-through ${
+            size === "sm" ? "text-xs" : "text-sm"
+          }`}
+        >
+          {originalPrice} ج
+        </span>
+      ) : null}
+      <span
+        className={`font-black text-brand-pink ${
+          size === "sm" ? "text-sm" : "text-lg"
+        }`}
+      >
+        {price} ج
+      </span>
     </div>
   );
 }

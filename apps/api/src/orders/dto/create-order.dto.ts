@@ -38,6 +38,10 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
+  shippingCityId?: string;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
 
   @IsArray()

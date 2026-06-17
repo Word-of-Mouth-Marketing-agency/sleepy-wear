@@ -260,6 +260,17 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+model ShippingCity {
+  id        String   @id @default(cuid())
+  nameAr    String
+  nameEn    String?
+  price     Float
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model InventoryLog {
   id          String           @id @default(cuid())
   variantId   String

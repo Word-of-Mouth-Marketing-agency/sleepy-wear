@@ -9,6 +9,7 @@ import {
   Grid3X3,
   ShoppingCart,
   FileText,
+  Truck,
   LogOut,
   Menu,
   X,
@@ -20,6 +21,7 @@ const NAV = [
   { href: "/admin/categories", label: "التصنيفات", icon: Grid3X3 },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingCart },
   { href: "/admin/pages", label: "الصفحات", icon: FileText },
+  { href: "/admin/shipping", label: "الشحن", icon: Truck },
 ];
 
 export default function AdminLayout({
@@ -63,7 +65,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8]">
+    <div className="flex min-h-screen bg-[#fbf7fa] text-black">
       {/* Mobile overlay */}
       {sidebarOpen ? (
         <div
@@ -73,45 +75,55 @@ export default function AdminLayout({
       ) : null}
 
       {/* Mobile top bar */}
-      <div className="fixed right-0 top-0 z-50 flex h-14 w-full items-center justify-between border-b border-[var(--line)] bg-white px-4 lg:hidden">
+      <div className="fixed right-0 top-0 z-50 flex h-16 w-full items-center justify-between border-b border-pink-100 bg-white/95 px-4 shadow-sm backdrop-blur lg:hidden">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="rounded-md p-2 text-[var(--muted)] hover:bg-[var(--line)]"
+          className="rounded-full border border-[var(--line)] p-2 text-black transition-colors hover:border-brand-pink hover:text-brand-pink"
+          aria-label="فتح القائمة"
         >
           <Menu size={22} />
         </button>
-        <span className="text-sm font-bold text-brand-pink">SleepyWear</span>
+        <span className="text-sm font-extrabold text-brand-pink">SleepyWear Admin</span>
         <div className="w-9" />
       </div>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex w-64 flex-col border-l border-[var(--line)] bg-white transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 right-0 z-50 flex w-72 flex-col border-l border-pink-100 bg-white shadow-2xl shadow-pink-100/40 transition-transform lg:static lg:translate-x-0 lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Brand */}
-        <div className="flex items-center justify-between border-b border-[var(--line)] px-6 py-5">
-          <Link href="/admin" className="flex items-center gap-2">
-            <span className="rounded-md bg-brand-pink px-2 py-0.5 text-lg font-extrabold tracking-tight text-white">
+        <div className="flex items-center justify-between border-b border-pink-100 px-5 py-5">
+          <Link href="/admin" className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-pink text-lg font-extrabold tracking-tight text-white shadow-sm">
               SW
             </span>
-            <span className="text-sm font-medium text-[var(--muted)]">
-              Admin
+            <span>
+              <span className="block text-base font-extrabold leading-none text-black">
+                SleepyWear
+              </span>
+              <span className="mt-1 block text-xs font-semibold text-[var(--muted)]">
+                مركز الإدارة
+              </span>
             </span>
           </Link>
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
-            className="rounded-md p-1 text-[var(--muted)] hover:bg-[var(--line)] lg:hidden"
+            className="rounded-full p-2 text-[var(--muted)] transition-colors hover:bg-pink-50 hover:text-brand-pink lg:hidden"
+            aria-label="إغلاق القائمة"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-1.5 px-3 py-5">
+          <p className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
+            الإدارة
+          </p>
           {NAV.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -121,13 +133,21 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+                className={`group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition-colors ${
                   isActive
-                    ? "bg-brand-pink/10 text-brand-pink"
-                    : "text-[var(--muted)] hover:bg-[var(--line)] hover:text-[var(--foreground)]"
+                    ? "bg-brand-pink text-white shadow-sm shadow-pink-200"
+                    : "text-[var(--muted)] hover:bg-pink-50 hover:text-black"
                 }`}
               >
-                <Icon size={18} strokeWidth={2} aria-hidden="true" />
+                <span
+                  className={`grid h-9 w-9 place-items-center rounded-xl transition-colors ${
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-[#fbf7fa] text-black group-hover:bg-white group-hover:text-brand-pink"
+                  }`}
+                >
+                  <Icon size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
                 {item.label}
               </Link>
             );
@@ -135,21 +155,23 @@ export default function AdminLayout({
         </nav>
 
         {/* Logout */}
-        <div className="border-t border-[var(--line)] px-3 py-4">
+        <div className="border-t border-pink-100 px-3 py-4">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-red-50 hover:text-red-700"
+            className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-[var(--muted)] transition-colors hover:bg-red-50 hover:text-red-700"
           >
-            <LogOut size={18} strokeWidth={2} aria-hidden="true" />
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#fbf7fa]">
+              <LogOut size={18} strokeWidth={2} aria-hidden="true" />
+            </span>
             تسجيل خروج
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 pt-14 lg:pt-0">
-        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+      <main className="min-w-0 flex-1 pt-16 lg:pt-0">
+        <div className="p-4 sm:p-6 lg:p-8 xl:p-10">{children}</div>
       </main>
     </div>
   );

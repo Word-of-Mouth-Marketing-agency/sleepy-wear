@@ -9,9 +9,16 @@ export default async function NewProductPage() {
   ).catch(() => null);
 
   return (
-    <PageShell title="إضافة منتج" eyebrow="Admin" noContainer>
+    <PageShell
+      title="إضافة منتج"
+      eyebrow="Admin"
+      description="أنشئ بيانات المنتج الأساسية أولا، ثم أضف الصور والمتغيرات بعد الحفظ."
+      noContainer
+    >
       {!categories ? (
-        <p className="text-red-700">تعذر تحميل التصنيفات.</p>
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+          تعذر تحميل التصنيفات.
+        </p>
       ) : (
         <ProductForm categories={categories} />
       )}

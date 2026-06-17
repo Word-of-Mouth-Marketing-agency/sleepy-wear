@@ -79,6 +79,16 @@ export class OrdersService {
         throw new BadRequestException(`Insufficient stock for ${variant.sku}`);
     }
 
+    let shippingTotal = new Prisma.Decimal(0);
+    if (dto.shippingCityId) {
+      const shippingCity = await this.prisma.shippingCity.findUnique({
+        where: { id: dto.shippingCityId, isActive: true },
+      });
+      if (!shippingCity)
+        throw new BadRequestException("Invalid shipping city");
+      shippingTotal = new Prisma.Decimal(shippingCity.price);
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const customer = await tx.customer.upsert({
         where: { phone: dto.phone },
@@ -142,7 +152,8 @@ export class OrdersService {
           notes: dto.notes,
           status: OrderStatus.PENDING,
           subtotal,
-          total: subtotal,
+          shippingTotal,
+          total: subtotal.add(shippingTotal),
           items: { create: orderItems },
         },
         include: { items: true, customer: true },

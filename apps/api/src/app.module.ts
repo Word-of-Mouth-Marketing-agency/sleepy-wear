@@ -10,6 +10,7 @@ import { OrdersModule } from "./orders/orders.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ProductsModule } from "./products/products.module";
 import { SettingsModule } from "./settings/settings.module";
+import { ShippingCitiesModule } from "./shipping-cities/shipping-cities.module";
 import { SizesModule } from "./sizes/sizes.module";
 import { UploadsModule } from "./uploads/uploads.module";
 
@@ -27,6 +28,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     CouponsModule,
     UploadsModule,
     SettingsModule,
+    ShippingCitiesModule,
     BannersModule,
   ],
 })

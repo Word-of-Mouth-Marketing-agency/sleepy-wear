@@ -9,9 +9,17 @@ export default async function AdminCategoriesPage() {
   ).catch(() => null);
 
   return (
-    <PageShell title="إدارة التصنيفات" eyebrow="Admin" noContainer>
+    <PageShell
+      title="إدارة التصنيفات"
+      eyebrow="Admin"
+      description="أضف وعدّل التصنيفات التي تنظم المتجر وتظهر للعملاء."
+      noContainer
+      surface="plain"
+    >
       {!categories ? (
-        <p className="text-red-700">تعذر تحميل التصنيفات.</p>
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+          تعذر تحميل التصنيفات.
+        </p>
       ) : (
         <CategoryManager categories={categories} />
       )}

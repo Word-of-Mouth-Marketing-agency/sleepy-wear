@@ -18,6 +18,9 @@ type ProductFormProps = {
 
 const statuses: ProductStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
 
+const fieldClass =
+  "w-full rounded-2xl border border-[var(--line)] bg-[#fbf7fa] px-4 py-3 text-sm outline-none transition focus:border-brand-pink focus:bg-white focus:ring-4 focus:ring-pink-100";
+
 export function ProductForm({ categories, product }: ProductFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -57,71 +60,87 @@ export function ProductForm({ categories, product }: ProductFormProps) {
       router.push(`/admin/products/${saved.id}/edit`);
       router.refresh();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "تعذر حفظ المنتج.");
+      setError(
+        caught instanceof Error ? caught.message : "تعذر حفظ المنتج.",
+      );
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <form className="grid gap-4 sm:grid-cols-2" onSubmit={submit}>
-      <input
-        className="rounded-md border border-[var(--line)] p-3"
-        defaultValue={product?.nameAr}
-        name="nameAr"
-        placeholder="اسم المنتج بالعربي"
-        required
-      />
-      <input
-        className="rounded-md border border-[var(--line)] p-3"
-        defaultValue={product?.nameEn ?? ""}
-        name="nameEn"
-        placeholder="اسم إنجليزي اختياري"
-      />
-      <input
-        className="rounded-md border border-[var(--line)] p-3"
-        defaultValue={product?.slug}
-        name="slug"
-        placeholder="product-slug"
-        required
-      />
-      <select
-        className="rounded-md border border-[var(--line)] p-3"
-        defaultValue={product?.categoryId ?? ""}
-        name="categoryId"
-        required
-      >
-        <option value="" disabled>
-          اختر التصنيف
-        </option>
-        {categories.map((category) => (
-          <option key={category.id} value={category.id}>
-            {category.nameAr}
+    <form className="grid gap-5 sm:grid-cols-2" onSubmit={submit}>
+      <Field label="اسم المنتج بالعربي">
+        <input
+          className={fieldClass}
+          defaultValue={product?.nameAr}
+          name="nameAr"
+          placeholder="مثال: بيجامة قطن ناعمة"
+          required
+        />
+      </Field>
+      <Field label="اسم إنجليزي اختياري">
+        <input
+          className={fieldClass}
+          defaultValue={product?.nameEn ?? ""}
+          name="nameEn"
+          placeholder="Optional English name"
+        />
+      </Field>
+      <Field label="رابط المنتج">
+        <input
+          className={fieldClass}
+          defaultValue={product?.slug}
+          name="slug"
+          placeholder="product-slug"
+          required
+        />
+      </Field>
+      <Field label="التصنيف">
+        <select
+          className={fieldClass}
+          defaultValue={product?.categoryId ?? ""}
+          name="categoryId"
+          required
+        >
+          <option value="" disabled>
+            اختر التصنيف
           </option>
-        ))}
-      </select>
-      <select
-        className="rounded-md border border-[var(--line)] p-3"
-        defaultValue={product?.status ?? "DRAFT"}
-        name="status"
-      >
-        {statuses.map((status) => (
-          <option key={status} value={status}>
-            {status}
-          </option>
-        ))}
-      </select>
-      <textarea
-        className="rounded-md border border-[var(--line)] p-3 sm:col-span-2"
-        defaultValue={product?.descriptionAr ?? ""}
-        name="descriptionAr"
-        placeholder="وصف عربي"
-      />
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.nameAr}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="حالة المنتج">
+        <select
+          className={fieldClass}
+          defaultValue={product?.status ?? "DRAFT"}
+          name="status"
+        >
+          {statuses.map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="الوصف العربي" className="sm:col-span-2">
+        <textarea
+          className={`${fieldClass} min-h-32 resize-y leading-7`}
+          defaultValue={product?.descriptionAr ?? ""}
+          name="descriptionAr"
+          placeholder="اكتب وصفا مختصرا يساعد العميل على الاختيار"
+        />
+      </Field>
       {error ? (
-        <p className="text-sm text-red-700 sm:col-span-2">{error}</p>
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700 sm:col-span-2">
+          {error}
+        </p>
       ) : null}
       <button
-        className="rounded-md bg-[var(--accent)] px-4 py-3 font-semibold text-white disabled:opacity-50 sm:col-span-2"
+        className="rounded-full bg-brand-pink px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-pink/90 disabled:opacity-50 sm:col-span-2"
         disabled={isSaving}
         type="submit"
       >
@@ -184,7 +203,9 @@ export function VariantManager({
       event.currentTarget.reset();
       router.refresh();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "تعذر حفظ المتغير.");
+      setError(
+        caught instanceof Error ? caught.message : "تعذر حفظ المتغير.",
+      );
     }
   }
 
@@ -203,15 +224,21 @@ export function VariantManager({
 
   return (
     <div className="space-y-4">
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+          {error}
+        </p>
+      ) : null}
       <div className="space-y-3">
         {product.variants.length === 0 ? (
-          <p className="text-[var(--muted)]">لا توجد متغيرات بعد.</p>
+          <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
+            لا توجد متغيرات بعد.
+          </div>
         ) : null}
         {product.variants.map((variant) => (
           <div
             key={variant.id}
-            className="rounded-md border border-[var(--line)] p-3"
+            className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm"
           >
             {editing === variant.id ? (
               <VariantFields
@@ -221,29 +248,33 @@ export function VariantManager({
                 variant={variant}
               />
             ) : (
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="font-semibold">{variant.sku}</p>
-                  <p className="text-sm text-[var(--muted)]">
+                  <p className="font-bold">{variant.sku}</p>
+                  <p className="mt-1 text-sm text-[var(--muted)]">
                     {[variant.size?.labelAr, variant.color?.nameAr]
                       .filter(Boolean)
                       .join(" / ") || "بدون مقاس/لون"}
                   </p>
                 </div>
-                <p className="text-sm">
-                  السعر: {variant.salePrice ?? variant.price} / المخزون:{" "}
-                  {variant.stock}
-                </p>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="rounded-full bg-pink-50 px-3 py-1 font-bold text-brand-pink">
+                    {variant.salePrice ?? variant.price} ج
+                  </span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 font-bold text-brand-blue">
+                    مخزون {variant.stock}
+                  </span>
+                </div>
                 <div className="flex gap-2">
                   <button
-                    className="rounded-md border border-[var(--line)] px-3 py-2 text-sm"
+                    className="rounded-full border border-[var(--line)] px-4 py-2 text-sm font-bold transition hover:border-brand-blue hover:text-brand-blue"
                     onClick={() => setEditing(variant.id)}
                     type="button"
                   >
                     تعديل
                   </button>
                   <button
-                    className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-700"
+                    className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
                     onClick={() => deleteVariant(variant.id)}
                     type="button"
                   >
@@ -255,8 +286,8 @@ export function VariantManager({
           </div>
         ))}
       </div>
-      <div className="rounded-md border border-[var(--line)] p-4">
-        <h2 className="mb-3 font-semibold">إضافة متغير</h2>
+      <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-lg font-extrabold">إضافة متغير</h2>
         <VariantFields
           colors={colors}
           onSubmit={(event) => saveVariant(event)}
@@ -283,14 +314,14 @@ function VariantFields({
   return (
     <form className="grid gap-3 sm:grid-cols-6" onSubmit={onSubmit}>
       <input
-        className="rounded-md border border-[var(--line)] p-2 sm:col-span-2"
+        className={`${fieldClass} sm:col-span-2`}
         defaultValue={variant?.sku}
         name="sku"
         placeholder="SKU"
         required
       />
       <input
-        className="rounded-md border border-[var(--line)] p-2"
+        className={fieldClass}
         defaultValue={variant?.price}
         min="0"
         name="price"
@@ -300,7 +331,7 @@ function VariantFields({
         type="number"
       />
       <input
-        className="rounded-md border border-[var(--line)] p-2"
+        className={fieldClass}
         defaultValue={variant?.salePrice ?? ""}
         min="0"
         name="salePrice"
@@ -309,7 +340,7 @@ function VariantFields({
         type="number"
       />
       <input
-        className="rounded-md border border-[var(--line)] p-2"
+        className={fieldClass}
         defaultValue={variant?.stock ?? 0}
         min="0"
         name="stock"
@@ -317,7 +348,7 @@ function VariantFields({
         type="number"
       />
       <select
-        className="rounded-md border border-[var(--line)] p-2"
+        className={fieldClass}
         defaultValue={variant?.size?.id ?? ""}
         name="sizeId"
       >
@@ -329,7 +360,7 @@ function VariantFields({
         ))}
       </select>
       <select
-        className="rounded-md border border-[var(--line)] p-2"
+        className={fieldClass}
         defaultValue={variant?.color?.id ?? ""}
         name="colorId"
       >
@@ -341,12 +372,29 @@ function VariantFields({
         ))}
       </select>
       <button
-        className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white sm:col-span-6"
+        className="rounded-full bg-black px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-pink sm:col-span-6"
         type="submit"
       >
         حفظ المتغير
       </button>
     </form>
+  );
+}
+
+function Field({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className={`space-y-2 text-sm font-bold text-black ${className}`}>
+      <span>{label}</span>
+      {children}
+    </label>
   );
 }
 

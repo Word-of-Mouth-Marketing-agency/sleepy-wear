@@ -9,6 +9,9 @@ type CategoryManagerProps = {
   categories: Category[];
 };
 
+const inputClass =
+  "w-full rounded-2xl border border-[var(--line)] bg-[#fbf7fa] px-4 py-3 text-sm outline-none transition focus:border-brand-pink focus:bg-white focus:ring-4 focus:ring-pink-100";
+
 export function CategoryManager({ categories }: CategoryManagerProps) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,20 +70,31 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      <div className="rounded-md border border-[var(--line)] p-4">
-        <h2 className="mb-3 font-semibold">إضافة تصنيف</h2>
+    <div className="space-y-5">
+      {error ? (
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+          {error}
+        </p>
+      ) : null}
+      <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-lg font-extrabold">إضافة تصنيف</h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            يظهر التصنيف النشط في واجهات المتجر حسب إعدادات القائمة.
+          </p>
+        </div>
         <CategoryForm onSubmit={(event) => save(event)} />
       </div>
-      <div className="space-y-3">
+      <div className="grid gap-3">
         {categories.length === 0 ? (
-          <p className="text-[var(--muted)]">لا توجد تصنيفات.</p>
+          <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
+            لا توجد تصنيفات.
+          </div>
         ) : null}
         {categories.map((category) => (
           <div
             key={category.id}
-            className="rounded-md border border-[var(--line)] p-3"
+            className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm"
           >
             {editingId === category.id ? (
               <CategoryForm
@@ -88,23 +102,34 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
                 onSubmit={(event) => save(event, category.id)}
               />
             ) : (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold">{category.nameAr}</p>
-                  <p className="text-sm text-[var(--muted)]">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-extrabold">{category.nameAr}</p>
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+                        category.isActive
+                          ? "border-green-200 bg-green-50 text-green-700"
+                          : "border-gray-200 bg-gray-50 text-gray-500"
+                      }`}
+                    >
+                      {category.isActive ? "نشط" : "غير نشط"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-[var(--muted)]">
                     /{category.slug} - {category.productCount ?? 0} منتج
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
-                    className="rounded-md border border-[var(--line)] px-3 py-2 text-sm"
+                    className="rounded-full border border-[var(--line)] px-4 py-2 text-sm font-bold transition hover:border-brand-blue hover:text-brand-blue"
                     onClick={() => setEditingId(category.id)}
                     type="button"
                   >
                     تعديل
                   </button>
                   <button
-                    className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-700"
+                    className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
                     onClick={() => remove(category.id)}
                     type="button"
                   >
@@ -129,41 +154,42 @@ function CategoryForm({ category, onSubmit }: CategoryFormProps) {
   return (
     <form className="grid gap-3 sm:grid-cols-2" onSubmit={onSubmit}>
       <input
-        className="rounded-md border border-[var(--line)] p-2"
+        className={inputClass}
         defaultValue={category?.nameAr}
         name="nameAr"
         placeholder="اسم التصنيف بالعربي"
         required
       />
       <input
-        className="rounded-md border border-[var(--line)] p-2"
+        className={inputClass}
         defaultValue={category?.nameEn ?? ""}
         name="nameEn"
         placeholder="اسم إنجليزي"
       />
       <input
-        className="rounded-md border border-[var(--line)] p-2"
+        className={inputClass}
         defaultValue={category?.slug}
         name="slug"
         placeholder="slug"
         required
       />
       <input
-        className="rounded-md border border-[var(--line)] p-2"
+        className={inputClass}
         defaultValue={category?.descriptionAr ?? ""}
         name="descriptionAr"
         placeholder="وصف مختصر"
       />
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 rounded-2xl border border-[var(--line)] bg-[#fbf7fa] px-4 py-3 text-sm font-bold">
         <input
           defaultChecked={category?.isActive ?? true}
           name="isActive"
           type="checkbox"
+          className="h-4 w-4 accent-brand-pink"
         />
         نشط
       </label>
       <button
-        className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white sm:col-span-2"
+        className="rounded-full bg-brand-pink px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-pink/90 sm:col-span-2"
         type="submit"
       >
         حفظ التصنيف

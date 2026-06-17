@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ImagePlus, Trash2 } from "lucide-react";
 import type { Product } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
 import { getMediaUrl } from "@/lib/media";
@@ -76,47 +77,61 @@ export function ImageManager({ product }: ImageManagerProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">صور المنتج</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-extrabold">صور المنتج</h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            ارفع صورا واضحة، وستظهر في صفحة المنتج والكروت.
+          </p>
+        </div>
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink">
+          <ImagePlus size={17} aria-hidden="true" />
+          {uploading ? "جاري الرفع..." : "رفع صور"}
+          <input
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            className="hidden"
+            multiple
+            disabled={uploading}
+            onChange={(event) => handleUpload(event.target.files)}
+            type="file"
+          />
+        </label>
+      </div>
 
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+          {error}
+        </p>
+      ) : null}
 
       {product.images.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {product.images.map((image) => (
             <div
               key={image.id}
-              className="group relative rounded-md border border-[var(--line)]"
+              className="group relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
             >
               <img
                 alt={image.altAr ?? product.nameAr}
-                className="aspect-[4/3] w-full rounded-md object-cover"
+                className="aspect-[4/3] w-full object-cover"
                 src={getMediaUrl(image.url)}
               />
               <button
-                className="absolute right-1 top-1 rounded-md bg-red-600 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 opacity-0 shadow-sm transition group-hover:opacity-100"
                 onClick={() => handleDelete(image.id)}
                 type="button"
               >
+                <Trash2 size={13} aria-hidden="true" />
                 حذف
               </button>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[var(--muted)]">لا توجد صور للمنتج بعد.</p>
+        <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
+          لا توجد صور للمنتج بعد.
+        </div>
       )}
-
-      <label className="inline-block cursor-pointer rounded-md border border-[var(--line)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--line)]">
-        {uploading ? "جاري الرفع..." : "رفع صور"}
-        <input
-          accept="image/jpeg,image/png,image/webp,image/avif"
-          className="hidden"
-          multiple
-          disabled={uploading}
-          onChange={(event) => handleUpload(event.target.files)}
-          type="file"
-        />
-      </label>
     </div>
   );
 }
