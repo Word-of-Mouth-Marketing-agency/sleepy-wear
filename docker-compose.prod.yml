@@ -1,0 +1,63 @@
+name: sleepyweareg
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sleepywear}
+      POSTGRES_USER: ${POSTGRES_USER:-sleepywear}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sleepywear}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - sleepy-network
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    networks:
+      - sleepy-network
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "4000:4000"
+    volumes:
+      - uploads-data:/app/uploads
+    networks:
+      - sleepy-network
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://sleepyweareg.com/api
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      - api
+    ports:
+      - "3001:3000"
+    networks:
+      - sleepy-network
+
+volumes:
+  postgres-data:
+  uploads-data:
+
+networks:
+  sleepy-network:
+    driver: bridge

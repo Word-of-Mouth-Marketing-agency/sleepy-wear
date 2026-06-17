@@ -10,6 +10,8 @@ RUN pnpm install --frozen-lockfile
 COPY apps/web apps/web
 COPY packages/shared packages/shared
 RUN pnpm --filter @sleepywear/shared build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm --filter @sleepywear/web build
 
 EXPOSE 3000
