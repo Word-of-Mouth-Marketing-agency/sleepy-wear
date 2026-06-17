@@ -49,14 +49,18 @@ export function MobileHeaderMenu({ categories }: MobileHeaderMenuProps) {
       ) : null}
 
       <aside
-        className={`mobile-menu-drawer fixed inset-y-0 right-0 z-[70] w-[min(86vw,360px)] flex-col bg-white shadow-2xl transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`mobile-menu-drawer fixed inset-y-0 left-0 z-[70] w-[min(86vw,360px)] flex-col bg-white shadow-2xl transition-transform duration-300 ${
+          open ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
-          <Link href="/" onClick={close} className="font-extrabold text-brand-pink">
-            SleepyWear
+          <Link href="/" onClick={close} className="inline-flex items-center">
+            <img
+              src="/brand/blue-logo.png"
+              alt="SleepyWear | سليبى وير"
+              className="h-10 w-auto"
+            />
           </Link>
           <button
             type="button"
