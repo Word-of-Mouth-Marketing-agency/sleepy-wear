@@ -5,6 +5,7 @@ import { HeaderSearch } from "./HeaderSearch";
 import { NoticeBar } from "./NoticeBar";
 import { CartIcon } from "./CartIcon";
 import { MobileHeaderMenu } from "./MobileHeaderMenu";
+import { DesktopCategoryNav } from "./DesktopCategoryNav";
 
 async function getCategories() {
   try {
@@ -64,38 +65,7 @@ export function SiteHeaderContent({ categories }: { categories: Category[] }) {
         </div>
       </div>
 
-      <nav className="desktop-category-nav border-t border-[var(--line)] bg-white">
-        <div className="container">
-          <ul className="flex justify-center gap-6 overflow-x-auto whitespace-nowrap py-2.5 text-sm hide-scrollbar">
-              <li>
-                <Link
-                  href="/"
-                  className="font-semibold text-brand-pink transition-colors hover:text-brand-pink"
-                >
-                  الرئيسية
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/products"
-                  className="text-[var(--muted)] transition-colors hover:text-brand-pink"
-                >
-                  جميع المنتجات
-                </Link>
-              </li>
-              {categories.slice(0, 8).map((cat) => (
-                <li key={cat.id}>
-                  <Link
-                    href={`/categories/${cat.slug}`}
-                    className="text-[var(--muted)] transition-colors hover:text-brand-pink"
-                  >
-                    {cat.nameAr}
-                  </Link>
-                </li>
-              ))}
-          </ul>
-        </div>
-      </nav>
+      <DesktopCategoryNav categories={categories} />
     </header>
   );
 }
