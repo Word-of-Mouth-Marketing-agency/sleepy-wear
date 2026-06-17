@@ -21,12 +21,10 @@ export function DesktopCategoryNav({
 
   const linkClass = (isActive: boolean) =>
     [
-      "relative px-1 py-1 font-semibold transition-colors duration-200",
+      "relative px-3 py-1.5 rounded-full font-semibold transition-all duration-200",
       isActive
-        ? "text-brand-pink"
-        : "text-[var(--muted)] hover:text-brand-pink",
-      "after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-full after:origin-center after:rounded-full after:bg-brand-pink after:transition-transform after:duration-200",
-      isActive ? "after:scale-x-100" : "after:scale-x-0 hover:after:scale-x-100",
+        ? "bg-brand-pink text-white"
+        : "text-[var(--muted)] hover:bg-brand-light-pink hover:text-brand-black hover:-translate-y-[1px]",
     ].join(" ");
 
   return (
