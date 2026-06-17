@@ -4,10 +4,7 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-sleepywear}
-      POSTGRES_USER: ${POSTGRES_USER:-sleepywear}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sleepywear}
+    env_file: .env.production
     ports:
       - "5433:5432"
     volumes:
@@ -27,6 +24,8 @@ services:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+      args:
+        - DATABASE_URL=postgresql://placeholder:placeholder@placeholder:5432/placeholder?schema=public
     restart: unless-stopped
     env_file: .env.production
     depends_on:

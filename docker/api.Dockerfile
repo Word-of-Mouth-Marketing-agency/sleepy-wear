@@ -10,6 +10,8 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/api apps/api
 COPY packages packages
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 RUN pnpm --filter @sleepywear/database prisma:generate
 RUN pnpm --filter @sleepywear/shared build
 RUN pnpm --filter @sleepywear/api build
