@@ -29,8 +29,7 @@ export function DesktopCategoryNav({
 
   return (
     <nav className="desktop-category-nav border-t border-[var(--line)] bg-white">
-      <div className="container">
-        <ul className="flex justify-center gap-1 overflow-x-auto whitespace-nowrap py-2.5 text-sm hide-scrollbar">
+      <ul className="flex justify-center gap-1 overflow-x-auto whitespace-nowrap px-4 py-2.5 text-sm hide-scrollbar">
           <li>
             <Link href="/" className={linkClass(isHome)}>
               الرئيسية
@@ -52,7 +51,6 @@ export function DesktopCategoryNav({
             </li>
           ))}
         </ul>
-      </div>
     </nav>
   );
 }
