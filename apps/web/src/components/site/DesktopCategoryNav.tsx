@@ -15,10 +15,6 @@ export function DesktopCategoryNav({
     ? pathname.replace("/categories/", "")
     : null;
 
-  const isHome = pathname === "/";
-  const isProducts =
-    pathname === "/products" || pathname.startsWith("/products/");
-
   const linkClass = (isActive: boolean) =>
     [
       "relative px-2.5 py-1 rounded-full font-semibold transition-all duration-200",
@@ -30,17 +26,7 @@ export function DesktopCategoryNav({
   return (
     <nav className="desktop-category-nav border-t border-[var(--line)] bg-white">
       <ul className="flex justify-center gap-1 overflow-x-auto whitespace-nowrap px-4 py-2.5 text-sm hide-scrollbar">
-          <li>
-            <Link href="/" className={linkClass(isHome)}>
-              الرئيسية
-            </Link>
-          </li>
-          <li>
-            <Link href="/products" className={linkClass(isProducts)}>
-              جميع المنتجات
-            </Link>
-          </li>
-          {categories.map((cat) => (
+        {categories.map((cat) => (
             <li key={cat.id}>
               <Link
                 href={`/categories/${cat.slug}`}
