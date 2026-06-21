@@ -15,6 +15,11 @@ export const metadata: Metadata = {
   title: SITE_NAME,
   description: "متجر ملابس منزلية ولانجري — جودة عالية وأسعار من المصنع مباشرة",
   metadataBase: new URL(`https://${DOMAIN}`),
+  icons: {
+    icon: "/brand/favicon.png",
+    shortcut: "/brand/favicon.png",
+    apple: "/brand/favicon.png",
+  },
 };
 
 export default function RootLayout({

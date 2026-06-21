@@ -1,12 +1,9 @@
-const PHONE = "201000000000";
-const MESSAGE = encodeURIComponent(
-  "مرحباً، أريد الاستفسار عن منتجات SleepyWear"
-);
+import { WHATSAPP_LINK } from "@/lib/social-contact";
 
 export function FloatingWhatsApp() {
   return (
     <a
-      href={`https://wa.me/${PHONE}?text=${MESSAGE}`}
+      href={WHATSAPP_LINK}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="واتساب"
