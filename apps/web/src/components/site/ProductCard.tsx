@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useState, useRef } from "react";
 import type { Product } from "@sleepywear/shared";
 import { getCardUrl } from "@/lib/media";
+import {
+  getAvailableVariants,
+  getVariantInfo,
+  hasSelectableVariations,
+} from "@/lib/product-variants";
 import { useCartStore } from "@/stores/cart-store";
 
 type ProductCardProps = {
@@ -11,12 +16,18 @@ type ProductCardProps = {
   layout?: "grid" | "row";
 };
 
+const ADD_TO_CART_LABEL =
+  "\u0623\u0636\u0641 \u0625\u0644\u0649 \u0627\u0644\u0633\u0644\u0629";
+const ADDED_TO_CART_LABEL =
+  "\u062A\u0645\u062A \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713";
+
 export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const firstVariant = product.variants[0];
+  const availableVariants = getAvailableVariants(product);
+  const firstVariant = availableVariants[0] ?? product.variants[0];
   const price = firstVariant
     ? (firstVariant.salePrice ?? firstVariant.price)
     : null;
@@ -32,9 +43,9 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         )
       : null;
 
-  const inStockVariants = product.variants.filter((v) => v.stock > 0);
+  const inStockVariants = availableVariants;
   const availVariant = inStockVariants[0] ?? null;
-  const hasChoices = inStockVariants.length > 1;
+  const hasChoices = hasSelectableVariations(product);
 
   function handleAddToCart() {
     if (!availVariant || added) return;
@@ -45,8 +56,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       sku: availVariant.sku,
       quantity: 1,
       price: availVariant.salePrice ?? availVariant.price,
-      variantInfo:
-        availVariant.size?.labelAr ?? availVariant.color?.nameAr ?? undefined,
+      variantInfo: getVariantInfo(availVariant) || undefined,
       imageUrl: image?.url,
     });
     setAdded(true);
@@ -113,9 +123,9 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
           hasChoices ? (
             <Link
               href={`/products/${product.slug}`}
-              className="block w-full rounded-xl border border-brand-pink/25 bg-brand-light-pink px-3 py-2.5 text-center text-sm font-bold text-brand-pink transition-colors hover:bg-brand-pink hover:text-white"
+              className="block w-full rounded-xl bg-brand-pink px-3 py-2.5 text-center text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-blue"
             >
-              اختاري المقاس
+              {ADD_TO_CART_LABEL}
             </Link>
           ) : (
             <button
@@ -124,7 +134,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               className="w-full rounded-xl bg-brand-pink px-3 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-blue disabled:opacity-80"
               type="button"
             >
-              {added ? "تمت الإضافة ✓" : "أضف للسلة"}
+              {added ? ADDED_TO_CART_LABEL : ADD_TO_CART_LABEL}
             </button>
           )
         ) : (

@@ -46,7 +46,9 @@ export class CategoriesService {
       where: { slug },
     });
 
-    if (!category) throw new NotFoundException("Category not found");
+    if (!category || !category.isActive) {
+      throw new NotFoundException("Category not found");
+    }
 
     const where: Prisma.ProductWhereInput = {
       categoryId: category.id,
@@ -104,17 +106,52 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    await this.ensureCategory(id);
+    const category = await this.ensureCategory(id);
 
     const count = await this.prisma.product.count({ where: { categoryId: id } });
-    if (count > 0) {
+    if (count === 0) {
+      await this.prisma.category.delete({ where: { id } });
+      return { id, deleted: true, reassignedProducts: 0 };
+    }
+
+    if (category.slug === "uncategorized") {
       throw new ConflictException(
-        "لا يمكن حذف التصنيف لأنه يحتوي على منتجات. يمكنك تعطيله بدلاً من الحذف.",
+        "\u0644\u0627 \u064a\u0645\u0643\u0646 \u062d\u0630\u0641 \u062a\u0635\u0646\u064a\u0641 \u063a\u064a\u0631 \u0645\u0635\u0646\u0641 \u0644\u0623\u0646\u0647 \u064a\u062d\u062a\u0648\u064a \u0639\u0644\u0649 \u0645\u0646\u062a\u062c\u0627\u062a.",
       );
     }
 
-    await this.prisma.category.delete({ where: { id } });
-    return { id, deleted: true };
+    const uncategorized = await this.prisma.$transaction(async (tx) => {
+      const fallback = await tx.category.upsert({
+        where: { slug: "uncategorized" },
+        update: {
+          isActive: false,
+          nameAr: "\u063a\u064a\u0631 \u0645\u0635\u0646\u0641",
+          nameEn: "Uncategorized",
+        },
+        create: {
+          nameAr: "\u063a\u064a\u0631 \u0645\u0635\u0646\u0641",
+          nameEn: "Uncategorized",
+          slug: "uncategorized",
+          isActive: false,
+          sortOrder: 9999,
+        },
+      });
+
+      await tx.product.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: fallback.id },
+      });
+
+      await tx.category.delete({ where: { id } });
+      return fallback;
+    });
+
+    return {
+      id,
+      deleted: true,
+      reassignedProducts: count,
+      reassignedToCategoryId: uncategorized.id,
+    };
   }
 
   private async ensureCategory(id: string) {

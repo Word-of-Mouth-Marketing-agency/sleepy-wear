@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { CreateOrderInput, Order, ShippingCity } from "@sleepywear/shared";
 import { apiGet, apiPost } from "@/lib/api";
 import { getCardUrl } from "@/lib/media";
+import { getDisplayVariantInfo } from "@/lib/product-variants";
 import { useCartStore } from "@/stores/cart-store";
 
 const inputClass =
@@ -244,11 +245,14 @@ export function CheckoutForm() {
         </div>
 
         <div className="space-y-3">
-          {items.map((item) => (
-            <div
-              key={item.variantId}
-              className="flex items-center gap-3 rounded-2xl bg-brand-light-pink/45 p-2"
-            >
+          {items.map((item) => {
+            const variantInfo = getDisplayVariantInfo(item.variantInfo);
+
+            return (
+              <div
+                key={item.variantId}
+                className="flex items-center gap-3 rounded-2xl bg-brand-light-pink/45 p-2"
+              >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
                 {item.imageUrl ? (
                   <img
@@ -267,14 +271,16 @@ export function CheckoutForm() {
                   {item.nameAr}
                 </p>
                 <p className="text-xs text-[var(--muted)]">
-                  {item.variantInfo || item.sku} × {item.quantity}
+                  {variantInfo ? `${variantInfo} × ` : ""}
+                  {item.quantity}
                 </p>
               </div>
               <p className="shrink-0 text-sm font-black">
                 {item.price * item.quantity} ج
               </p>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         <div className="space-y-3 border-t border-[var(--line)] pt-4">

@@ -159,6 +159,16 @@ export type Banner = {
   sortOrder: number;
 };
 
+export type StaticPage = {
+  id: string;
+  slug: string;
+  titleAr: string;
+  contentAr: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type CategoryDetails = {
   category: Category;
   products: PaginatedResponse<Product>;

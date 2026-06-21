@@ -12,6 +12,7 @@ import { ProductsModule } from "./products/products.module";
 import { SettingsModule } from "./settings/settings.module";
 import { ShippingCitiesModule } from "./shipping-cities/shipping-cities.module";
 import { SizesModule } from "./sizes/sizes.module";
+import { StaticPagesModule } from "./static-pages/static-pages.module";
 import { UploadsModule } from "./uploads/uploads.module";
 
 @Module({
@@ -30,6 +31,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     SettingsModule,
     ShippingCitiesModule,
     BannersModule,
+    StaticPagesModule,
   ],
 })
 export class AppModule {}

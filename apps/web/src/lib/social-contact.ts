@@ -5,8 +5,10 @@ export const EMAIL = "nozhasocialmedia@gmail.com";
 
 export const FACEBOOK = "https://www.facebook.com/Sleepy.lingerie.HomeWear/";
 export const TELEGRAM = "https://t.me/sleepylingerie";
-export const TIKTOK = "#";
-export const INSTAGRAM = "#";
+export const TIKTOK =
+  "https://www.tiktok.com/@sleepy.lingerie?_r=1&_t=ZS-97I0xGD5E61";
+export const INSTAGRAM =
+  "https://www.instagram.com/sleepy.lingerie2?igsh=MTE2aTd3Y2N1aDM0OA==";
 
 export const WHATSAPP = `https://wa.me/${PHONE_INTERNATIONAL}`;
 

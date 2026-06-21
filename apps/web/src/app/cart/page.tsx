@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCartStore } from "@/stores/cart-store";
 import { getCardUrl } from "@/lib/media";
+import { getDisplayVariantInfo } from "@/lib/product-variants";
 
 export default function CartPage() {
   const items = useCartStore((state) => state.items);
@@ -52,11 +53,14 @@ export default function CartPage() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="space-y-3">
-          {items.map((item) => (
-            <article
-              key={item.variantId}
-              className="grid gap-4 rounded-3xl border border-[var(--line)] bg-white p-4 shadow-sm sm:grid-cols-[88px_1fr_auto] sm:items-center"
-            >
+          {items.map((item) => {
+            const variantInfo = getDisplayVariantInfo(item.variantInfo);
+
+            return (
+              <article
+                key={item.variantId}
+                className="grid gap-4 rounded-3xl border border-[var(--line)] bg-white p-4 shadow-sm sm:grid-cols-[88px_1fr_auto] sm:items-center"
+              >
               <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-brand-light-pink sm:h-[88px] sm:w-[88px]">
                 {item.imageUrl ? (
                   <img
@@ -75,9 +79,11 @@ export default function CartPage() {
                 <p className="truncate text-base font-black text-brand-black">
                   {item.nameAr}
                 </p>
-                <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
-                  {item.variantInfo || item.sku}
-                </p>
+                {variantInfo ? (
+                  <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                    {variantInfo}
+                  </p>
+                ) : null}
                 <p className="mt-2 text-lg font-black text-brand-pink">
                   {item.price} ج
                 </p>
@@ -122,8 +128,9 @@ export default function CartPage() {
                   </button>
                 </div>
               </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
 
         <aside className="h-fit rounded-3xl border border-[var(--line)] bg-white p-6 shadow-sm lg:sticky lg:top-32">

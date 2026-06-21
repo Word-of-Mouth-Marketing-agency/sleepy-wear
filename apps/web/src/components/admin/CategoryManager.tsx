@@ -14,6 +14,7 @@ const inputClass =
 
 export function CategoryManager({ categories }: CategoryManagerProps) {
   const router = useRouter();
+  const [items, setItems] = useState(categories);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +67,9 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
       return;
     }
     setError(null);
+    setItems((current) =>
+      current.filter((category) => category.id !== categoryId),
+    );
     router.refresh();
   }
 
@@ -86,12 +90,12 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
         <CategoryForm onSubmit={(event) => save(event)} />
       </div>
       <div className="grid gap-3">
-        {categories.length === 0 ? (
+        {items.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
             لا توجد تصنيفات.
           </div>
         ) : null}
-        {categories.map((category) => (
+        {items.map((category) => (
           <div
             key={category.id}
             className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm"

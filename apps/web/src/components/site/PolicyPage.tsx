@@ -1,9 +1,13 @@
+﻿import type { ReactNode } from "react";
+
 export function PolicyPage({
   title,
+  content,
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  content?: string;
+  children?: ReactNode;
 }) {
   return (
     <div className="min-h-[60vh] bg-white">
@@ -13,10 +17,22 @@ export function PolicyPage({
             {title}
           </h1>
           <div className="space-y-4 text-sm leading-8 text-[var(--muted)] sm:text-base sm:leading-9">
-            {children}
+            {content ? <PolicyContent content={content} /> : children}
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function PolicyContent({ content }: { content: string }) {
+  return content
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block, index) => (
+      <p key={index} className="whitespace-pre-line">
+        {block}
+      </p>
+    ));
 }

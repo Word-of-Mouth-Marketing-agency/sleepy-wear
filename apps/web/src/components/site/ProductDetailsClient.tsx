@@ -4,6 +4,12 @@ import { useState, useMemo } from "react";
 import type { Product } from "@sleepywear/shared";
 import { useCartStore } from "@/stores/cart-store";
 import { getMediaUrl, getThumbUrl } from "@/lib/media";
+import {
+  getAvailableVariants,
+  getVariantInfo,
+  hasRealColor,
+  hasRealSize,
+} from "@/lib/product-variants";
 import { ProductCard } from "./ProductCard";
 import { SectionHeading } from "./SectionHeading";
 
@@ -37,7 +43,7 @@ export default function ProductDetailsClient({
     // Map active variant SKUs to their colorId
     const skuToColor = new Map<string, string>();
     for (const v of product.variants) {
-      if (v.stock > 0 && v.color?.id) {
+      if (v.stock > 0 && v.color?.id && hasRealColor(v)) {
         skuToColor.set(v.sku, v.color.id);
       }
     }
@@ -67,8 +73,8 @@ export default function ProductDetailsClient({
   const [mainImageError, setMainImageError] = useState(false);
 
   const activeVariants = useMemo(
-    () => product.variants.filter((v) => v.stock > 0),
-    [product.variants],
+    () => getAvailableVariants(product),
+    [product],
   );
 
   const sizes = useMemo(() => {
@@ -77,7 +83,7 @@ export default function ProductDetailsClient({
       NonNullable<(typeof product.variants)[0]["size"]>
     >();
     for (const v of activeVariants) {
-      if (v.size) map.set(v.size.id, v.size);
+      if (v.size && hasRealSize(v)) map.set(v.size.id, v.size);
     }
     return Array.from(map.values());
   }, [activeVariants]);
@@ -88,7 +94,7 @@ export default function ProductDetailsClient({
       NonNullable<(typeof product.variants)[0]["color"]>
     >();
     for (const v of activeVariants) {
-      if (v.color) map.set(v.color.id, v.color);
+      if (v.color && hasRealColor(v)) map.set(v.color.id, v.color);
     }
     return Array.from(map.values());
   }, [activeVariants]);
@@ -127,10 +133,11 @@ export default function ProductDetailsClient({
 
   const hasSale = activeVariants.some((v) => v.salePrice !== null);
   const allOutOfStock = activeVariants.length === 0;
-  const minPrice = Math.min(
-    ...activeVariants.map((v) => v.salePrice ?? v.price),
-  );
-  const maxPrice = Math.max(...activeVariants.map((v) => v.price));
+  const activePrices = activeVariants.map((v) => v.salePrice ?? v.price);
+  const minPrice = activePrices.length ? Math.min(...activePrices) : null;
+  const maxPrice = activePrices.length
+    ? Math.max(...activeVariants.map((v) => v.price))
+    : null;
 
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -152,12 +159,7 @@ export default function ProductDetailsClient({
     setAdding(true);
     setFeedback(null);
 
-    const variantInfo = [
-      selectedVariant.size?.labelAr,
-      selectedVariant.color?.nameAr,
-    ]
-      .filter(Boolean)
-      .join(" / ");
+    const variantInfo = getVariantInfo(selectedVariant);
 
     addItem({
       productId: product.id,
@@ -277,7 +279,9 @@ export default function ProductDetailsClient({
                         </span>
                       ) : null}
                     </>
-                  ) : minPrice !== maxPrice ? (
+                  ) : minPrice !== null &&
+                    maxPrice !== null &&
+                    minPrice !== maxPrice ? (
                     <span className="text-2xl font-black text-brand-pink">
                       {minPrice} - {maxPrice} ج
                     </span>
