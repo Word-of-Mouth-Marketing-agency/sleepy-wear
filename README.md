@@ -5,7 +5,7 @@ Arabic-first custom e-commerce foundation for `sleepyweareg.com`.
 ## Stack
 
 - `apps/web`: Next.js App Router, TypeScript, Tailwind CSS, RTL by default
-- `apps/api`: NestJS REST API with validation, CORS, `/api` prefix, and starter modules
+- `apps/api`: NestJS REST API with validation, CORS, `/api` prefix, admin guards, orders, coupons, static pages, and Paymob payments
 - `packages/database`: Prisma schema, PostgreSQL models, seed data
 - `packages/shared`: shared types/constants for web and API
 - Docker Compose: PostgreSQL, Redis, API, web
@@ -72,9 +72,9 @@ uploads/    local media root ignored by Git except .gitkeep
 
 - Product stock lives on `ProductVariant`, not `Product`.
 - `OrderItem` stores product, variant, SKU, price, and quantity snapshots.
-- Uploads are local-only for now. Future image processing should validate types, convert to WebP, and create thumbnail/card/large versions.
-- Authentication is intentionally placeholder-only; `AdminGuard` should be replaced with real JWT/session checks.
-- Payment, delivery integrations, and advanced inventory reservations are not implemented yet.
+- Uploads are stored locally and exposed through `/media`.
+- Admin authentication uses JWT guards. Keep `JWT_SECRET` strong in production.
+- Paymob Unified Checkout is supported alongside cash on delivery. Do not expose Paymob secret keys to the web app.
 
 ## Useful Commands
 
@@ -86,6 +86,16 @@ pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
 ```
+
+## Production Notes
+
+For production deploys, run migrations only:
+
+```bash
+docker compose -f docker-compose.prod.yml exec api sh -lc "cd /app && pnpm --filter @sleepywear/database exec prisma migrate deploy"
+```
+
+Do not run `pnpm db:seed`, EasyOrders importers, database restores, or volume deletion in production unless explicitly planned with a fresh backup.
 
 ## Recommended Next Steps
 

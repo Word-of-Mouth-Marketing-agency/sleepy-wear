@@ -10,10 +10,15 @@ loadEnv({ path: resolve(process.cwd(), "../../.env") });
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const corsOrigin =
+    process.env.WEB_ORIGIN ??
+    (process.env.NODE_ENV === "production"
+      ? "https://sleepyweareg.com"
+      : true);
 
   app.setGlobalPrefix("api");
   app.enableCors({
-    origin: process.env.WEB_ORIGIN ?? true,
+    origin: corsOrigin,
     credentials: true,
   });
   app.useGlobalPipes(

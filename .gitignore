@@ -34,6 +34,11 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# local one-off reports/backups
+/backup-before-*.sql
+/category-report.*
+/image-dedupe-report.md
+
 # OS/editor
 .DS_Store
 Thumbs.db

@@ -294,6 +294,16 @@ function buildPaymobItems(order: OrderForPaymob): PaymobIntentionItem[] {
     });
   }
 
+  const discountMinor = decimalToMinorUnits(order.discountTotal);
+  if (discountMinor > 0) {
+    items.push({
+      name: "\u0627\u0644\u062e\u0635\u0645",
+      amount: -discountMinor,
+      description: "\u062e\u0635\u0645 \u0627\u0644\u0643\u0648\u0628\u0648\u0646",
+      quantity: 1,
+    });
+  }
+
   return items;
 }
 
@@ -321,6 +331,10 @@ function logPaymobPayloadSummary({
     special_reference: string;
   };
 }) {
+  if (process.env.NODE_ENV === "production" && process.env.PAYMOB_DEBUG !== "true") {
+    return;
+  }
+
   console.log("[paymob] intention payload summary", {
     amount: amountCents,
     currency,

@@ -97,15 +97,14 @@ docker compose -f docker-compose.prod.yml logs
 
 ---
 
-## 8. Run Database Migrations & Seed
+## 8. Run Database Migrations
 
 ```bash
-# Run Prisma migrations inside the API container
-docker compose -f docker-compose.prod.yml exec api npx prisma migrate deploy
-
-# Seed initial data (admin user, etc.)
-docker compose -f docker-compose.prod.yml exec api npx prisma db seed
+# Run Prisma migrations inside the API container from the monorepo root
+docker compose -f docker-compose.prod.yml exec api sh -lc "cd /app && pnpm --filter @sleepywear/database exec prisma migrate deploy"
 ```
+
+Do not run seed, EasyOrders importers, database restores, or volume deletion in production unless explicitly planned with a fresh backup.
 
 ---
 
