@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -39,5 +40,11 @@ export class OrdersController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateOrderDto) {
     return this.ordersService.update(id, dto);
+  }
+
+  @UseGuards(AdminGuard)
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.ordersService.remove(id);
   }
 }

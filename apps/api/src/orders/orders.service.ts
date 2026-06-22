@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
+import { CouponType, OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { ListOrdersQueryDto } from "./dto/list-orders-query.dto";
@@ -89,6 +89,33 @@ export class OrdersService {
       shippingTotal = new Prisma.Decimal(shippingCity.price);
     }
 
+    let couponId: string | null = null;
+    let couponCode: string | null = null;
+    let couponType: CouponType | null = null;
+    let couponDiscountAmt = new Prisma.Decimal(0);
+    let freeDelivery = false;
+
+    if (dto.couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({
+        where: { code: dto.couponCode },
+      });
+      if (!coupon) throw new BadRequestException("الكوبون غير صحيح");
+      if (!coupon.isActive) throw new BadRequestException("هذا الكوبون غير نشط");
+      const now = new Date();
+      if (coupon.startsAt && coupon.startsAt > now)
+        throw new BadRequestException("هذا الكوبون لم يبدأ بعد");
+      if (coupon.expiresAt && coupon.expiresAt < now)
+        throw new BadRequestException("انتهت صلاحية هذا الكوبون");
+      if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit)
+        throw new BadRequestException("تم استخدام هذا الكوبون لأقصى عدد مرات مسموح به");
+
+      freeDelivery = coupon.type === CouponType.FREE_DELIVERY;
+
+      couponId = coupon.id;
+      couponCode = coupon.code;
+      couponType = coupon.type;
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const customer = await tx.customer.upsert({
         where: { phone: dto.phone },
@@ -128,6 +155,34 @@ export class OrdersService {
         };
       });
 
+      if (couponId) {
+        const coupon = await tx.coupon.findUnique({ where: { id: couponId } });
+        if (!coupon) throw new BadRequestException("الكوبون غير صحيح");
+
+        if (coupon.minimumOrderAmount && subtotal.lessThan(coupon.minimumOrderAmount)) {
+          throw new BadRequestException(
+            `الحد الأدنى للطلب لاستخدام هذا الكوبون هو ${coupon.minimumOrderAmount.toNumber()} جنيه`,
+          );
+        }
+
+        if (coupon.type === CouponType.FIXED) {
+          couponDiscountAmt = Prisma.Decimal.min(coupon.value, subtotal);
+        } else if (coupon.type === CouponType.PERCENTAGE) {
+          const percent = coupon.value.toNumber();
+          couponDiscountAmt = subtotal.mul(percent).div(100);
+          couponDiscountAmt = Prisma.Decimal.min(couponDiscountAmt, subtotal);
+        }
+
+        await tx.coupon.update({
+          where: { id: couponId },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
+
+      const finalShipping = freeDelivery ? new Prisma.Decimal(0) : shippingTotal;
+      const discountTotal = couponDiscountAmt;
+      const total = subtotal.add(finalShipping).sub(discountTotal);
+
       for (const variant of variants) {
         const quantity = quantities.get(variant.id) ?? 0;
         const result = await tx.productVariant.updateMany({
@@ -154,8 +209,13 @@ export class OrdersService {
           paymentMethod: dto.paymentMethod ?? PaymentMethod.COD,
           paymentStatus: PaymentStatus.PENDING,
           subtotal,
-          shippingTotal,
-          total: subtotal.add(shippingTotal),
+          shippingTotal: finalShipping,
+          discountTotal,
+          total,
+          couponId,
+          couponCode,
+          couponType,
+          couponDiscount: discountTotal,
           items: { create: orderItems },
         },
         include: { items: true, customer: true },
@@ -174,6 +234,12 @@ export class OrdersService {
     });
     return mapOrder(order);
   }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.prisma.order.delete({ where: { id } });
+    return { id, deleted: true };
+  }
 }
 
 type OrderWithItems = Prisma.OrderGetPayload<{
@@ -190,6 +256,7 @@ function mapOrder(order: OrderWithItems) {
     paymobIntentionId: order.paymobIntentionId,
     paymobTransactionId: order.paymobTransactionId,
     paymobOrderId: order.paymobOrderId,
+    paymobClientSecret: order.paymobClientSecret,
     paidAt: order.paidAt?.toISOString() ?? null,
     customerName: order.customerName,
     phone: order.phone,
@@ -201,6 +268,10 @@ function mapOrder(order: OrderWithItems) {
     discountTotal: order.discountTotal.toNumber(),
     shippingTotal: order.shippingTotal.toNumber(),
     total: order.total.toNumber(),
+    couponId: order.couponId,
+    couponCode: order.couponCode,
+    couponType: order.couponType,
+    couponDiscount: order.couponDiscount?.toNumber() ?? null,
     items: order.items.map((item) => ({
       id: item.id,
       productId: item.productId,

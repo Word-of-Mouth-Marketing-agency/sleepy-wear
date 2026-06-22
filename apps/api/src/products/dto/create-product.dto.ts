@@ -23,10 +23,20 @@ class ProductVariantDto {
   salePrice?: string;
 
   @IsOptional()
+  @IsString()
   sizeId?: string;
 
   @IsOptional()
+  @IsString()
   colorId?: string;
+
+  @IsOptional()
+  @IsString()
+  sizeName?: string;
+
+  @IsOptional()
+  @IsString()
+  colorName?: string;
 
   @IsOptional()
   @Type(() => Number)

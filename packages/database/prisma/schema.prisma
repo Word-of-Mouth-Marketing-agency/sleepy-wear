@@ -37,6 +37,7 @@ enum PaymentStatus {
 enum CouponType {
   PERCENTAGE
   FIXED
+  FREE_DELIVERY
 }
 
 enum InventoryLogType {
@@ -219,6 +220,9 @@ model Order {
   total           Decimal     @db.Decimal(10, 2)
   couponId        String?
   coupon          Coupon?     @relation(fields: [couponId], references: [id])
+  couponCode      String?
+  couponType      CouponType?
+  couponDiscount  Decimal?    @db.Decimal(10, 2)
   items           OrderItem[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -248,18 +252,19 @@ model OrderItem {
 }
 
 model Coupon {
-  id          String     @id @default(cuid())
-  code        String     @unique
-  type        CouponType
-  value       Decimal    @db.Decimal(10, 2)
-  isActive    Boolean    @default(true)
-  startsAt    DateTime?
-  expiresAt   DateTime?
-  usageLimit  Int?
-  usageCount  Int        @default(0)
-  orders      Order[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id                String     @id @default(cuid())
+  code              String     @unique
+  type              CouponType
+  value             Decimal    @db.Decimal(10, 2)
+  isActive          Boolean    @default(true)
+  minimumOrderAmount Decimal?  @db.Decimal(10, 2)
+  startsAt          DateTime?
+  expiresAt         DateTime?
+  usageLimit        Int?
+  usageCount        Int        @default(0)
+  orders            Order[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 }
 
 model Banner {

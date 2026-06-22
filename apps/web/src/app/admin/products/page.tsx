@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, PackagePlus, Search } from "lucide-react";
 import type { PaginatedResponse, Product } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { getThumbUrl } from "@/lib/media";
-import { API_URL } from "@/lib/api";
+import { API_URL, getAdminHeaders } from "@/lib/api";
 
 const PAGE_SIZE = 24;
 
@@ -45,6 +45,8 @@ export default function AdminProductsPage() {
   const [data, setData] = useState<PaginatedResponse<Product> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -76,6 +78,32 @@ export default function AdminProductsPage() {
     e.preventDefault();
     setPage(1);
     setSearch(query);
+  }
+
+  async function handleDelete(productId: string, productName: string) {
+    if (!window.confirm(`هل أنت متأكد من حذف "${productName}"؟`)) return;
+    setDeleteError(null);
+    setDeletingId(productId);
+    try {
+      const res = await fetch(`${API_URL}/products/${productId}`, {
+        method: "DELETE",
+        headers: { ...getAdminHeaders() },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(
+          body?.message ?? "تعذر حذف المنتج.",
+        );
+      }
+      setDeleteError(null);
+      fetchProducts();
+    } catch (caught) {
+      setDeleteError(
+        caught instanceof Error ? caught.message : "تعذر حذف المنتج.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -140,6 +168,12 @@ export default function AdminProductsPage() {
       {error ? (
         <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm font-semibold text-red-700">
           تعذر تحميل المنتجات. يرجى المحاولة مرة أخرى.
+        </div>
+      ) : null}
+
+      {deleteError ? (
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm font-semibold text-red-700">
+          {deleteError}
         </div>
       ) : null}
 
@@ -218,12 +252,26 @@ export default function AdminProductsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <Link
-                            className="rounded-full border border-[var(--line)] px-4 py-2 text-xs font-bold transition hover:border-brand-pink hover:bg-pink-50 hover:text-brand-pink"
-                            href={`/admin/products/${product.id}/edit`}
-                          >
-                            تعديل
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              className="rounded-full border border-[var(--line)] px-4 py-2 text-xs font-bold transition hover:border-brand-pink hover:bg-pink-50 hover:text-brand-pink"
+                              href={`/admin/products/${product.id}/edit`}
+                            >
+                              تعديل
+                            </Link>
+                            <button
+                              type="button"
+                              disabled={deletingId === product.id}
+                              onClick={() =>
+                                handleDelete(product.id, product.nameAr)
+                              }
+                              className="rounded-full border border-red-200 px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                            >
+                              {deletingId === product.id
+                                ? "جارٍ الحذف..."
+                                : "حذف"}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

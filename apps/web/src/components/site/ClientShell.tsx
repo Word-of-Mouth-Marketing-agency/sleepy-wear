@@ -4,13 +4,19 @@ import { usePathname } from "next/navigation";
 import { SiteFooter } from "./Footer";
 import { FloatingWhatsApp } from "./FloatingWhatsApp";
 
+type ClientShellProps = {
+  children: React.ReactNode;
+  header: React.ReactNode;
+  footerDescription?: string;
+  socialUrls?: { facebook?: string; instagram?: string; tiktok?: string; telegram?: string };
+};
+
 export function ClientShell({
   children,
   header,
-}: {
-  children: React.ReactNode;
-  header: React.ReactNode;
-}) {
+  footerDescription,
+  socialUrls,
+}: ClientShellProps) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
@@ -20,7 +26,7 @@ export function ClientShell({
     <>
       {header}
       <main className="min-h-screen">{children}</main>
-      <SiteFooter />
+      <SiteFooter footerDescription={footerDescription} socialUrls={socialUrls} />
       <FloatingWhatsApp />
     </>
   );

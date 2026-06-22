@@ -81,6 +81,20 @@ export class ProductsService {
 
     if (!category) throw new NotFoundException("Category not found");
 
+    const resolvedVariants = await Promise.all(
+      (dto.variants ?? []).map(async (v) => {
+        const { sizeId, colorId } = await this.resolveVariantInput(v);
+        return {
+          sku: v.sku,
+          price: new Prisma.Decimal(v.price),
+          salePrice: v.salePrice ? new Prisma.Decimal(v.salePrice) : null,
+          stock: v.stock ?? 0,
+          sizeId,
+          colorId,
+        };
+      }),
+    );
+
     const product = await this.prisma.product.create({
       data: {
         nameAr: dto.nameAr,
@@ -89,19 +103,8 @@ export class ProductsService {
         descriptionAr: dto.descriptionAr,
         categoryId: dto.categoryId,
         status: dto.status ?? ProductStatus.DRAFT,
-        variants: dto.variants?.length
-          ? {
-              create: dto.variants.map((variant) => ({
-                sku: variant.sku,
-                price: new Prisma.Decimal(variant.price),
-                salePrice: variant.salePrice
-                  ? new Prisma.Decimal(variant.salePrice)
-                  : null,
-                stock: variant.stock ?? 0,
-                sizeId: variant.sizeId,
-                colorId: variant.colorId,
-              })),
-            }
+        variants: resolvedVariants.length
+          ? { create: resolvedVariants }
           : undefined,
       },
       include: productInclude,
@@ -130,7 +133,19 @@ export class ProductsService {
   }
 
   async remove(id: string) {
-    await this.ensureProduct(id);
+    const product = await this.ensureProduct(id);
+
+    const orderCount = await this.prisma.orderItem.count({
+      where: { productId: id },
+    });
+    if (orderCount > 0) {
+      throw new BadRequestException(
+        "لا يمكن حذف هذا المنتج لأنه مرتبط بطلبات سابقة.",
+      );
+    }
+
+    await this.prisma.cartItem.deleteMany({ where: { productId: id } });
+
     await this.prisma.product.delete({ where: { id } });
     return { id, deleted: true };
   }
@@ -167,6 +182,7 @@ export class ProductsService {
 
   async createVariant(productId: string, dto: CreateVariantDto) {
     await this.ensureProduct(productId);
+    const { sizeId, colorId } = await this.resolveVariantInput(dto);
 
     const variant = await this.prisma.productVariant.create({
       data: {
@@ -174,8 +190,8 @@ export class ProductsService {
         sku: dto.sku,
         price: new Prisma.Decimal(dto.price),
         salePrice: dto.salePrice ? new Prisma.Decimal(dto.salePrice) : null,
-        sizeId: dto.sizeId || null,
-        colorId: dto.colorId || null,
+        sizeId: sizeId ?? null,
+        colorId: colorId ?? null,
         stock: dto.stock,
       },
       include: { size: true, color: true },
@@ -186,6 +202,28 @@ export class ProductsService {
 
   async updateVariant(variantId: string, dto: UpdateVariantDto) {
     await this.ensureVariant(variantId);
+
+    let sizeId: string | null | undefined = undefined;
+    let colorId: string | null | undefined = undefined;
+
+    if (dto.sizeName !== undefined || dto.sizeId !== undefined) {
+      const resolved = await this.resolveVariantInput({
+        sizeId: dto.sizeId,
+        colorId: undefined,
+        sizeName: dto.sizeName,
+        colorName: undefined,
+      });
+      sizeId = resolved.sizeId ?? null;
+    }
+    if (dto.colorName !== undefined || dto.colorId !== undefined) {
+      const resolved = await this.resolveVariantInput({
+        sizeId: undefined,
+        colorId: dto.colorId,
+        sizeName: undefined,
+        colorName: dto.colorName,
+      });
+      colorId = resolved.colorId ?? null;
+    }
 
     const variant = await this.prisma.productVariant.update({
       where: { id: variantId },
@@ -198,8 +236,14 @@ export class ProductsService {
             : dto.salePrice
               ? new Prisma.Decimal(dto.salePrice)
               : null,
-        sizeId: dto.sizeId === undefined ? undefined : dto.sizeId || null,
-        colorId: dto.colorId === undefined ? undefined : dto.colorId || null,
+        sizeId:
+          sizeId === undefined
+            ? undefined
+            : sizeId,
+        colorId:
+          colorId === undefined
+            ? undefined
+            : colorId,
         stock: dto.stock,
       },
       include: { size: true, color: true },
@@ -226,6 +270,47 @@ export class ProductsService {
     });
     if (!variant) throw new NotFoundException("Variant not found");
     return variant;
+  }
+
+  private async resolveSizeId(sizeId?: string, sizeName?: string): Promise<string | undefined> {
+    if (sizeId) return sizeId;
+    if (!sizeName) return undefined;
+    const trimmed = sizeName.trim();
+    if (!trimmed) return undefined;
+    const existing = await this.prisma.size.findFirst({
+      where: { labelAr: { equals: trimmed } },
+    });
+    if (existing) return existing.id;
+    const created = await this.prisma.size.create({
+      data: { name: trimmed, labelAr: trimmed, sortOrder: 0 },
+    });
+    return created.id;
+  }
+
+  private async resolveColorId(colorId?: string, colorName?: string): Promise<string | undefined> {
+    if (colorId) return colorId;
+    if (!colorName) return undefined;
+    const trimmed = colorName.trim();
+    if (!trimmed) return undefined;
+    const existing = await this.prisma.color.findFirst({
+      where: { nameAr: { equals: trimmed } },
+    });
+    if (existing) return existing.id;
+    const created = await this.prisma.color.create({
+      data: { nameAr: trimmed, hex: "#CCCCCC" },
+    });
+    return created.id;
+  }
+
+  private async resolveVariantInput(dto: {
+    sizeId?: string;
+    colorId?: string;
+    sizeName?: string;
+    colorName?: string;
+  }) {
+    const sizeId = await this.resolveSizeId(dto.sizeId, dto.sizeName);
+    const colorId = await this.resolveColorId(dto.colorId, dto.colorName);
+    return { sizeId, colorId };
   }
 }
 

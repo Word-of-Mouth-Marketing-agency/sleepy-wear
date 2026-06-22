@@ -10,6 +10,8 @@ import {
   ShoppingCart,
   FileText,
   Truck,
+  Tag,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -20,6 +22,8 @@ const NAV = [
   { href: "/admin/products", label: "المنتجات", icon: Package },
   { href: "/admin/categories", label: "التصنيفات", icon: Grid3X3 },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingCart },
+  { href: "/admin/coupons", label: "الكوبونات", icon: Tag },
+  { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
   { href: "/admin/pages", label: "الصفحات", icon: FileText },
   { href: "/admin/shipping", label: "الشحن", icon: Truck },
 ];

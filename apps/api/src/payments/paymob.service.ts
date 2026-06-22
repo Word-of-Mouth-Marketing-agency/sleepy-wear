@@ -277,6 +277,19 @@ function getPaymentMethods(integrationId: string) {
 type OrderForPaymob = Prisma.OrderGetPayload<{ include: { items: true } }>;
 
 function buildPaymobItems(order: OrderForPaymob): PaymobIntentionItem[] {
+  const discountMinor = decimalToMinorUnits(order.discountTotal);
+  if (discountMinor > 0) {
+    const totalMinor = decimalToMinorUnits(order.total);
+    return [
+      {
+        name: `SleepyWear ${order.orderNumber}`,
+        amount: totalMinor,
+        description: "\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0637\u0644\u0628 \u0628\u0639\u062f \u0627\u0644\u062e\u0635\u0645",
+        quantity: 1,
+      },
+    ];
+  }
+
   const items: PaymobIntentionItem[] = order.items.map((item) => ({
     name: item.productNameSnapshot,
     amount: decimalToMinorUnits(item.unitPriceSnapshot),
@@ -290,16 +303,6 @@ function buildPaymobItems(order: OrderForPaymob): PaymobIntentionItem[] {
       name: "\u0627\u0644\u0634\u062d\u0646",
       amount: shippingMinor,
       description: "\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0634\u062d\u0646",
-      quantity: 1,
-    });
-  }
-
-  const discountMinor = decimalToMinorUnits(order.discountTotal);
-  if (discountMinor > 0) {
-    items.push({
-      name: "\u0627\u0644\u062e\u0635\u0645",
-      amount: -discountMinor,
-      description: "\u062e\u0635\u0645 \u0627\u0644\u0643\u0648\u0628\u0648\u0646",
       quantity: 1,
     });
   }

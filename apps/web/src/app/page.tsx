@@ -7,8 +7,80 @@ import { CategorySlider } from "@/components/site/CategorySlider";
 import { ProductCard } from "@/components/site/ProductCard";
 import { API_URL, apiGet } from "@/lib/api";
 
+type ReasonItem = {
+  title: string;
+  description: string;
+  icon: string;
+  enabled: boolean;
+};
+
+type WhySection = {
+  title: string;
+  subtitle: string;
+  enabled: boolean;
+  reasons: ReasonItem[];
+};
+
+type MidBanner = {
+  title: string;
+  subtitle: string;
+  description: string;
+  buttonText: string;
+  buttonUrl: string;
+  enabled: boolean;
+};
+
+type MarqueeSettings = {
+  messages: string[];
+};
+
+type BestSellersSettings = {
+  productIds: string[];
+};
+
+const REASON_ICONS: Record<string, React.ReactNode> = {
+  factory: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+    </svg>
+  ),
+  truck: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+      <path d="M15 18H9" />
+      <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+      <circle cx="17" cy="18" r="2" />
+      <circle cx="7" cy="18" r="2" />
+    </svg>
+  ),
+  refresh: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 4v6h6" />
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+    </svg>
+  ),
+  chat: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+};
+
+async function getSettings() {
+  try {
+    const res = await fetch(`${API_URL}/settings`, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) throw new Error();
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 export default async function HomePage() {
-  const [categoriesRes, productsRes] = await Promise.all([
+  const [categoriesRes, productsRes, settings] = await Promise.all([
     fetch(`${API_URL}/categories`, {
       headers: { Accept: "application/json" },
       cache: "no-store",
@@ -16,17 +88,55 @@ export default async function HomePage() {
       .then((r) => (r.ok ? (r.json() as Promise<Category[]>) : null))
       .catch(() => null),
     apiGet<PaginatedResponse<Product>>("/products?limit=20").catch(() => null),
+    getSettings(),
   ]);
 
   const products = productsRes?.items ?? [];
   const categories = categoriesRes ?? [];
-  const bestSellers = products.slice(0, 4);
   const latest = [...products].reverse().slice(0, 4);
+
+  const marqueeSettings = (settings?.homepage_marquee ?? {
+    messages: ["توصيل مجاني", "خصم 10%", "جودة من المصنع"],
+  }) as MarqueeSettings;
+
+  const bestSellerIds = (settings?.homepage_best_sellers as BestSellersSettings)?.productIds ?? [];
+
+  let bestSellers: Product[];
+  if (bestSellerIds.length > 0) {
+    bestSellers = products.filter((p) => bestSellerIds.includes(p.id));
+    if (bestSellers.length < 4) {
+      const fallback = products.filter((p) => !bestSellerIds.includes(p.id));
+      bestSellers = [...bestSellers, ...fallback].slice(0, 4);
+    }
+  } else {
+    bestSellers = products.slice(0, 4);
+  }
+
+  const midBanner = (settings?.homepage_mid_banner ?? {
+    title: "عرض خاص",
+    subtitle: "خصم 10% على أول طلب",
+    description: "+ توصيل مجاني للطلبات فوق 999 جنيه",
+    buttonText: "تسوق الآن",
+    buttonUrl: "/products",
+    enabled: true,
+  }) as MidBanner;
+
+  const whySection = (settings?.homepage_why_sleepywear ?? {
+    title: "ليه SleepyWear؟",
+    subtitle: "كل اللي تحتاجيه لراحة البيت وأناقة كل يوم",
+    enabled: true,
+    reasons: [
+      { title: "أسعار المصنع مباشرة", description: "اختيارات حقيقية بسعر قريب من المصنع من غير طبقات زيادة.", icon: "factory", enabled: true },
+      { title: "خامات مريحة وجودة عالية", description: "ملابس بيت ولانچيري بخامات ناعمة ومناسبة للاستخدام اليومي.", icon: "refresh", enabled: true },
+      { title: "تشكيلات متنوعة لكل الأذواق", description: "بيچامات، ساتان، كيرفي، لانچيري وكوليكشنات تتجدد باستمرار.", icon: "chat", enabled: true },
+      { title: "توصيل سريع لكل المحافظات", description: "نوصل طلبك لباب البيت مع متابعة واضحة لحد الاستلام.", icon: "truck", enabled: true },
+    ],
+  }) as WhySection;
 
   return (
     <div>
       <HeroSlider />
-      <MarqueeBanner bgColor="#FBE8F5" />
+      <MarqueeBanner bgColor="#FBE8F5" messages={marqueeSettings.messages} />
 
       <section className="container py-12 sm:py-16">
         <div className="mb-6">
@@ -38,7 +148,7 @@ export default async function HomePage() {
         <CategorySlider categories={categories} />
       </section>
 
-      <MarqueeBanner bgColor="#FBE8F5" reverse />
+      <MarqueeBanner bgColor="#FBE8F5" reverse messages={marqueeSettings.messages} />
 
       <section className="container py-12 sm:py-16">
         <div className="mb-6">
@@ -58,7 +168,9 @@ export default async function HomePage() {
         )}
       </section>
 
-      <FullWidthBanner />
+      {midBanner.enabled ? (
+        <FullWidthBanner banner={midBanner} />
+      ) : null}
 
       <section className="container py-12 sm:py-16">
         <div className="mb-6">
@@ -78,38 +190,28 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="container py-12 text-center sm:py-16">
-        <div className="mb-10">
-          <h2 className="text-2xl font-black text-brand-black sm:text-3xl">
-            ليه SleepyWear؟
-          </h2>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            كل اللي تحتاجيه لراحة البيت وأناقة كل يوم
-          </p>
-        </div>
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <BenefitCard
-            icon={<FactoryIcon />}
-            title="أسعار المصنع مباشرة"
-            desc="اختيارات حقيقية بسعر قريب من المصنع من غير طبقات زيادة."
-          />
-          <BenefitCard
-            icon={<RefreshIcon />}
-            title="خامات مريحة وجودة عالية"
-            desc="ملابس بيت ولانچيري بخامات ناعمة ومناسبة للاستخدام اليومي."
-          />
-          <BenefitCard
-            icon={<ChatIcon />}
-            title="تشكيلات متنوعة لكل الأذواق"
-            desc="بيچامات، ساتان، كيرفي، لانچيري وكوليكشنات تتجدد باستمرار."
-          />
-          <BenefitCard
-            icon={<TruckIcon />}
-            title="توصيل سريع لكل المحافظات"
-            desc="نوصل طلبك لباب البيت مع متابعة واضحة لحد الاستلام."
-          />
-        </div>
-      </section>
+      {whySection.enabled ? (
+        <section className="container py-12 text-center sm:py-16">
+          <div className="mb-10">
+            <h2 className="text-2xl font-black text-brand-black sm:text-3xl">
+              {whySection.title}
+            </h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              {whySection.subtitle}
+            </p>
+          </div>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {whySection.reasons.filter((r) => r.enabled).map((reason, i) => (
+              <BenefitCard
+                key={i}
+                icon={REASON_ICONS[reason.icon] ?? REASON_ICONS.factory}
+                title={reason.title}
+                desc={reason.description}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -133,42 +235,5 @@ function BenefitCard({
         {desc}
       </p>
     </div>
-  );
-}
-
-function FactoryIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-    </svg>
-  );
-}
-
-function TruckIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
-      <path d="M15 18H9" />
-      <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
-      <circle cx="17" cy="18" r="2" />
-      <circle cx="7" cy="18" r="2" />
-    </svg>
-  );
-}
-
-function RefreshIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 4v6h6" />
-      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-    </svg>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
   );
 }

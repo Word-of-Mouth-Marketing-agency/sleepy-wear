@@ -1,4 +1,4 @@
-import type { Category, Color, Product, Size } from "@sleepywear/shared";
+import type { Category, Product } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { ProductForm, VariantManager } from "@/components/admin/ProductForm";
 import { ImageManager } from "@/components/admin/ImageManager";
@@ -12,11 +12,9 @@ export default async function EditProductPage({
   params,
 }: EditProductPageProps) {
   const { id } = await params;
-  const [product, categories, sizes, colors] = await Promise.all([
+  const [product, categories] = await Promise.all([
     apiGet<Product>(`/products/${id}`).catch(() => null),
     apiGet<Category[]>("/categories?includeInactive=true").catch(() => null),
-    apiGet<Size[]>("/sizes").catch(() => null),
-    apiGet<Color[]>("/colors").catch(() => null),
   ]);
 
   return (
@@ -27,7 +25,7 @@ export default async function EditProductPage({
       noContainer
       surface="plain"
     >
-      {!product || !categories || !sizes || !colors ? (
+      {!product || !categories ? (
         <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
           تعذر تحميل بيانات المنتج.
         </p>
@@ -47,7 +45,7 @@ export default async function EditProductPage({
                 أضف متغيرا لكل مقاس أو لون متاح للعميل.
               </p>
             </div>
-            <VariantManager colors={colors} product={product} sizes={sizes} />
+            <VariantManager product={product} />
           </section>
         </div>
       )}

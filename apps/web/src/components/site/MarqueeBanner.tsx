@@ -1,9 +1,10 @@
 type MarqueeBannerProps = {
   bgColor?: string;
   reverse?: boolean;
+  messages?: string[];
 };
 
-const items = [
+const FALLBACK_ITEMS = [
   "توصيل مجاني",
   "خصم 10%",
   "جودة من المصنع",
@@ -11,7 +12,7 @@ const items = [
 
 const STAR = '\u2726';
 
-function buildMarqueeContent(startIdx: number) {
+function buildMarqueeContent(startIdx: number, items: string[]) {
   const parts: React.ReactNode[] = [];
   for (let cycle = 0; cycle < 2; cycle++) {
     for (const item of items) {
@@ -31,15 +32,16 @@ function buildMarqueeContent(startIdx: number) {
   return parts;
 }
 
-export function MarqueeBanner({ bgColor = "transparent", reverse }: MarqueeBannerProps) {
+export function MarqueeBanner({ bgColor = "transparent", reverse, messages }: MarqueeBannerProps) {
+  const items = messages?.length ? messages : FALLBACK_ITEMS;
   return (
     <section className="wom-marquee" style={{ background: bgColor }}>
       <div className={`wom-marquee__track${reverse ? " wom-marquee__track--reverse" : ""}`}>
         <div className="wom-marquee__content">
-          {buildMarqueeContent(0)}
+          {buildMarqueeContent(0, items)}
         </div>
         <div className="wom-marquee__content" aria-hidden="true">
-          {buildMarqueeContent(1)}
+          {buildMarqueeContent(1, items)}
         </div>
       </div>
     </section>

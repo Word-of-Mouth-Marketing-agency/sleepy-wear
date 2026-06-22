@@ -13,6 +13,12 @@ export class SettingsController {
   }
 
   @UseGuards(AdminGuard)
+  @Get(":key")
+  findOne(@Param("key") key: string) {
+    return this.settingsService.findOne(key);
+  }
+
+  @UseGuards(AdminGuard)
   @Patch(":key")
   update(@Param("key") key: string, @Body() dto: UpdateSettingDto) {
     return this.settingsService.update(key, dto);

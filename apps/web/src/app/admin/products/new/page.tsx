@@ -1,6 +1,6 @@
 import type { Category } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
-import { ProductForm } from "@/components/admin/ProductForm";
+import { FullProductForm } from "@/components/admin/FullProductForm";
 import { apiGet } from "@/lib/api";
 
 export default async function NewProductPage() {
@@ -12,7 +12,7 @@ export default async function NewProductPage() {
     <PageShell
       title="إضافة منتج"
       eyebrow="Admin"
-      description="أنشئ بيانات المنتج الأساسية أولا، ثم أضف الصور والمتغيرات بعد الحفظ."
+      description="أضف بيانات المنتج والصور والمتغيرات مرة واحدة."
       noContainer
     >
       {!categories ? (
@@ -20,7 +20,7 @@ export default async function NewProductPage() {
           تعذر تحميل التصنيفات.
         </p>
       ) : (
-        <ProductForm categories={categories} />
+        <FullProductForm categories={categories} />
       )}
     </PageShell>
   );

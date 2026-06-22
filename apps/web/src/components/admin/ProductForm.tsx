@@ -4,10 +4,8 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   Category,
-  Color,
   Product,
   ProductStatus,
-  Size,
 } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
 
@@ -34,7 +32,6 @@ export function ProductForm({ categories, product }: ProductFormProps) {
     const form = new FormData(event.currentTarget);
     const payload = {
       nameAr: String(form.get("nameAr") ?? ""),
-      nameEn: String(form.get("nameEn") ?? "") || undefined,
       slug: String(form.get("slug") ?? ""),
       categoryId: String(form.get("categoryId") ?? ""),
       descriptionAr: String(form.get("descriptionAr") ?? "") || undefined,
@@ -77,14 +74,6 @@ export function ProductForm({ categories, product }: ProductFormProps) {
           name="nameAr"
           placeholder="مثال: بيجامة قطن ناعمة"
           required
-        />
-      </Field>
-      <Field label="اسم إنجليزي اختياري">
-        <input
-          className={fieldClass}
-          defaultValue={product?.nameEn ?? ""}
-          name="nameEn"
-          placeholder="Optional English name"
         />
       </Field>
       <Field label="رابط المنتج">
@@ -152,14 +141,10 @@ export function ProductForm({ categories, product }: ProductFormProps) {
 
 type VariantManagerProps = {
   product: Product;
-  sizes: Size[];
-  colors: Color[];
 };
 
 export function VariantManager({
   product,
-  sizes,
-  colors,
 }: VariantManagerProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -173,13 +158,13 @@ export function VariantManager({
     setError(null);
 
     const form = new FormData(event.currentTarget);
-    const payload = {
+    const payload: Record<string, unknown> = {
       sku: String(form.get("sku") ?? ""),
       price: String(form.get("price") ?? ""),
       salePrice: String(form.get("salePrice") ?? "") || undefined,
       stock: Number(form.get("stock") ?? 0),
-      sizeId: String(form.get("sizeId") ?? "") || undefined,
-      colorId: String(form.get("colorId") ?? "") || undefined,
+      sizeName: String(form.get("sizeName") ?? "") || undefined,
+      colorName: String(form.get("colorName") ?? "") || undefined,
     };
 
     try {
@@ -242,9 +227,7 @@ export function VariantManager({
           >
             {editing === variant.id ? (
               <VariantFields
-                colors={colors}
                 onSubmit={(event) => saveVariant(event, variant.id)}
-                sizes={sizes}
                 variant={variant}
               />
             ) : (
@@ -289,9 +272,7 @@ export function VariantManager({
       <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-sm">
         <h2 className="mb-4 text-lg font-extrabold">إضافة متغير</h2>
         <VariantFields
-          colors={colors}
           onSubmit={(event) => saveVariant(event)}
-          sizes={sizes}
         />
       </div>
     </div>
@@ -299,15 +280,11 @@ export function VariantManager({
 }
 
 type VariantFieldsProps = {
-  colors: Color[];
-  sizes: Size[];
   variant?: Product["variants"][number];
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
 function VariantFields({
-  colors,
-  sizes,
   variant,
   onSubmit,
 }: VariantFieldsProps) {
@@ -347,30 +324,18 @@ function VariantFields({
         placeholder="المخزون"
         type="number"
       />
-      <select
+      <input
         className={fieldClass}
-        defaultValue={variant?.size?.id ?? ""}
-        name="sizeId"
-      >
-        <option value="">مقاس</option>
-        {sizes.map((size) => (
-          <option key={size.id} value={size.id}>
-            {size.labelAr}
-          </option>
-        ))}
-      </select>
-      <select
+        defaultValue={variant?.size?.labelAr ?? ""}
+        name="sizeName"
+        placeholder="مقاس (مثال: XL)"
+      />
+      <input
         className={fieldClass}
-        defaultValue={variant?.color?.id ?? ""}
-        name="colorId"
-      >
-        <option value="">لون</option>
-        {colors.map((color) => (
-          <option key={color.id} value={color.id}>
-            {color.nameAr}
-          </option>
-        ))}
-      </select>
+        defaultValue={variant?.color?.nameAr ?? ""}
+        name="colorName"
+        placeholder="لون (مثال: موف)"
+      />
       <button
         className="rounded-full bg-black px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-pink sm:col-span-6"
         type="submit"

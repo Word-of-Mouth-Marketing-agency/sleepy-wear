@@ -3,13 +3,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import type {
+  CouponValidationResult,
   CreateOrderInput,
   Order,
   PaymentMethod,
   PaymobIntentionResponse,
   ShippingCity,
 } from "@sleepywear/shared";
-import { apiGet, apiPost } from "@/lib/api";
+import { API_URL, apiGet, apiPost } from "@/lib/api";
 import { getCardUrl } from "@/lib/media";
 import { getDisplayVariantInfo } from "@/lib/product-variants";
 import { useCartStore } from "@/stores/cart-store";
@@ -28,12 +29,18 @@ export function CheckoutForm() {
   const [selectedCityId, setSelectedCityId] = useState("");
   const [shippingPrice, setShippingPrice] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponResult, setCouponResult] = useState<CouponValidationResult | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
-  const total = subtotal + shippingPrice;
+
+  const effectiveShipping = couponResult?.freeDelivery ? 0 : shippingPrice;
+  const discount = couponResult?.discountAmount ?? 0;
+  const total = Math.max(0, subtotal + effectiveShipping - discount);
 
   useEffect(() => {
     apiGet<ShippingCity[]>("/shipping-cities")
@@ -46,6 +53,29 @@ export function CheckoutForm() {
     setSelectedCityId(id);
     const city = shippingCities.find((c) => c.id === id);
     setShippingPrice(city?.price ?? 0);
+    setCouponResult(null);
+  }
+
+  async function handleApplyCoupon() {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponResult(null);
+    try {
+      const res = await fetch(
+        `${API_URL}/coupons/validate?code=${encodeURIComponent(couponCode.trim())}&subtotal=${subtotal}`,
+      );
+      const result = (await res.json()) as CouponValidationResult;
+      setCouponResult(result);
+    } catch {
+      setCouponResult({
+        valid: false,
+        discountAmount: 0,
+        freeDelivery: false,
+        message: "تعذر التحقق من الكوبون.",
+      });
+    } finally {
+      setCouponLoading(false);
+    }
   }
 
   if (orderNumber) {
@@ -113,6 +143,10 @@ export function CheckoutForm() {
         quantity: item.quantity,
       })),
     };
+
+    if (couponResult?.valid && couponCode.trim()) {
+      payload.couponCode = couponCode.trim();
+    }
 
     setIsSubmitting(true);
     try {
@@ -233,7 +267,32 @@ export function CheckoutForm() {
           </Field>
         </div>
 
-        <div className="mt-5 rounded-3xl border border-[var(--line)] bg-brand-light-pink/35 p-4">
+        <div className="mt-5 rounded-3xl border border-[var(--line)] bg-white p-4">
+          <p className="mb-3 text-sm font-black text-brand-black">كود الخصم</p>
+          <div className="flex gap-2">
+            <input
+              className={`${inputClass} flex-1`}
+              placeholder="أدخلي كود الخصم"
+              value={couponCode}
+              onChange={(e) => { setCouponCode(e.target.value); setCouponResult(null); }}
+            />
+            <button
+              className="shrink-0 rounded-2xl bg-black px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-pink disabled:opacity-50"
+              disabled={couponLoading || !couponCode.trim()}
+              onClick={handleApplyCoupon}
+              type="button"
+            >
+              {couponLoading ? "..." : "تطبيق"}
+            </button>
+          </div>
+          {couponResult ? (
+            <p className={`mt-2 text-xs font-semibold ${couponResult.valid ? "text-green-700" : "text-red-700"}`}>
+              {couponResult.message}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="rounded-3xl border border-[var(--line)] bg-brand-light-pink/35 p-4">
           <p className="text-sm font-black text-brand-black">طريقة الدفع</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <PaymentOption
@@ -334,9 +393,15 @@ export function CheckoutForm() {
           <div className="flex justify-between text-sm">
             <span className="text-[var(--muted)]">الشحن</span>
             <span className="font-bold text-brand-blue">
-              {shippingPrice > 0 ? `${shippingPrice} ج` : "مجاني"}
+              {effectiveShipping > 0 ? `${effectiveShipping} ج` : "مجاني"}
             </span>
           </div>
+          {discount > 0 ? (
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--muted)]">الخصم</span>
+              <span className="font-bold text-red-600">-{discount} ج</span>
+            </div>
+          ) : null}
           <div className="flex justify-between border-t border-[var(--line)] pt-3 text-base font-black">
             <span>الإجمالي</span>
             <span className="text-brand-pink">{total} ج</span>

@@ -1,14 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { Order, PaginatedResponse } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { API_URL, getAdminHeaders } from "@/lib/api";
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "جديد",
+  CONFIRMED: "قيد المراجعة",
+  PROCESSING: "قيد التجهيز",
+  SHIPPED: "تم الشحن",
+  DELIVERED: "تم التسليم",
+  CANCELLED: "ملغي",
+};
+
 const statusStyles: Record<string, string> = {
   PENDING: "border-amber-200 bg-amber-50 text-amber-700",
   CONFIRMED: "border-blue-200 bg-blue-50 text-brand-blue",
-  SHIPPED: "border-purple-200 bg-purple-50 text-purple-700",
+  PROCESSING: "border-purple-200 bg-purple-50 text-purple-700",
+  SHIPPED: "border-indigo-200 bg-indigo-50 text-indigo-700",
   DELIVERED: "border-green-200 bg-green-50 text-green-700",
   CANCELLED: "border-red-200 bg-red-50 text-red-700",
 };
@@ -55,9 +66,10 @@ export default function AdminOrdersPage() {
       {!error && orders && orders.items.length > 0 ? (
         <div className="space-y-4">
           {orders.items.map((order) => (
-            <article
+            <Link
               key={order.id}
-              className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm"
+              href={`/admin/orders/${order.id}`}
+              className="block rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-pink/40 hover:shadow-md"
             >
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
                 <div>
@@ -73,7 +85,7 @@ export default function AdminOrdersPage() {
                       "border-gray-200 bg-gray-50 text-gray-600"
                     }`}
                   >
-                    {order.status}
+                    {STATUS_LABELS[order.status] ?? order.status}
                   </span>
                   <span className="rounded-full bg-pink-50 px-4 py-1.5 text-sm font-extrabold text-brand-pink">
                     {order.total} جنيه
@@ -81,7 +93,7 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
               <ul className="mt-4 grid gap-2">
-                {order.items?.map((item) => (
+                {order.items?.slice(0, 3).map((item) => (
                   <li
                     key={item.id}
                     className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#fbf7fa] px-4 py-3 text-sm"
@@ -95,8 +107,13 @@ export default function AdminOrdersPage() {
                     </span>
                   </li>
                 ))}
+                {order.items && order.items.length > 3 ? (
+                  <li className="text-center text-xs font-bold text-[var(--muted)]">
+                    + {order.items.length - 3} منتجات أخرى
+                  </li>
+                ) : null}
               </ul>
-            </article>
+            </Link>
           ))}
         </div>
       ) : null}

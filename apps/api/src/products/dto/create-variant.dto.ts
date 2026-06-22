@@ -20,6 +20,14 @@ export class CreateVariantDto {
   @IsString()
   colorId?: string;
 
+  @IsOptional()
+  @IsString()
+  sizeName?: string;
+
+  @IsOptional()
+  @IsString()
+  colorName?: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(0)

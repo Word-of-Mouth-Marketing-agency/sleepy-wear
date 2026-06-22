@@ -118,6 +118,7 @@ export type CreateOrderInput = {
   shippingCityId?: string;
   notes?: string;
   paymentMethod?: PaymentMethod;
+  couponCode?: string;
   items: CreateOrderItemInput[];
 };
 
@@ -142,6 +143,7 @@ export type Order = {
   paymobIntentionId?: string | null;
   paymobTransactionId?: string | null;
   paymobOrderId?: string | null;
+  paymobClientSecret?: string | null;
   paidAt?: string | null;
   customerName: string;
   phone: string;
@@ -153,6 +155,10 @@ export type Order = {
   discountTotal?: number;
   shippingTotal?: number;
   total: number;
+  couponId?: string | null;
+  couponCode?: string | null;
+  couponType?: string | null;
+  couponDiscount?: number | null;
   items?: OrderItem[];
   createdAt: string;
   updatedAt?: string;
@@ -185,6 +191,30 @@ export type StaticPage = {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type CouponType = "PERCENTAGE" | "FIXED" | "FREE_DELIVERY";
+
+export type Coupon = {
+  id: string;
+  code: string;
+  type: CouponType;
+  value: number;
+  isActive: boolean;
+  minimumOrderAmount?: number | null;
+  startsAt?: string | null;
+  expiresAt?: string | null;
+  usageLimit?: number | null;
+  usageCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type CouponValidationResult = {
+  valid: boolean;
+  discountAmount: number;
+  freeDelivery: boolean;
+  message: string;
 };
 
 export type CategoryDetails = {

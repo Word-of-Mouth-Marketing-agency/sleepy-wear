@@ -3,7 +3,14 @@ import { SITE_NAME } from "@sleepywear/shared";
 import { PHONE_LOCAL, EMAIL } from "@/lib/social-contact";
 import { SocialLinks } from "./SocialLinks";
 
-export function SiteFooter() {
+type SiteFooterProps = {
+  footerDescription?: string;
+  socialUrls?: { facebook?: string; instagram?: string; tiktok?: string; telegram?: string };
+};
+
+const DEFAULT_DESCRIPTION = "ملابس منزلية ولانجري بأفضل الأسعار من المصنع مباشرة.";
+
+export function SiteFooter({ footerDescription, socialUrls }: SiteFooterProps) {
   return (
     <footer className="bg-black text-white">
       <div className="container py-12">
@@ -15,7 +22,7 @@ export function SiteFooter() {
               src="/brand/pink-logo.png"
             />
             <p className="text-sm text-gray-400 mb-3">
-              ملابس منزلية ولانجري بأفضل الأسعار من المصنع مباشرة.
+              {footerDescription || DEFAULT_DESCRIPTION}
             </p>
           </div>
 
@@ -65,7 +72,7 @@ export function SiteFooter() {
                 </a>
               </li>
               <li className="pt-2">
-                <SocialLinks variant="dark" />
+                <SocialLinks variant="dark" urls={socialUrls} />
               </li>
             </ul>
           </div>

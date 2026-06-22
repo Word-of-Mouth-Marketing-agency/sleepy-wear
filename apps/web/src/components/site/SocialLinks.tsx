@@ -1,26 +1,48 @@
 import { FACEBOOK, INSTAGRAM, TELEGRAM, TIKTOK } from "@/lib/social-contact";
 
-const ICONS = [
+type SocialUrls = {
+  facebook?: string;
+  instagram?: string;
+  tiktok?: string;
+  telegram?: string;
+};
+
+type Variant = "light" | "dark";
+
+type SocialLinksProps = {
+  variant?: Variant;
+  urls?: SocialUrls;
+};
+
+const DEFAULT_ICONS = [
   { key: "facebook" as const, href: FACEBOOK, label: "Facebook" },
   { key: "telegram" as const, href: TELEGRAM, label: "Telegram" },
   { key: "tiktok" as const, href: TIKTOK, label: "TikTok" },
   { key: "instagram" as const, href: INSTAGRAM, label: "Instagram" },
 ];
 
-type Variant = "light" | "dark";
-
 export function SocialLinks({
   variant = "light",
-}: {
-  variant?: Variant;
-}) {
+  urls,
+}: SocialLinksProps) {
+  const icons = urls
+    ? [
+        { key: "facebook" as const, href: urls.facebook || "#", label: "Facebook" },
+        { key: "telegram" as const, href: urls.telegram || "#", label: "Telegram" },
+        { key: "tiktok" as const, href: urls.tiktok || "#", label: "TikTok" },
+        { key: "instagram" as const, href: urls.instagram || "#", label: "Instagram" },
+      ]
+    : DEFAULT_ICONS;
+
   return (
     <div className="flex items-center gap-2">
-      {ICONS.map((icon) => (
-        <SocialLink key={icon.key} href={icon.href} label={icon.label} variant={variant}>
-          <SocialSvg icon={icon.key} />
-        </SocialLink>
-      ))}
+      {icons
+        .filter((icon) => icon.href && icon.href !== "#")
+        .map((icon) => (
+          <SocialLink key={icon.key} href={icon.href} label={icon.label} variant={variant}>
+            <SocialSvg icon={icon.key} />
+          </SocialLink>
+        ))}
     </div>
   );
 }

@@ -7,9 +7,10 @@ import { SocialLinks } from "./SocialLinks";
 
 type MobileHeaderMenuProps = {
   categories: Category[];
+  socialUrls?: { facebook?: string; instagram?: string; tiktok?: string; telegram?: string };
 };
 
-export function MobileHeaderMenu({ categories }: MobileHeaderMenuProps) {
+export function MobileHeaderMenu({ categories, socialUrls }: MobileHeaderMenuProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export function MobileHeaderMenu({ categories }: MobileHeaderMenuProps) {
           <p className="mb-3 text-xs font-bold text-[var(--muted)]">
             تابعينا
           </p>
-          <SocialLinks />
+          <SocialLinks urls={socialUrls} />
         </div>
       </aside>
     </>
