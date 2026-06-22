@@ -27,7 +27,8 @@ export class AdminGuard implements CanActivate {
     }
 
     try {
-      this.jwt.verify(parts[1]);
+      const payload = this.jwt.verify(parts[1]) as { sub: string; email: string };
+      (request as any).admin = { id: payload.sub, email: payload.email };
       return true;
     } catch {
       throw new UnauthorizedException("Invalid or expired token");

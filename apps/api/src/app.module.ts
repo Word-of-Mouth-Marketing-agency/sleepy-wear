@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { AdminUsersModule } from "./admin-users/admin-users.module";
 import { AuthModule } from "./auth/auth.module";
 import { BannersModule } from "./banners/banners.module";
 import { CategoriesModule } from "./categories/categories.module";
@@ -21,6 +22,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     HealthModule,
     PrismaModule,
     AuthModule,
+    AdminUsersModule,
     ProductsModule,
     CategoriesModule,
     SizesModule,

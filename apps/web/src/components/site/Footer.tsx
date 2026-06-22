@@ -82,6 +82,18 @@ export function SiteFooter({ footerDescription, socialUrls }: SiteFooterProps) {
       <div className="border-t border-gray-800 py-4">
         <div className="container text-center text-xs text-gray-500">
           © 2026 {SITE_NAME} — جميع الحقوق محفوظة
+          <span className="mx-2 opacity-40">|</span>
+          <span className="tracking-wider opacity-70">
+            Powered by{" "}
+            <a
+              href="https://wordofmoutheg.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-white/90 transition-colors hover:text-brand-pink"
+            >
+              WORD OF MOUTH
+            </a>
+          </span>
         </div>
       </div>
     </footer>
