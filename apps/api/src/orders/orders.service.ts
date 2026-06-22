@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OrderStatus, Prisma } from "@prisma/client";
+import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { ListOrdersQueryDto } from "./dto/list-orders-query.dto";
@@ -151,6 +151,8 @@ export class OrdersService {
           city: dto.city,
           notes: dto.notes,
           status: OrderStatus.PENDING,
+          paymentMethod: dto.paymentMethod ?? PaymentMethod.COD,
+          paymentStatus: PaymentStatus.PENDING,
           subtotal,
           shippingTotal,
           total: subtotal.add(shippingTotal),
@@ -183,6 +185,12 @@ function mapOrder(order: OrderWithItems) {
     id: order.id,
     orderNumber: order.orderNumber,
     status: order.status,
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
+    paymobIntentionId: order.paymobIntentionId,
+    paymobTransactionId: order.paymobTransactionId,
+    paymobOrderId: order.paymobOrderId,
+    paidAt: order.paidAt?.toISOString() ?? null,
     customerName: order.customerName,
     phone: order.phone,
     email: order.email,

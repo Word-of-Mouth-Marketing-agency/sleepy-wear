@@ -7,6 +7,7 @@ import { CouponsModule } from "./coupons/coupons.module";
 import { CustomersModule } from "./customers/customers.module";
 import { HealthModule } from "./health/health.module";
 import { OrdersModule } from "./orders/orders.module";
+import { PaymentsModule } from "./payments/payments.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ProductsModule } from "./products/products.module";
 import { SettingsModule } from "./settings/settings.module";
@@ -25,6 +26,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     SizesModule,
     ColorsModule,
     OrdersModule,
+    PaymentsModule,
     CustomersModule,
     CouponsModule,
     UploadsModule,

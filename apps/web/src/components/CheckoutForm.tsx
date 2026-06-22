@@ -2,7 +2,13 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import type { CreateOrderInput, Order, ShippingCity } from "@sleepywear/shared";
+import type {
+  CreateOrderInput,
+  Order,
+  PaymentMethod,
+  PaymobIntentionResponse,
+  ShippingCity,
+} from "@sleepywear/shared";
 import { apiGet, apiPost } from "@/lib/api";
 import { getCardUrl } from "@/lib/media";
 import { getDisplayVariantInfo } from "@/lib/product-variants";
@@ -21,6 +27,7 @@ export function CheckoutForm() {
   const [shippingCities, setShippingCities] = useState<ShippingCity[]>([]);
   const [selectedCityId, setSelectedCityId] = useState("");
   const [shippingPrice, setShippingPrice] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -100,6 +107,7 @@ export function CheckoutForm() {
       city: city?.nameAr ?? "",
       shippingCityId: cityId || undefined,
       notes: String(form.get("notes") ?? "") || undefined,
+      paymentMethod,
       items: items.map((item) => ({
         variantId: item.variantId,
         quantity: item.quantity,
@@ -109,6 +117,15 @@ export function CheckoutForm() {
     setIsSubmitting(true);
     try {
       const order = await apiPost<Order, CreateOrderInput>("/orders", payload);
+      if (paymentMethod === "PAYMOB") {
+        const intention = await apiPost<
+          PaymobIntentionResponse,
+          { orderId: string }
+        >("/payments/paymob/create-intention", { orderId: order.id });
+        window.location.href = intention.checkoutUrl;
+        return;
+      }
+
       clear();
       setOrderNumber(order.orderNumber);
       setMessage(
@@ -216,6 +233,26 @@ export function CheckoutForm() {
           </Field>
         </div>
 
+        <div className="mt-5 rounded-3xl border border-[var(--line)] bg-brand-light-pink/35 p-4">
+          <p className="text-sm font-black text-brand-black">طريقة الدفع</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <PaymentOption
+              checked={paymentMethod === "COD"}
+              description="ادفعي عند استلام الطلب."
+              label="الدفع عند الاستلام"
+              value="COD"
+              onChange={setPaymentMethod}
+            />
+            <PaymentOption
+              checked={paymentMethod === "PAYMOB"}
+              description="تحويل آمن إلى صفحة الدفع."
+              label="الدفع أونلاين"
+              value="PAYMOB"
+              onChange={setPaymentMethod}
+            />
+          </div>
+        </div>
+
         {error ? (
           <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
             {error}
@@ -232,7 +269,13 @@ export function CheckoutForm() {
           disabled={isSubmitting || !selectedCityId}
           type="submit"
         >
-          {isSubmitting ? "جاري إنشاء الطلب..." : "تأكيد الطلب"}
+          {isSubmitting
+            ? paymentMethod === "PAYMOB"
+              ? "جاري تحويلك للدفع..."
+              : "جاري إنشاء الطلب..."
+            : paymentMethod === "PAYMOB"
+              ? "إتمام الدفع أونلاين"
+              : "تأكيد الطلب"}
         </button>
       </form>
 
@@ -332,5 +375,44 @@ function Field({
       </label>
       {children}
     </div>
+  );
+}
+
+function PaymentOption({
+  checked,
+  description,
+  label,
+  value,
+  onChange,
+}: {
+  checked: boolean;
+  description: string;
+  label: string;
+  value: PaymentMethod;
+  onChange: (value: PaymentMethod) => void;
+}) {
+  return (
+    <label
+      className={`cursor-pointer rounded-2xl border p-4 transition ${
+        checked
+          ? "border-brand-pink bg-white shadow-sm"
+          : "border-[var(--line)] bg-white/70 hover:border-brand-pink/40"
+      }`}
+    >
+      <span className="flex items-center gap-3">
+        <input
+          type="radio"
+          name="paymentMethod"
+          checked={checked}
+          value={value}
+          onChange={() => onChange(value)}
+          className="h-4 w-4 accent-brand-pink"
+        />
+        <span className="text-sm font-black text-brand-black">{label}</span>
+      </span>
+      <span className="mt-2 block text-xs leading-5 text-[var(--muted)]">
+        {description}
+      </span>
+    </label>
   );
 }

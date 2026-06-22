@@ -6,6 +6,8 @@ export type OrderStatus =
   | "SHIPPED"
   | "DELIVERED"
   | "CANCELLED";
+export type PaymentMethod = "COD" | "PAYMOB";
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "CANCELED";
 
 export type PaginationMeta = {
   page: number;
@@ -115,6 +117,7 @@ export type CreateOrderInput = {
   city: string;
   shippingCityId?: string;
   notes?: string;
+  paymentMethod?: PaymentMethod;
   items: CreateOrderItemInput[];
 };
 
@@ -134,6 +137,12 @@ export type Order = {
   id: string;
   orderNumber: string;
   status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  paymobIntentionId?: string | null;
+  paymobTransactionId?: string | null;
+  paymobOrderId?: string | null;
+  paidAt?: string | null;
   customerName: string;
   phone: string;
   email?: string | null;
@@ -147,6 +156,15 @@ export type Order = {
   items?: OrderItem[];
   createdAt: string;
   updatedAt?: string;
+};
+
+export type PaymobIntentionResponse = {
+  orderId: string;
+  orderNumber: string;
+  paymentStatus: PaymentStatus;
+  paymobIntentionId?: string | null;
+  clientSecret: string;
+  checkoutUrl: string;
 };
 
 export type Banner = {
