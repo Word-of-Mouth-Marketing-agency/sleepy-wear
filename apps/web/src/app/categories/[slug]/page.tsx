@@ -1,16 +1,27 @@
 import type { CategoryDetails } from "@sleepywear/shared";
 import { ProductGrid } from "@/components/ProductGrid";
+import { CategoryPagination } from "@/components/CategoryPagination";
 import { apiGet } from "@/lib/api";
+
+const PER_PAGE = 24;
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 };
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: CategoryPageProps) {
   const { slug } = await params;
+  const { page: pageStr } = await searchParams;
+  const page = Math.max(1, Number(pageStr) || 1);
 
   try {
-    const details = await apiGet<CategoryDetails>(`/categories/${slug}`);
+    const details = await apiGet<CategoryDetails>(
+      `/categories/${slug}?page=${page}&limit=${PER_PAGE}`,
+    );
     const { category, products } = details;
     const count = category.productCount ?? products.meta.total;
 
@@ -30,7 +41,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
         <section className="container py-8 sm:py-10">
           {products.items.length > 0 ? (
-            <ProductGrid products={products.items} />
+            <>
+              <ProductGrid products={products.items} />
+              <CategoryPagination
+                slug={slug}
+                page={products.meta.page}
+                totalPages={products.meta.totalPages}
+              />
+            </>
           ) : (
             <div className="mx-auto max-w-xl rounded-3xl border border-dashed border-brand-pink/35 bg-brand-light-pink/50 px-6 py-12 text-center">
               <p className="text-lg font-black text-brand-black">
