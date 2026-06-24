@@ -36,6 +36,7 @@ yarn-error.log*
 
 # local one-off reports/backups
 /backup-before-*.sql
+/prod-db-sync-*
 /category-report.*
 /image-dedupe-report.md
 

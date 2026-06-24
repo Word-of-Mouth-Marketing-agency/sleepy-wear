@@ -21,8 +21,8 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
   async function save(event: FormEvent<HTMLFormElement>, categoryId?: string) {
     event.preventDefault();
     setError(null);
-    const form = event.currentTarget;
-    const data = new FormData(form);
+    const formEl = event.currentTarget;
+    const data = new FormData(formEl);
     const payload = {
       nameAr: String(data.get("nameAr") ?? ""),
       nameEn: String(data.get("nameEn") ?? "") || undefined,
@@ -50,8 +50,11 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
       return;
     }
 
-    setEditingId(null);
-    form.reset();
+    if (categoryId) {
+      setEditingId(null);
+    } else {
+      formEl.reset();
+    }
     router.refresh();
   }
 

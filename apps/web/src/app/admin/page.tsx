@@ -2,20 +2,19 @@ import Link from "next/link";
 import { ArrowUpLeft, Grid3X3, Package, ShoppingCart } from "lucide-react";
 import type {
   Category,
-  Order,
   PaginatedResponse,
   Product,
 } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
+import { AdminOrderCount } from "@/components/admin/AdminOrderCount";
 import { apiGet } from "@/lib/api";
 
 export default async function AdminPage() {
-  const [products, categories, orders] = await Promise.all([
+  const [products, categories] = await Promise.all([
     apiGet<PaginatedResponse<Product>>(
       "/products?includeInactive=true&limit=1",
     ).catch(() => null),
     apiGet<Category[]>("/categories?includeInactive=true").catch(() => null),
-    apiGet<PaginatedResponse<Order>>("/orders?limit=1").catch(() => null),
   ]);
 
   const cards = [
@@ -25,7 +24,7 @@ export default async function AdminPage() {
       hint: "إدارة الكتالوج والمخزون",
       value: products?.meta.total ?? "-",
       icon: Package,
-      tone: "pink",
+      tone: "pink" as const,
     },
     {
       href: "/admin/categories",
@@ -33,15 +32,15 @@ export default async function AdminPage() {
       hint: "ترتيب قوائم المتجر",
       value: categories?.length ?? "-",
       icon: Grid3X3,
-      tone: "blue",
+      tone: "blue" as const,
     },
     {
       href: "/admin/orders",
       label: "الطلبات",
       hint: "متابعة طلبات العملاء",
-      value: orders?.meta.total ?? "-",
+      valueElement: <AdminOrderCount />,
       icon: ShoppingCart,
-      tone: "black",
+      tone: "black" as const,
     },
   ];
 
@@ -84,7 +83,7 @@ export default async function AdminPage() {
               </p>
               <div className="mt-2 flex items-end justify-between gap-3">
                 <p className="text-4xl font-extrabold tracking-tight">
-                  {card.value}
+                  {"value" in card ? card.value : card.valueElement}
                 </p>
                 <p className="pb-1 text-xs font-semibold text-[var(--muted)]">
                   {card.hint}

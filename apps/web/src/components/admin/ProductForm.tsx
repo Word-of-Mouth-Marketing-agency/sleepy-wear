@@ -147,6 +147,7 @@ export function VariantManager({
   product,
 }: VariantManagerProps) {
   const router = useRouter();
+  const [variants, setVariants] = useState(product.variants);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
 
@@ -157,7 +158,8 @@ export function VariantManager({
     event.preventDefault();
     setError(null);
 
-    const form = new FormData(event.currentTarget);
+    const formEl = event.currentTarget;
+    const form = new FormData(formEl);
     const payload: Record<string, unknown> = {
       sku: String(form.get("sku") ?? ""),
       price: String(form.get("price") ?? ""),
@@ -184,8 +186,17 @@ export function VariantManager({
 
       if (!response.ok) throw new Error(await readError(response));
 
-      setEditing(null);
-      event.currentTarget.reset();
+      const saved = (await response.json()) as Product["variants"][number];
+
+      if (variantId) {
+        setVariants((prev) =>
+          prev.map((v) => (v.id === variantId ? saved : v)),
+        );
+        setEditing(null);
+      } else {
+        setVariants((prev) => [...prev, saved]);
+        formEl.reset();
+      }
       router.refresh();
     } catch (caught) {
       setError(
@@ -204,6 +215,7 @@ export function VariantManager({
       setError(await readError(response));
       return;
     }
+    setVariants((prev) => prev.filter((v) => v.id !== variantId));
     router.refresh();
   }
 
@@ -215,12 +227,12 @@ export function VariantManager({
         </p>
       ) : null}
       <div className="space-y-3">
-        {product.variants.length === 0 ? (
+        {variants.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
             لا توجد متغيرات بعد.
           </div>
         ) : null}
-        {product.variants.map((variant) => (
+        {variants.map((variant) => (
           <div
             key={variant.id}
             className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm"
