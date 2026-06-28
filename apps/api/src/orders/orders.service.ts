@@ -3,7 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { CouponType, OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
+import {
+  CouponType,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Prisma,
+  ProductStatus,
+} from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { ListOrdersQueryDto } from "./dto/list-orders-query.dto";
@@ -62,22 +69,6 @@ export class OrdersService {
     }
 
     const variantIds = [...quantities.keys()];
-    const variants = await this.prisma.productVariant.findMany({
-      where: { id: { in: variantIds } },
-      include: { product: true, size: true, color: true },
-    });
-
-    if (variants.length !== variantIds.length) {
-      throw new NotFoundException(
-        "One or more product variants were not found",
-      );
-    }
-
-    for (const variant of variants) {
-      const quantity = quantities.get(variant.id) ?? 0;
-      if (variant.stock < quantity)
-        throw new BadRequestException(`Insufficient stock for ${variant.sku}`);
-    }
 
     let shippingTotal = new Prisma.Decimal(0);
     if (dto.shippingCityId) {
@@ -117,6 +108,33 @@ export class OrdersService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      const variants = await tx.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        include: { product: { include: { category: true } }, size: true, color: true },
+      });
+
+      if (variants.length !== variantIds.length) {
+        throw new NotFoundException(
+          "\u0628\u0639\u0636 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0641\u064a \u0627\u0644\u0633\u0644\u0629 \u0644\u0645 \u062a\u0639\u062f \u0645\u062a\u0648\u0641\u0631\u0629",
+        );
+      }
+
+      for (const variant of variants) {
+        const quantity = quantities.get(variant.id) ?? 0;
+        if (
+          variant.product.status !== ProductStatus.ACTIVE ||
+          !variant.product.category.isActive
+        ) {
+          throw new BadRequestException(OUT_OF_STOCK_MESSAGE);
+        }
+        if (variant.stock <= 0) {
+          throw new BadRequestException(OUT_OF_STOCK_MESSAGE);
+        }
+        if (variant.stock < quantity) {
+          throw new BadRequestException(INSUFFICIENT_STOCK_MESSAGE);
+        }
+      }
+
       const customer = await tx.customer.upsert({
         where: { phone: dto.phone },
         update: {
@@ -186,13 +204,18 @@ export class OrdersService {
       for (const variant of variants) {
         const quantity = quantities.get(variant.id) ?? 0;
         const result = await tx.productVariant.updateMany({
-          where: { id: variant.id, stock: { gte: quantity } },
+          where: {
+            id: variant.id,
+            stock: { gte: quantity },
+            product: {
+              status: ProductStatus.ACTIVE,
+              category: { isActive: true },
+            },
+          },
           data: { stock: { decrement: quantity } },
         });
         if (result.count !== 1)
-          throw new BadRequestException(
-            `Insufficient stock for ${variant.sku}`,
-          );
+          throw new BadRequestException(INSUFFICIENT_STOCK_MESSAGE);
       }
 
       const order = await tx.order.create({
@@ -241,6 +264,11 @@ export class OrdersService {
     return { id, deleted: true };
   }
 }
+
+const OUT_OF_STOCK_MESSAGE =
+  "\u0627\u0644\u0645\u0646\u062a\u062c \u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631 \u062d\u0627\u0644\u064a\u064b\u0627";
+const INSUFFICIENT_STOCK_MESSAGE =
+  "\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629 \u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631\u0629";
 
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: true; customer: true };

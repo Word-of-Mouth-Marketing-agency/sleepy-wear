@@ -26,55 +26,18 @@ export default function ProductDetailsClient({
 
   const images = product.images;
 
-  const galleryImages = useMemo(() => {
-    if (!images.length) return [];
-
-    const variantImages = images.filter((img) =>
-      img.altAr?.startsWith("EO-VAR-"),
-    );
-
-    if (variantImages.length === 0) {
-      // No variant images: use main product image only
-      const mainImage = images.find((img) => !img.altAr?.startsWith("EO-VAR-"));
-      return mainImage ? [mainImage] : [];
-    }
-
-    // Has variant images: show only variant images, deduped by color
-    // Map active variant SKUs to their colorId
-    const skuToColor = new Map<string, string>();
-    for (const v of product.variants) {
-      if (v.stock > 0 && v.color?.id && hasRealColor(v)) {
-        skuToColor.set(v.sku, v.color.id);
-      }
-    }
-
-    // Dedupe variant images: one per color
-    const seenUrl = new Set<string>();
-    const seenColor = new Set<string>();
-    const uniqueVariants: typeof images = [];
-
-    for (const img of variantImages) {
-      if (seenUrl.has(img.url)) continue;
-      const skuMatch = img.altAr?.match(/^(EO-VAR-[a-f0-9-]+)/);
-      if (!skuMatch) continue;
-      const sku = skuMatch[1];
-      const colorId = skuToColor.get(sku);
-      if (!colorId) continue;
-      if (seenColor.has(colorId)) continue;
-      seenColor.add(colorId);
-      seenUrl.add(img.url);
-      uniqueVariants.push(img);
-    }
-
-    return uniqueVariants;
-  }, [images, product.variants]);
-
-  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-  const [mainImageError, setMainImageError] = useState(false);
-
   const activeVariants = useMemo(
     () => getAvailableVariants(product),
     [product],
+  );
+
+  const galleryImages = useMemo(() => {
+    return buildGalleryImages(images, activeVariants);
+  }, [images, activeVariants]);
+
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
+    () => new Set(),
   );
 
   const sizes = useMemo(() => {
@@ -169,7 +132,8 @@ export default function ProductDetailsClient({
       quantity: 1,
       price: selectedVariant.salePrice ?? selectedVariant.price,
       variantInfo,
-      imageUrl: images[0]?.url,
+      imageUrl: displayImage?.url ?? galleryImages[0]?.url ?? images[0]?.url,
+      availableStock: selectedVariant.stock,
     });
 
     setAdding(false);
@@ -177,15 +141,26 @@ export default function ProductDetailsClient({
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  const displayUrl = selectedImageUrl ?? galleryImages[0]?.url ?? null;
-
   const displayImage = useMemo(
-    () => galleryImages.find((img) => img.url === displayUrl) ?? null,
-    [galleryImages, displayUrl],
+    () => {
+      const selected = selectedImageUrl
+        ? galleryImages.find(
+            (img) =>
+              img.url === selectedImageUrl && !failedImageUrls.has(img.url),
+          )
+        : null;
+
+      return (
+        selected ??
+        galleryImages.find((img) => !failedImageUrls.has(img.url)) ??
+        null
+      );
+    },
+    [galleryImages, selectedImageUrl, failedImageUrls],
   );
 
   const isActiveThumbnail = (img: (typeof galleryImages)[number]) =>
-    img.url === displayUrl;
+    img.url === displayImage?.url;
 
   return (
     <div className="bg-white">
@@ -193,12 +168,18 @@ export default function ProductDetailsClient({
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] lg:items-start">
           <section className="flex min-w-0 w-full flex-col gap-3 lg:flex-row-reverse">
             <div className="relative flex h-[420px] w-full items-center justify-center overflow-hidden rounded-3xl border border-[var(--line)] bg-brand-light-pink sm:h-[520px] lg:h-[700px] lg:flex-1">
-              {displayImage && !mainImageError ? (
+              {displayImage ? (
                 <img
                   alt={displayImage.altAr ?? product.nameAr}
                   className="h-full w-full object-contain p-4"
                   src={getMediaUrl(displayImage.url)}
-                  onError={() => setMainImageError(true)}
+                  onError={() => {
+                    setFailedImageUrls((prev) => {
+                      const next = new Set(prev);
+                      next.add(displayImage.url);
+                      return next;
+                    });
+                  }}
                 />
               ) : (
                 <span className="px-6 text-center text-sm font-semibold text-[var(--muted)]">
@@ -226,7 +207,11 @@ export default function ProductDetailsClient({
                     aria-label={`صورة المنتج ${i + 1}`}
                     onClick={() => {
                       setSelectedImageUrl(img.url);
-                      setMainImageError(false);
+                      setFailedImageUrls((prev) => {
+                        const next = new Set(prev);
+                        next.delete(img.url);
+                        return next;
+                      });
                       const skuMatch = img.altAr?.match(/^(EO-VAR-[a-f0-9-]+)/);
                       if (skuMatch) {
                         const v = activeVariants.find((v) => v.sku === skuMatch[1]);
@@ -440,6 +425,89 @@ export default function ProductDetailsClient({
       </div>
     </div>
   );
+}
+
+type DetailImage = Product["images"][number];
+type DetailVariant = Product["variants"][number];
+
+function buildGalleryImages(
+  images: DetailImage[],
+  activeVariants: DetailVariant[],
+) {
+  const validImages = uniqueImages(images.filter(hasUsableImageUrl));
+  if (!validImages.length) return [];
+
+  const realVariants = activeVariants.filter(
+    (variant) => hasRealSize(variant) || hasRealColor(variant),
+  );
+
+  const variantImages = collectValidVariantImages(validImages, realVariants);
+  if (variantImages.length) return variantImages;
+
+  const productImages = validImages.filter((image) => !isVariantImage(image));
+  return productImages.length ? productImages : validImages;
+}
+
+function collectValidVariantImages(
+  images: DetailImage[],
+  variants: DetailVariant[],
+) {
+  if (!variants.length) return [];
+
+  const seenOption = new Set<string>();
+  const result: DetailImage[] = [];
+
+  for (const image of images) {
+    if (!isVariantImage(image)) continue;
+
+    const variant = findImageVariant(image, variants);
+    if (!variant) continue;
+
+    const optionKey = variant.color?.id ?? variant.size?.id ?? variant.id;
+    if (seenOption.has(optionKey)) continue;
+
+    seenOption.add(optionKey);
+    result.push(image);
+  }
+
+  return result;
+}
+
+function findImageVariant(image: DetailImage, variants: DetailVariant[]) {
+  const sku = getVariantSku(image);
+  return variants.find(
+    (variant) =>
+      (image.variantId && variant.id === image.variantId) ||
+      (sku && variant.sku === sku) ||
+      (image.colorId && variant.color?.id === image.colorId),
+  );
+}
+
+function uniqueImages(images: DetailImage[]) {
+  const seen = new Set<string>();
+  const result: DetailImage[] = [];
+
+  for (const image of images) {
+    const key = image.url.trim();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(image);
+  }
+
+  return result;
+}
+
+function hasUsableImageUrl(image: DetailImage) {
+  return Boolean(image.url?.trim());
+}
+
+function isVariantImage(image: DetailImage) {
+  return Boolean(image.variantId || image.colorId || getVariantSku(image));
+}
+
+function getVariantSku(image: DetailImage) {
+  const label = `${image.altAr ?? ""} ${image.altEn ?? ""}`;
+  return label.match(/(EO-VAR-[a-f0-9-]+)/i)?.[1] ?? null;
 }
 
 function VariantGroup({

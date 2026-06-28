@@ -26,18 +26,30 @@ export const useCartStore = create<CartState>()(
           return {
             items: state.items.map((entry) =>
               entry.variantId === item.variantId
-                ? { ...entry, quantity: entry.quantity + item.quantity }
+                ? {
+                    ...entry,
+                    quantity: Math.min(
+                      entry.quantity + item.quantity,
+                      item.availableStock ??
+                        entry.availableStock ??
+                        Number.POSITIVE_INFINITY,
+                    ),
+                    availableStock: item.availableStock ?? entry.availableStock,
+                  }
                 : entry,
             ),
           };
         }),
       updateQuantity: (variantId, quantity) =>
         set((state) => ({
-          items: state.items.map((entry) =>
-            entry.variantId === variantId
-              ? { ...entry, quantity: Math.max(1, quantity) }
-              : entry,
-          ),
+          items: state.items.map((entry) => {
+            if (entry.variantId !== variantId) return entry;
+            const maxQuantity = entry.availableStock ?? Number.POSITIVE_INFINITY;
+            return {
+              ...entry,
+              quantity: Math.min(Math.max(1, quantity), maxQuantity),
+            };
+          }),
         })),
       removeItem: (variantId) =>
         set((state) => ({

@@ -58,6 +58,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       price: availVariant.salePrice ?? availVariant.price,
       variantInfo: getVariantInfo(availVariant) || undefined,
       imageUrl: image?.url,
+      availableStock: availVariant.stock,
     });
     setAdded(true);
     if (timerRef.current) clearTimeout(timerRef.current);

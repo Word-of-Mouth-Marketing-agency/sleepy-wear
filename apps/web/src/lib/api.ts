@@ -37,6 +37,8 @@ export async function apiPost<TResponse, TBody>(
     const message =
       typeof errorBody?.message === "string"
         ? errorBody.message
+        : Array.isArray(errorBody?.message)
+          ? errorBody.message.join("، ")
         : `API request failed: ${response.status}`;
     throw new Error(message);
   }

@@ -66,6 +66,7 @@ export type ProductVariant = {
   price: number;
   salePrice?: number | null;
   stock: number;
+  images?: ProductImage[];
 };
 
 export type Product = {
@@ -93,6 +94,7 @@ export type CartItem = {
   price: number;
   variantInfo?: string;
   imageUrl?: string;
+  availableStock?: number;
 };
 
 export type CreateOrderItemInput = {

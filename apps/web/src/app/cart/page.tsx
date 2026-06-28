@@ -55,6 +55,9 @@ export default function CartPage() {
         <div className="space-y-3">
           {items.map((item) => {
             const variantInfo = getDisplayVariantInfo(item.variantInfo);
+            const isAtStockLimit =
+              item.availableStock !== undefined &&
+              item.quantity >= item.availableStock;
 
             return (
               <article
@@ -84,6 +87,11 @@ export default function CartPage() {
                     {variantInfo}
                   </p>
                 ) : null}
+                {isAtStockLimit ? (
+                  <p className="mt-1 text-xs font-bold text-amber-700">
+                    الكمية المتاحة حاليًا: {item.availableStock}
+                  </p>
+                ) : null}
                 <p className="mt-2 text-lg font-black text-brand-pink">
                   {item.price} ج
                 </p>
@@ -105,10 +113,11 @@ export default function CartPage() {
                     {item.quantity}
                   </span>
                   <button
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-black transition-colors hover:text-brand-pink"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-black transition-colors hover:text-brand-pink disabled:cursor-not-allowed disabled:opacity-40"
                     onClick={() =>
                       updateQuantity(item.variantId, item.quantity + 1)
                     }
+                    disabled={isAtStockLimit}
                     type="button"
                     aria-label="زيادة الكمية"
                   >

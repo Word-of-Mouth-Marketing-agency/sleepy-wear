@@ -1,4 +1,4 @@
-import type { Product, ProductVariant } from "@sleepywear/shared";
+import type { Product, ProductImage, ProductVariant } from "@sleepywear/shared";
 
 const GENERIC_OPTION_NAMES = new Set([
   "\u0639\u0627\u0645",
@@ -56,4 +56,55 @@ export function hasRealColor(variant: ProductVariant) {
 function isGenericOption(value: string) {
   const normalized = value.trim().toLowerCase().replace(/\s+/g, " ");
   return GENERIC_OPTION_NAMES.has(normalized);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Image classification helpers for admin product edit               */
+/* ------------------------------------------------------------------ */
+
+const EO_VAR_RE = /^EO-VAR-/i;
+
+export function isVariationImage(image: ProductImage) {
+  if (image.variantId) return true;
+  if (image.altAr && EO_VAR_RE.test(image.altAr.trim())) return true;
+  if (image.altEn && EO_VAR_RE.test(image.altEn.trim())) return true;
+  return false;
+}
+
+export function isAssignedVariantImage(image: ProductImage) {
+  return Boolean(image.variantId);
+}
+
+export function normalizeImageUrl(url: string) {
+  return url.trim();
+}
+
+export type ImageClass = "product" | "variation" | "assigned-variant";
+
+export function classifyImage(image: ProductImage): ImageClass {
+  if (image.variantId) return "assigned-variant";
+  const alt = (image.altAr ?? "").trim();
+  const altEn = (image.altEn ?? "").trim();
+  if (EO_VAR_RE.test(alt) || EO_VAR_RE.test(altEn)) return "variation";
+  return "product";
+}
+
+export function dedupeImages<T extends { url: string }>(
+  images: T[],
+): T[] {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const img of images) {
+    const normalized = normalizeImageUrl(img.url);
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(img);
+  }
+  return result;
+}
+
+export function filterProductGalleryImages(
+  images: ProductImage[],
+): ProductImage[] {
+  return dedupeImages(images.filter((img) => classifyImage(img) === "product"));
 }

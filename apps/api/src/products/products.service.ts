@@ -166,7 +166,7 @@ export class ProductsService {
 
     const variant = await this.prisma.productVariant.findUnique({
       where: { id: variantId },
-      include: { size: true, color: true },
+      include: { size: true, color: true, images: { orderBy: { sortOrder: "asc" } } },
     });
 
     if (!variant) throw new NotFoundException("Variant not found");
@@ -174,7 +174,7 @@ export class ProductsService {
     const updated = await this.prisma.productVariant.update({
       where: { id: variantId },
       data: { stock },
-      include: { size: true, color: true },
+      include: { size: true, color: true, images: { orderBy: { sortOrder: "asc" } } },
     });
 
     return mapVariant(updated);
@@ -194,8 +194,15 @@ export class ProductsService {
         colorId: colorId ?? null,
         stock: dto.stock,
       },
-      include: { size: true, color: true },
+      include: { size: true, color: true, images: { orderBy: { sortOrder: "asc" } } },
     });
+
+    if (dto.imageId) {
+      await this.prisma.productImage.update({
+        where: { id: dto.imageId },
+        data: { variantId: variant.id },
+      });
+    }
 
     return mapVariant(variant);
   }
@@ -225,6 +232,26 @@ export class ProductsService {
       colorId = resolved.colorId ?? null;
     }
 
+    if (dto.imageId !== undefined) {
+      if (dto.imageId) {
+        await this.prisma.$transaction([
+          this.prisma.productImage.updateMany({
+            where: { variantId, id: { not: dto.imageId } },
+            data: { variantId: null },
+          }),
+          this.prisma.productImage.update({
+            where: { id: dto.imageId },
+            data: { variantId },
+          }),
+        ]);
+      } else {
+        await this.prisma.productImage.updateMany({
+          where: { variantId },
+          data: { variantId: null },
+        });
+      }
+    }
+
     const variant = await this.prisma.productVariant.update({
       where: { id: variantId },
       data: {
@@ -246,7 +273,7 @@ export class ProductsService {
             : colorId,
         stock: dto.stock,
       },
-      include: { size: true, color: true },
+      include: { size: true, color: true, images: { orderBy: { sortOrder: "asc" } } },
     });
 
     return mapVariant(variant);
@@ -319,7 +346,7 @@ const productInclude = {
   images: { orderBy: { sortOrder: "asc" } },
   variants: {
     orderBy: { sku: "asc" },
-    include: { size: true, color: true },
+    include: { size: true, color: true, images: { orderBy: { sortOrder: "asc" } } },
   },
 } satisfies Prisma.ProductInclude;
 
@@ -327,6 +354,10 @@ type ProductWithRelations = Prisma.ProductGetPayload<{
   include: typeof productInclude;
 }>;
 type VariantWithRelations = ProductWithRelations["variants"][number];
+
+type VariantWithOptionalImages = Prisma.ProductVariantGetPayload<{
+  include: { size: true; color: true };
+}>;
 
 export function mapProduct(product: ProductWithRelations) {
   return {
@@ -346,7 +377,7 @@ export function mapProduct(product: ProductWithRelations) {
   };
 }
 
-function mapVariant(variant: VariantWithRelations) {
+function mapVariant(variant: VariantWithRelations | VariantWithOptionalImages) {
   return {
     id: variant.id,
     productId: variant.productId,
@@ -356,5 +387,6 @@ function mapVariant(variant: VariantWithRelations) {
     stock: variant.stock,
     size: variant.size,
     color: variant.color,
+    images: "images" in variant ? variant.images : undefined,
   };
 }

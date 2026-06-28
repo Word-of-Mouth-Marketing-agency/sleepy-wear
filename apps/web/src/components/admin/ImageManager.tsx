@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Trash2 } from "lucide-react";
 import type { Product } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
 import { getMediaUrl } from "@/lib/media";
+import { filterProductGalleryImages } from "@/lib/product-variants";
 
 type ImageManagerProps = {
   product: Product;
@@ -15,6 +16,11 @@ export function ImageManager({ product }: ImageManagerProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const galleryImages = useMemo(
+    () => filterProductGalleryImages(product.images),
+    [product.images],
+  );
 
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -79,9 +85,9 @@ export function ImageManager({ product }: ImageManagerProps) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-extrabold">صور المنتج</h2>
+          <h2 className="text-xl font-extrabold">صور المنتج الأساسية</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            ارفع صورا واضحة، وستظهر في صفحة المنتج والكروت.
+            ارفع صورا واضحة لتظهر في كروت المنتج والمعرض الرئيسي. صور المتغيرات تدار من قسم المتغيرات.
           </p>
         </div>
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink">
@@ -104,9 +110,9 @@ export function ImageManager({ product }: ImageManagerProps) {
         </p>
       ) : null}
 
-      {product.images.length > 0 ? (
+      {galleryImages.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {product.images.map((image) => (
+          {galleryImages.map((image) => (
             <div
               key={image.id}
               className="group relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
@@ -129,7 +135,7 @@ export function ImageManager({ product }: ImageManagerProps) {
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
-          لا توجد صور للمنتج بعد.
+          لا توجد صور أساسية للمنتج بعد.
         </div>
       )}
     </div>

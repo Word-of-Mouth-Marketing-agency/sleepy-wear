@@ -1,13 +1,19 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Image as ImageIcon, X } from "lucide-react";
 import type {
   Category,
   Product,
   ProductStatus,
 } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
+import { getMediaUrl } from "@/lib/media";
+import {
+  classifyImage,
+  dedupeImages,
+} from "@/lib/product-variants";
 
 type ProductFormProps = {
   categories: Category[];
@@ -150,6 +156,67 @@ export function VariantManager({
   const [variants, setVariants] = useState(product.variants);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
+  const [imagePickerFor, setImagePickerFor] = useState<string | null>(null);
+
+  const groupedImageOptions = useMemo(() => {
+    const deduped = dedupeImages(product.images);
+
+    const productImages = deduped.filter(
+      (img) => classifyImage(img) === "product",
+    );
+    const variationImages = deduped.filter(
+      (img) => classifyImage(img) === "variation",
+    );
+    const assignedImages = deduped.filter(
+      (img) => classifyImage(img) === "assigned-variant",
+    );
+
+    return { productImages, variationImages, assignedImages };
+  }, [product.images]);
+
+  function getVariantImage(
+    variant: (typeof variants)[number],
+  ) {
+    return (
+      variant.images?.[0] ??
+      product.images.find((img) => img.variantId === variant.id) ??
+      null
+    );
+  }
+
+  function getVariantImageBySku(variant: (typeof variants)[number]) {
+    return product.images.find((img) =>
+      img.altAr?.startsWith(variant.sku),
+    );
+  }
+
+  async function assignImage(variantId: string, imageId: string | null) {
+    setError(null);
+    try {
+      const response = await fetch(
+        `${API_URL}/products/variants/${variantId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAdminHeaders(),
+          },
+          body: JSON.stringify({ imageId }),
+        },
+      );
+      if (!response.ok) throw new Error(await readError(response));
+      const updated = (await response.json()) as Product["variants"][number];
+      setVariants((prev) =>
+        prev.map((v) => (v.id === variantId ? updated : v)),
+      );
+      setImagePickerFor(null);
+      router.refresh();
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "تعذر تحديث الصورة.",
+      );
+    }
+  }
 
   async function saveVariant(
     event: FormEvent<HTMLFormElement>,
@@ -226,68 +293,213 @@ export function VariantManager({
           {error}
         </p>
       ) : null}
+
       <div className="space-y-3">
         {variants.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
             لا توجد متغيرات بعد.
           </div>
-        ) : null}
-        {variants.map((variant) => (
-          <div
-            key={variant.id}
-            className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm"
-          >
-            {editing === variant.id ? (
-              <VariantFields
-                onSubmit={(event) => saveVariant(event, variant.id)}
-                variant={variant}
-              />
-            ) : (
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="font-bold">{variant.sku}</p>
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    {[variant.size?.labelAr, variant.color?.nameAr]
-                      .filter(Boolean)
-                      .join(" / ") || "بدون مقاس/لون"}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="rounded-full bg-pink-50 px-3 py-1 font-bold text-brand-pink">
-                    {variant.salePrice ?? variant.price} ج
-                  </span>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 font-bold text-brand-blue">
-                    مخزون {variant.stock}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    className="rounded-full border border-[var(--line)] px-4 py-2 text-sm font-bold transition hover:border-brand-blue hover:text-brand-blue"
-                    onClick={() => setEditing(variant.id)}
-                    type="button"
-                  >
-                    تعديل
-                  </button>
-                  <button
-                    className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
-                    onClick={() => deleteVariant(variant.id)}
-                    type="button"
-                  >
-                    حذف
-                  </button>
-                </div>
+        ) : (
+          variants.map((variant) => {
+            const variantImage = getVariantImage(variant) ?? getVariantImageBySku(variant);
+            const isEditing = editing === variant.id;
+            const isPicking = imagePickerFor === variant.id;
+
+            return (
+              <div
+                key={variant.id}
+                className="rounded-2xl border border-[var(--line)] bg-white shadow-sm"
+              >
+                {isEditing ? (
+                  <div className="p-4">
+                    <VariantFields
+                      onSubmit={(event) => saveVariant(event, variant.id)}
+                      variant={variant}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-4 p-4">
+                    <button
+                      type="button"
+                      className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-brand-light-pink transition hover:border-brand-pink"
+                      onClick={() =>
+                        setImagePickerFor(
+                          isPicking ? null : variant.id,
+                        )
+                      }
+                      title="اختيار صورة المتغير"
+                    >
+                      {variantImage ? (
+                        <img
+                          alt=""
+                          className="h-full w-full object-cover"
+                          src={getMediaUrl(variantImage.url)}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[var(--muted)]">
+                          <ImageIcon size={20} aria-hidden="true" />
+                        </div>
+                      )}
+                    </button>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold text-sm">
+                        {[variant.color?.nameAr, variant.size?.labelAr]
+                          .filter(Boolean)
+                          .join(" / ") || variant.sku}
+                      </p>
+                      <p className="mt-0.5 text-xs text-[var(--muted)] truncate">
+                        {variant.sku}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className="rounded-full bg-pink-50 px-3 py-1 font-bold text-brand-pink">
+                        {variant.salePrice ?? variant.price} ج
+                      </span>
+                      <StockBadge stock={variant.stock} />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs font-bold transition hover:border-brand-blue hover:text-brand-blue"
+                        onClick={() => setEditing(variant.id)}
+                        type="button"
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-50"
+                        onClick={() => deleteVariant(variant.id)}
+                        type="button"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {isPicking ? (
+                  <div className="border-t border-[var(--line)] bg-brand-light-pink/30 p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-xs font-bold text-[var(--muted)]">
+                        اختر صورة للمتغير من الصور المتاحة
+                      </p>
+                      <button
+                        type="button"
+                        className="rounded-full p-1 text-[var(--muted)] transition hover:bg-white hover:text-black"
+                        onClick={() => setImagePickerFor(null)}
+                      >
+                        <X size={16} aria-hidden="true" />
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        className={`h-14 w-14 overflow-hidden rounded-xl border-2 bg-brand-light-pink transition ${
+                          !variantImage
+                            ? "border-brand-pink"
+                            : "border-transparent hover:border-brand-pink/50"
+                        }`}
+                        onClick={() => assignImage(variant.id, null)}
+                        title="بدون صورة"
+                      >
+                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-[var(--muted)]">
+                          بدون
+                        </div>
+                      </button>
+
+                      {groupedImageOptions.productImages.length > 0 ? (
+                        <div>
+                          <p className="mb-1 text-[10px] font-bold text-green-700">
+                            صور المنتج الأساسية
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {groupedImageOptions.productImages.map((img) => (
+                              <ImageOption
+                                key={img.id}
+                                img={img}
+                                selected={variantImage?.id === img.id}
+                                onClick={() => assignImage(variant.id, img.id)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {groupedImageOptions.variationImages.length > 0 ? (
+                        <div>
+                          <p className="mb-1 text-[10px] font-bold text-amber-700">
+                            صور المتغيرات
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {groupedImageOptions.variationImages.map((img) => (
+                              <ImageOption
+                                key={img.id}
+                                img={img}
+                                selected={variantImage?.id === img.id}
+                                onClick={() => assignImage(variant.id, img.id)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {groupedImageOptions.assignedImages.length > 0 ? (
+                        <div>
+                          <p className="mb-1 text-[10px] font-bold text-brand-pink">
+                            مستخدمة مع متغير آخر
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {groupedImageOptions.assignedImages.map((img) => (
+                              <ImageOption
+                                key={img.id}
+                                img={img}
+                                selected={variantImage?.id === img.id}
+                                onClick={() => assignImage(variant.id, img.id)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            )}
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
+
       <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-extrabold">إضافة متغير</h2>
+        <h3 className="mb-4 text-sm font-extrabold">إضافة متغير جديد</h3>
         <VariantFields
           onSubmit={(event) => saveVariant(event)}
         />
       </div>
     </div>
+  );
+}
+
+function StockBadge({ stock }: { stock: number }) {
+  if (stock <= 0) {
+    return (
+      <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+        غير متوفر
+      </span>
+    );
+  }
+  if (stock <= 5) {
+    return (
+      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+        متبقي {stock}
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-brand-blue">
+      مخزون {stock}
+    </span>
   );
 }
 
@@ -372,6 +584,34 @@ function Field({
       <span>{label}</span>
       {children}
     </label>
+  );
+}
+
+function ImageOption({
+  img,
+  selected,
+  onClick,
+}: {
+  img: Product["images"][number];
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`h-14 w-14 overflow-hidden rounded-xl border-2 transition ${
+        selected
+          ? "border-brand-pink"
+          : "border-transparent hover:border-brand-pink/50"
+      }`}
+      onClick={onClick}
+    >
+      <img
+        alt=""
+        className="h-full w-full object-cover"
+        src={getMediaUrl(img.url)}
+      />
+    </button>
   );
 }
 

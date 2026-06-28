@@ -66,7 +66,7 @@ export class CategoriesService {
           images: { orderBy: { sortOrder: "asc" } },
           variants: {
             orderBy: { sku: "asc" },
-            include: { size: true, color: true },
+            include: { size: true, color: true, images: { orderBy: { sortOrder: "asc" } } },
           },
         },
       }),

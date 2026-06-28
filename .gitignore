@@ -36,6 +36,13 @@ yarn-error.log*
 
 # local one-off reports/backups
 /backup-before-*.sql
+/backup-before-*.dump
+/prod-sync-*.dump
+/missing-media.tar
+/local-media-list.txt
+/prod-media-list.txt
+/missing-media.txt
+/extra-local-media.txt
 /prod-db-sync-*
 /category-report.*
 /image-dedupe-report.md

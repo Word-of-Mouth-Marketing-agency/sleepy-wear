@@ -32,4 +32,8 @@ export class CreateVariantDto {
   @IsInt()
   @Min(0)
   stock = 0;
+
+  @IsOptional()
+  @IsString()
+  imageId?: string;
 }
