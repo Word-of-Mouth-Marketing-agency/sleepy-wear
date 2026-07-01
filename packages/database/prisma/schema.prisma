@@ -53,8 +53,48 @@ model AdminUser {
   name         String
   passwordHash String
   isActive     Boolean  @default(true)
+  pushDevices  AdminPushDevice[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model AdminPushDevice {
+  id          String   @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  deviceName String?
+  platform   String?
+  endpoint   String   @unique
+  p256dh      String
+  auth        String
+  enabled     Boolean  @default(true)
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  notificationLogs NotificationLog[]
+
+  @@index([adminUserId])
+  @@index([enabled])
+}
+
+model NotificationLog {
+  id           String   @id @default(cuid())
+  type         String
+  orderId      String?
+  adminUserId  String?
+  deviceId     String?
+  status       String
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  device AdminPushDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Customer {

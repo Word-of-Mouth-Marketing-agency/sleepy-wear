@@ -12,13 +12,17 @@ import {
   ProductStatus,
 } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { ListOrdersQueryDto } from "./dto/list-orders-query.dto";
 import { UpdateOrderDto } from "./dto/update-order.dto";
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async findAll(query: ListOrdersQueryDto) {
     const page = query.page ?? 1;
@@ -107,7 +111,7 @@ export class OrdersService {
       couponType = coupon.type;
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const order = await this.prisma.$transaction(async (tx) => {
       const variants = await tx.productVariant.findMany({
         where: { id: { in: variantIds } },
         include: { product: { include: { category: true } }, size: true, color: true },
@@ -246,6 +250,17 @@ export class OrdersService {
 
       return mapOrder(order);
     });
+
+    this.notificationsService
+      .sendNewOrderNotification(order.id)
+      .catch((error) => {
+        console.error("[notifications] failed to send new order notification", {
+          orderId: order.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+
+    return order;
   }
 
   async update(id: string, dto: UpdateOrderDto) {

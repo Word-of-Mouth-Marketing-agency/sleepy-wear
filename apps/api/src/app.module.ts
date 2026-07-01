@@ -6,7 +6,9 @@ import { CategoriesModule } from "./categories/categories.module";
 import { ColorsModule } from "./colors/colors.module";
 import { CouponsModule } from "./coupons/coupons.module";
 import { CustomersModule } from "./customers/customers.module";
+import { DashboardModule } from "./dashboard/dashboard.module";
 import { HealthModule } from "./health/health.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { OrdersModule } from "./orders/orders.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -28,8 +30,10 @@ import { UploadsModule } from "./uploads/uploads.module";
     SizesModule,
     ColorsModule,
     OrdersModule,
+    NotificationsModule,
     PaymentsModule,
     CustomersModule,
+    DashboardModule,
     CouponsModule,
     UploadsModule,
     SettingsModule,
