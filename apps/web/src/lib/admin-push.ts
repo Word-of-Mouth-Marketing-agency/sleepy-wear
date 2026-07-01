@@ -119,12 +119,17 @@ export async function getCurrentPushSubscription() {
 }
 
 export async function registerAdminPushDevice(input: RegisterDeviceInput) {
+  const subscriptionJson = input.subscription.toJSON();
+
   return adminFetch<AdminPushDevice>("/admin/notifications/devices/register", {
     method: "POST",
     body: JSON.stringify({
       deviceName: input.deviceName,
       platform: input.platform,
-      subscription: input.subscription.toJSON(),
+      subscription: {
+        endpoint: subscriptionJson.endpoint,
+        keys: subscriptionJson.keys,
+      },
     }),
   });
 }

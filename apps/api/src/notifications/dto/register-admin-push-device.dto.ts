@@ -26,6 +26,9 @@ class PushSubscriptionDto {
   @ValidateNested()
   @Type(() => PushSubscriptionKeysDto)
   keys: PushSubscriptionKeysDto;
+
+  @IsOptional()
+  expirationTime: unknown;
 }
 
 export class RegisterAdminPushDeviceDto {
