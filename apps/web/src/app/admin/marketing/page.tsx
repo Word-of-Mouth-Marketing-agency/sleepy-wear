@@ -54,42 +54,13 @@ export default function AdminMarketingPage() {
     const script = pixel.headScript.trim();
     const enabled = pixel.enabled;
 
-    if (!enabled || !script) {
-      const payload: MarketingPixelSettings = { enabled, headScript: script };
-      setSaving(true);
-      try {
-        const res = await fetch(`${API_URL}/settings/marketing_pixel`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", ...getAdminHeaders() },
-          body: JSON.stringify({ value: payload }),
-        });
-        if (!res.ok) throw new Error();
-        showMessage("success", "تم حفظ إعدادات التسويق بنجاح");
-      } catch {
-        showMessage("error", "فشل الحفظ");
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-
-    if (script.length > 12000) {
+    if (script.length > 20000) {
       showMessage("error", "كود Meta Pixel طويل جدًا");
       return;
     }
 
-    const hasFbq = /fbq\s*\(/.test(script);
-    const hasFacebookDomain =
-      /connect\.facebook\.net/.test(script) ||
-      /facebook\.com\/tr/.test(script);
-
-    if (!hasFbq || !hasFacebookDomain) {
-      showMessage("error", "كود Meta Pixel غير صالح — تأكد أن الكود يحتوي على fbq و connect.facebook.net");
-      return;
-    }
-
     const blockedDomains = /google-analytics|googletagmanager|gtag|tiktok\.com|snap\.chat|pinterest\.com|twitter\.com|linkedin\.com/i;
-    if (blockedDomains.test(script)) {
+    if (enabled && script && blockedDomains.test(script)) {
       showMessage("error", "هذا المكان مخصص لكود Meta Pixel فقط. لا تضف أكواد أخرى.");
       return;
     }
@@ -105,13 +76,18 @@ export default function AdminMarketingPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        const errMsg = typeof body?.message === "string" ? body.message : "فشل الحفظ";
-        showMessage("error", errMsg);
+        const serverMsg =
+          typeof body?.message === "string"
+            ? body.message
+            : Array.isArray(body?.message)
+              ? body.message.join("، ")
+              : `خطأ ${res.status}`;
+        showMessage("error", serverMsg);
         return;
       }
       showMessage("success", "تم حفظ إعدادات التسويق بنجاح");
-    } catch {
-      showMessage("error", "فشل الحفظ");
+    } catch (e) {
+      showMessage("error", e instanceof Error ? e.message : "فشل الاتصال بالخادم");
     } finally {
       setSaving(false);
     }
