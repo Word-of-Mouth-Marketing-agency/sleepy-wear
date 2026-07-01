@@ -11,6 +11,7 @@ const PUBLIC_KEYS = [
   "site_notice",
   "site_footer_text",
   "site_social_links",
+  "marketing_pixel",
 ];
 
 const DEFAULT_SETTINGS: Record<string, unknown> = {
@@ -75,6 +76,7 @@ const DEFAULT_SETTINGS: Record<string, unknown> = {
   name: "SleepyWear",
   domain: "sleepyweareg.com",
   currency: "EGP",
+  marketing_pixel: { enabled: false, pixelId: "" },
 };
 
 @Injectable()

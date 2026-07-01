@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Bell,
+  Megaphone,
 } from "lucide-react";
 import { AdminPwaBootstrap } from "@/components/admin/AdminPwaBootstrap";
 
@@ -29,6 +30,7 @@ const NAV = [
   { href: "/admin/users", label: "المستخدمين", icon: Users },
   { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings, exact: true },
   { href: "/admin/settings/notifications", label: "الإشعارات", icon: Bell, exact: true },
+  { href: "/admin/marketing", label: "التسويق", icon: Megaphone },
   { href: "/admin/pages", label: "الصفحات", icon: FileText },
   { href: "/admin/shipping", label: "الشحن", icon: Truck },
 ];
