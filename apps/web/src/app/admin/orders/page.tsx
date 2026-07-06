@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Order, PaginatedResponse } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { API_URL, getAdminHeaders } from "@/lib/api";
@@ -25,6 +26,7 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function AdminOrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<PaginatedResponse<Order> | null>(null);
   const [error, setError] = useState(false);
 
@@ -33,12 +35,22 @@ export default function AdminOrdersPage() {
       headers: { Accept: "application/json", ...getAdminHeaders() },
     })
       .then((r) => {
-        if (!r.ok) throw new Error();
+        if (!r.ok) {
+          if (r.status === 401) throw Object.assign(new Error(), { status: 401 });
+          throw new Error();
+        }
         return r.json() as Promise<PaginatedResponse<Order>>;
       })
       .then(setOrders)
-      .catch(() => setError(true));
-  }, []);
+      .catch((err: unknown) => {
+        if (err instanceof Error && "status" in err && (err as any).status === 401) {
+          localStorage.removeItem("admin_token");
+          router.replace("/admin/login");
+          return;
+        }
+        setError(true);
+      });
+  }, [router]);
 
   return (
     <PageShell

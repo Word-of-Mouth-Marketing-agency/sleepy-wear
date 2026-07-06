@@ -68,7 +68,7 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
         : Array.isArray(body?.message)
           ? body.message.join("، ")
           : `API request failed: ${response.status}`;
-    throw new Error(message);
+    throw new Error(`HTTP ${response.status}: ${message}`);
   }
 
   return response.json() as Promise<T>;

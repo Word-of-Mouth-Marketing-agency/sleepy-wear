@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArrowUpLeft,
@@ -29,14 +30,25 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function AdminPage() {
+  const router = useRouter();
   const [summary, setSummary] = useState<AdminDashboardSummary | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     getAdminDashboardSummary()
       .then(setSummary)
-      .catch(() => setError(true));
-  }, []);
+      .catch((err: unknown) => {
+        if (
+          err instanceof Error &&
+          err.message.startsWith("HTTP 401")
+        ) {
+          localStorage.removeItem("admin_token");
+          router.replace("/admin/login");
+          return;
+        }
+        setError(true);
+      });
+  }, [router]);
 
   const cards = [
     {

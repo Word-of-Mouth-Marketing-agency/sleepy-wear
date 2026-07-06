@@ -56,14 +56,22 @@ export default function AdminOrderDetailPage() {
       const res = await fetch(`${API_URL}/orders/${params.id}`, {
         headers: { Accept: "application/json", ...getAdminHeaders() },
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        if (res.status === 401) throw Object.assign(new Error(), { status: 401 });
+        throw new Error();
+      }
       setOrder((await res.json()) as Order);
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof Error && "status" in err && (err as any).status === 401) {
+        localStorage.removeItem("admin_token");
+        router.replace("/admin/login");
+        return;
+      }
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [params.id, router]);
 
   useEffect(() => {
     fetchOrder();
@@ -82,10 +90,18 @@ export default function AdminOrderDetailPage() {
         },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error("تعذر تحديث حالة الطلب.");
+      if (!res.ok) {
+        if (res.status === 401) throw Object.assign(new Error(), { status: 401 });
+        throw new Error("تعذر تحديث حالة الطلب.");
+      }
       setSaveSuccess(true);
       fetchOrder();
     } catch (caught) {
+      if (caught instanceof Error && "status" in caught && (caught as any).status === 401) {
+        localStorage.removeItem("admin_token");
+        router.replace("/admin/login");
+        return;
+      }
       setSaveError(
         caught instanceof Error ? caught.message : "تعذر تحديث حالة الطلب.",
       );
@@ -104,12 +120,18 @@ export default function AdminOrderDetailPage() {
         headers: { ...getAdminHeaders() },
       });
       if (!res.ok) {
+        if (res.status === 401) throw Object.assign(new Error(), { status: 401 });
         const body = await res.json().catch(() => null);
         throw new Error(body?.message ?? "تعذر حذف الطلب.");
       }
       router.push("/admin/orders");
       router.refresh();
     } catch (caught) {
+      if (caught instanceof Error && "status" in caught && (caught as any).status === 401) {
+        localStorage.removeItem("admin_token");
+        router.replace("/admin/login");
+        return;
+      }
       setSaveError(
         caught instanceof Error ? caught.message : "تعذر حذف الطلب.",
       );
