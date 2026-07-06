@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowUpLeft,
   Bell,
@@ -29,32 +29,84 @@ const statusLabels: Record<string, string> = {
   CANCELLED: "ملغي",
 };
 
+type Preset = "today" | "yesterday" | "this_week" | "this_month" | "custom";
+
+const PRESETS: { value: Preset; label: string }[] = [
+  { value: "today", label: "اليوم" },
+  { value: "yesterday", label: "أمس" },
+  { value: "this_week", label: "هذا الأسبوع" },
+  { value: "this_month", label: "هذا الشهر" },
+  { value: "custom", label: "فترة مخصصة" },
+];
+
+const PERIOD_LABELS: Record<Preset, string> = {
+  today: "إحصائيات اليوم",
+  yesterday: "إحصائيات أمس",
+  this_week: "إحصائيات هذا الأسبوع",
+  this_month: "إحصائيات هذا الشهر",
+  custom: "إحصائيات الفترة المخصصة",
+};
+
+function todayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [summary, setSummary] = useState<AdminDashboardSummary | null>(null);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [preset, setPreset] = useState<Preset>("today");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+
+  const fetchSummary = useCallback(
+    (signal?: AbortSignal) => {
+      setError(false);
+      setLoading(true);
+
+      const params: { preset?: string; from?: string; to?: string } = {};
+
+      if (preset === "custom") {
+        if (customFrom) params.from = customFrom;
+        if (customTo) params.to = customTo;
+      } else {
+        params.preset = preset;
+      }
+
+      getAdminDashboardSummary(params)
+        .then(setSummary)
+        .catch((err: unknown) => {
+          if (err instanceof Error && err.name === "AbortError") return;
+          if (
+            err instanceof Error &&
+            err.message.startsWith("HTTP 401")
+          ) {
+            localStorage.removeItem("admin_token");
+            router.replace("/admin/login");
+            return;
+          }
+          setError(true);
+        })
+        .finally(() => setLoading(false));
+    },
+    [preset, customFrom, customTo, router],
+  );
 
   useEffect(() => {
-    getAdminDashboardSummary()
-      .then(setSummary)
-      .catch((err: unknown) => {
-        if (
-          err instanceof Error &&
-          err.message.startsWith("HTTP 401")
-        ) {
-          localStorage.removeItem("admin_token");
-          router.replace("/admin/login");
-          return;
-        }
-        setError(true);
-      });
-  }, [router]);
+    fetchSummary();
+  }, [fetchSummary]);
+
+  const handlePresetChange = (p: Preset) => {
+    setPreset(p);
+  };
 
   const cards = [
     {
-      label: "طلبات اليوم",
-      value: summary?.todayOrders ?? "-",
-      hint: "كل الطلبات الجديدة اليوم",
+      label: "طلبات الفترة",
+      value: loading ? "..." : summary?.periodOrders ?? "-",
+      hint: "كل الطلبات في الفترة المحددة",
       icon: ShoppingCart,
       tone: "pink" as const,
     },
@@ -80,26 +132,37 @@ export default function AdminPage() {
       tone: "red" as const,
     },
     {
-      label: "قيمة طلبات اليوم",
-      value: formatMoney(summary?.todayOrderValue),
+      label: "قيمة طلبات الفترة",
+      value: loading ? "..." : formatMoney(summary?.periodOrderValue),
       hint: "بدون الطلبات الملغية",
       icon: ReceiptText,
       tone: "blue" as const,
     },
     {
-      label: "إيراد مدفوع اليوم",
-      value: formatMoney(summary?.paidRevenueToday),
+      label: "إيراد مدفوع الفترة",
+      value: loading ? "..." : formatMoney(summary?.periodPaidRevenue),
       hint: "الطلبات المدفوعة فقط",
       icon: CreditCard,
       tone: "black" as const,
     },
   ];
 
+  const periodDescription =
+    preset === "custom"
+      ? customFrom && customTo
+        ? `إحصائيات من ${customFrom} إلى ${customTo}`
+        : customFrom
+          ? `إحصائيات من ${customFrom}`
+          : customTo
+            ? `إحصائيات حتى ${customTo}`
+            : "فترة مخصصة"
+      : PERIOD_LABELS[preset];
+
   return (
     <PageShell
       title="لوحة الإدارة"
       eyebrow="متابعة الطلبات"
-      description="واجهة سريعة للهاتف لمراقبة الطلبات والإشعارات بعد تثبيت لوحة الإدارة كتطبيق."
+      description={periodDescription}
       noContainer
       surface="plain"
       actions={
@@ -112,9 +175,60 @@ export default function AdminPage() {
         </Link>
       }
     >
+      <div className="mb-4 rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm">
+        <p className="mb-2 text-xs font-bold text-[var(--muted)]">
+          فلترة الإحصائيات
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <div className="inline-flex flex-wrap rounded-xl border border-[var(--line)] bg-[var(--bg-soft)] p-1">
+            {PRESETS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={preset === opt.value}
+                onClick={() => handlePresetChange(opt.value)}
+                className={`rounded-lg px-3 py-2 text-sm font-bold transition sm:px-4 ${
+                  preset === opt.value
+                    ? "bg-brand-pink text-white shadow-sm"
+                    : "text-[var(--muted)] hover:text-[var(--fg)]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {preset === "custom" && (
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-[var(--muted)]">من</label>
+                <input
+                  type="date"
+                  value={customFrom}
+                  max={customTo || todayDateString()}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="rounded-xl border border-[var(--line)] bg-white px-3 py-1.5 text-xs font-bold shadow-sm focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/20"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-[var(--muted)]">إلى</label>
+                <input
+                  type="date"
+                  value={customTo}
+                  min={customFrom || undefined}
+                  max={todayDateString()}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="rounded-xl border border-[var(--line)] bg-white px-3 py-1.5 text-xs font-bold shadow-sm focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/20"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          تعذر تحميل ملخص لوحة الإدارة.
+          تعذر تحميل الإحصائيات.
         </div>
       ) : null}
 

@@ -23,12 +23,12 @@ export type NotificationLog = {
 };
 
 export type AdminDashboardSummary = {
-  todayOrders: number;
+  periodOrders: number;
+  periodOrderValue: number;
+  periodPaidRevenue: number;
   pendingOrders: number;
   paidOrders: number;
   cancelledOrders: number;
-  todayOrderValue: number;
-  paidRevenueToday: number;
   latestOrders: Array<{
     id: string;
     orderNumber: string;
@@ -185,8 +185,19 @@ export async function listNotificationLogs() {
   return adminFetch<NotificationLog[]>("/admin/notifications/logs");
 }
 
-export async function getAdminDashboardSummary() {
-  return adminFetch<AdminDashboardSummary>("/admin/dashboard/summary");
+export async function getAdminDashboardSummary(params?: {
+  preset?: string;
+  from?: string;
+  to?: string;
+}) {
+  const qs = new URLSearchParams();
+  if (params?.preset) qs.set("preset", params.preset);
+  if (params?.from) qs.set("from", params.from);
+  if (params?.to) qs.set("to", params.to);
+  const path = qs.toString()
+    ? `/admin/dashboard/summary?${qs.toString()}`
+    : "/admin/dashboard/summary";
+  return adminFetch<AdminDashboardSummary>(path);
 }
 
 export function getBrowserDeviceName() {
