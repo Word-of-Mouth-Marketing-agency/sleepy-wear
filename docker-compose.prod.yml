@@ -44,8 +44,11 @@ services:
       dockerfile: docker/web.Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=https://sleepyweareg.com/api
+        - API_INTERNAL_URL=http://api:4000/api
     restart: unless-stopped
     env_file: .env.production
+    environment:
+      - API_INTERNAL_URL=http://api:4000/api
     depends_on:
       - api
     ports:
