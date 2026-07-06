@@ -2,12 +2,53 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
+
+type TrackingData = {
+  orderId: string;
+  orderNumber: string;
+  total: number;
+  currency: string;
+  itemCount: number;
+  contentIds: string[];
+};
+
+const STORAGE_KEY = "sleepywear_purchase_tracked";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
+  const [tracking, setTracking] = useState<TrackingData | null>(null);
+
+  useEffect(() => {
+    if (!orderNumber) return;
+
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored === orderNumber) return;
+
+    fetch(`/api/orders/success/${encodeURIComponent(orderNumber)}`, {
+      headers: { Accept: "application/json" },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json() as Promise<TrackingData>;
+      })
+      .then((data) => {
+        setTracking(data);
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "Purchase", {
+            value: data.total,
+            currency: data.currency,
+            content_ids: data.contentIds,
+            content_type: "product",
+            num_items: data.itemCount,
+          });
+        }
+        sessionStorage.setItem(STORAGE_KEY, orderNumber);
+      })
+      .catch(() => {});
+  }, [orderNumber]);
 
   return (
     <div className="container py-12 sm:py-16">
@@ -22,6 +63,11 @@ function SuccessContent() {
           <p className="mt-3 text-[var(--muted)]">
             رقم الطلب:{" "}
             <span className="font-black text-brand-pink">{orderNumber}</span>
+          </p>
+        ) : null}
+        {tracking ? (
+          <p className="mt-1 text-base font-extrabold text-brand-black">
+            إجمالي الطلب: {Math.round(tracking.total).toLocaleString("ar-EG")} ج.م
           </p>
         ) : null}
         <p className="mt-2 text-sm text-[var(--muted)]">

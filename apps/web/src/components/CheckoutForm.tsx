@@ -131,10 +131,24 @@ export function CheckoutForm() {
     const form = new FormData(event.currentTarget);
     const cityId = String(form.get("shippingCityId") ?? "");
     const city = shippingCities.find((c) => c.id === cityId);
+
+    const phone = String(form.get("phone") ?? "").trim();
+    if (!/^01[0-9]{9}$/.test(phone)) {
+      setError("رقم الهاتف غير صالح");
+      return;
+    }
+
+    const emailRaw = String(form.get("email") ?? "").trim();
+    const email = emailRaw || undefined;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("البريد الإلكتروني غير صالح");
+      return;
+    }
+
     const payload: CreateOrderInput = {
       customerName: String(form.get("customerName") ?? ""),
-      phone: String(form.get("phone") ?? ""),
-      email: String(form.get("email") ?? "").trim() || undefined,
+      phone,
+      email,
       address: String(form.get("address") ?? ""),
       city: city?.nameAr ?? "",
       shippingCityId: cityId || undefined,

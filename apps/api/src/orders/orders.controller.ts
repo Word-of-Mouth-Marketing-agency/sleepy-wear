@@ -26,6 +26,11 @@ export class OrdersController {
     return this.ordersService.findAll(query);
   }
 
+  @Get("success/:orderNumber")
+  getSuccessTracking(@Param("orderNumber") orderNumber: string) {
+    return this.ordersService.getSuccessTracking(orderNumber);
+  }
+
   @UseGuards(AdminGuard)
   @Get(":id")
   findOne(@Param("id") id: string) {

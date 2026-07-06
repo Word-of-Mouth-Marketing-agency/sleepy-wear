@@ -84,6 +84,31 @@ export class OrdersService {
     return mapOrder(order);
   }
 
+  async getSuccessTracking(orderNumber: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { orderNumber },
+      select: {
+        id: true,
+        orderNumber: true,
+        total: true,
+        items: {
+          select: { id: true, productId: true },
+        },
+      },
+    });
+
+    if (!order) throw new NotFoundException("Order not found");
+
+    return {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      total: order.total.toNumber(),
+      currency: "EGP",
+      itemCount: order.items.length,
+      contentIds: order.items.map((i) => i.productId).filter(Boolean),
+    };
+  }
+
   async create(dto: CreateOrderDto) {
     if (!dto.items.length)
       throw new BadRequestException("Order must include at least one item");
@@ -174,40 +199,7 @@ export class OrdersService {
         }
       }
 
-      const customer = await tx.customer.upsert({
-        where: { phone: dto.phone },
-        update: {
-          name: dto.customerName,
-          email: dto.email ?? null,
-          address: dto.address,
-          city: dto.city,
-        },
-        create: {
-          name: dto.customerName,
-          phone: dto.phone,
-          email: dto.email ?? null,
-          address: dto.address,
-          city: dto.city,
-        },
-      }).catch(async (err) => {
-        if (err?.code === "P2002" && dto.email) {
-          return tx.customer.upsert({
-            where: { phone: dto.phone },
-            update: {
-              name: dto.customerName,
-              address: dto.address,
-              city: dto.city,
-            },
-            create: {
-              name: dto.customerName,
-              phone: dto.phone,
-              address: dto.address,
-              city: dto.city,
-            },
-          });
-        }
-        throw err;
-      });
+      let customer = await matchCustomer(tx, dto);
 
       let subtotal = new Prisma.Decimal(0);
       const orderItems = variants.map((variant) => {
@@ -671,4 +663,72 @@ function mapOrder(order: OrderWithItems) {
 
 function createOrderNumber() {
   return `SW-${Date.now().toString(36).toUpperCase()}`;
+}
+
+async function matchCustomer(
+  tx: Prisma.TransactionClient,
+  dto: CreateOrderDto,
+) {
+  const email = dto.email?.trim().toLowerCase() || null;
+  const phone = dto.phone.trim();
+
+  if (email) {
+    const customerByEmail = await tx.customer.findFirst({
+      where: { email },
+    });
+
+    if (customerByEmail) {
+      return tx.customer.update({
+        where: { id: customerByEmail.id },
+        data: {
+          name: dto.customerName,
+          phone,
+          address: dto.address,
+          city: dto.city,
+        },
+      });
+    }
+  }
+
+  const customerByPhone = await tx.customer.findFirst({
+    where: { phone },
+  });
+
+  if (customerByPhone) {
+    if (email) {
+      const emailOwner = await tx.customer.findFirst({
+        where: { email, id: { not: customerByPhone.id } },
+        select: { id: true },
+      });
+      if (!emailOwner) {
+        return tx.customer.update({
+          where: { id: customerByPhone.id },
+          data: {
+            name: dto.customerName,
+            email,
+            address: dto.address,
+            city: dto.city,
+          },
+        });
+      }
+    }
+    return tx.customer.update({
+      where: { id: customerByPhone.id },
+      data: {
+        name: dto.customerName,
+        address: dto.address,
+        city: dto.city,
+      },
+    });
+  }
+
+  return tx.customer.create({
+    data: {
+      name: dto.customerName,
+      phone,
+      email,
+      address: dto.address,
+      city: dto.city,
+    },
+  });
 }
