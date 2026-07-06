@@ -6,6 +6,9 @@ packages/*/dist
 *.log
 *.dump
 *.sql
+.env
+.env.*
+!.env.example
 .git
 .agents
 .codex

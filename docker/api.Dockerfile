@@ -2,7 +2,7 @@ FROM node:24-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
-COPY .npmrc .env package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/api apps/api
 COPY packages packages
 RUN pnpm install --frozen-lockfile

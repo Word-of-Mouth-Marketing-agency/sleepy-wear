@@ -405,10 +405,11 @@ export class OrdersService {
     }
 
     const requestVariantIds = [...newQuantities.keys()];
+    const stockVariantIds = [...allVariantIds];
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const variants = await tx.productVariant.findMany({
-        where: { id: { in: requestVariantIds } },
+        where: { id: { in: stockVariantIds } },
         include: {
           product: {
             include: {
@@ -421,11 +422,20 @@ export class OrdersService {
         },
       });
 
-      if (variants.length !== requestVariantIds.length) {
+      if (variants.length !== stockVariantIds.length) {
         throw new NotFoundException("بعض المنتجات غير متوفرة");
       }
 
-      for (const variant of variants) {
+      const variantsById = new Map(
+        variants.map((variant) => [variant.id, variant]),
+      );
+      const requestedVariants = requestVariantIds.map((variantId) => {
+        const variant = variantsById.get(variantId);
+        if (!variant) throw new NotFoundException("بعض المنتجات غير متوفرة");
+        return variant;
+      });
+
+      for (const variant of requestedVariants) {
         if (
           variant.product.status !== ProductStatus.ACTIVE ||
           !variant.product.category.isActive
@@ -438,8 +448,9 @@ export class OrdersService {
         }
       }
 
-      for (const variant of variants) {
-        const delta = stockDeltas.get(variant.id) ?? 0;
+      for (const [variantId, delta] of stockDeltas) {
+        const variant = variantsById.get(variantId);
+        if (!variant) continue;
         if (delta === 0) continue;
 
         if (delta > 0) {
@@ -463,7 +474,7 @@ export class OrdersService {
       await tx.orderItem.deleteMany({ where: { orderId: id } });
 
       let subtotal = new Prisma.Decimal(0);
-      const newItems = variants.map((variant) => {
+      const newItems = requestedVariants.map((variant) => {
         const quantity = newQuantities.get(variant.id) ?? 0;
         const unitPrice = variant.salePrice ?? variant.price;
         const total = unitPrice.mul(quantity);

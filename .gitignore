@@ -35,6 +35,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # local one-off reports/backups
+*.dump
 /backup-before-*.sql
 /backup-before-*.dump
 /prod-sync-*.dump
