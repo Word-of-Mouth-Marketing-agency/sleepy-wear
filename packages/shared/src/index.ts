@@ -124,6 +124,15 @@ export type CreateOrderInput = {
   items: CreateOrderItemInput[];
 };
 
+export type EditOrderItemInput = {
+  variantId: string;
+  quantity: number;
+};
+
+export type EditOrderItemsInput = {
+  items: EditOrderItemInput[];
+};
+
 export type OrderItem = {
   id: string;
   productId?: string | null;
@@ -131,6 +140,8 @@ export type OrderItem = {
   productNameSnapshot: string;
   variantInfoSnapshot: string;
   skuSnapshot: string;
+  imageUrlSnapshot: string | null;
+  displayImageUrl: string | null;
   unitPriceSnapshot: number;
   quantity: number;
   total: number;

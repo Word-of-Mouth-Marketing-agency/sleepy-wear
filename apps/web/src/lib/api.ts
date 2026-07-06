@@ -1,4 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+const API_INTERNAL_URL =
+  process.env.API_INTERNAL_URL ?? API_URL;
 
 function getAdminHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -7,7 +9,8 @@ function getAdminHeaders(): Record<string, string> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const baseUrl = typeof window === "undefined" ? API_INTERNAL_URL : API_URL;
+  const response = await fetch(`${baseUrl}${path}`, {
     headers: { Accept: "application/json" },
     next: { revalidate: 30 },
   });
@@ -17,6 +20,20 @@ export async function apiGet<T>(path: string): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T | null> {
+  const baseUrl = typeof window === "undefined" ? API_INTERNAL_URL : API_URL;
+  try {
+    const response = await fetch(`${baseUrl}${path}`, {
+      headers: { Accept: "application/json" },
+      ...init,
+    });
+    if (!response.ok) return null;
+    return response.json() as Promise<T>;
+  } catch {
+    return null;
+  }
 }
 
 export async function apiPost<TResponse, TBody>(

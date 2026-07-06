@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type {
   CouponValidationResult,
   CreateOrderInput,
@@ -19,12 +20,17 @@ const inputClass =
   "w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors placeholder:text-[var(--muted)] focus:border-brand-pink focus:ring-2 focus:ring-brand-pink/15";
 
 export function CheckoutForm() {
+  const router = useRouter();
   const items = useCartStore((state) => state.items);
   const clear = useCartStore((state) => state.clear);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [isRedirectingToSuccess, setIsRedirectingToSuccess] = useState(false);
+  const [checkoutNotice, setCheckoutNotice] = useState<{
+    text: string;
+    enabled: boolean;
+  } | null>(null);
   const [shippingCities, setShippingCities] = useState<ShippingCity[]>([]);
   const [selectedCityId, setSelectedCityId] = useState("");
   const [shippingPrice, setShippingPrice] = useState(0);
@@ -45,6 +51,18 @@ export function CheckoutForm() {
   useEffect(() => {
     apiGet<ShippingCity[]>("/shipping-cities")
       .then(setShippingCities)
+      .catch(() => {});
+    fetch(`${API_URL}/settings`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    })
+      .then((r) => r.json())
+      .then((data: Record<string, unknown>) => {
+        const notice = data.checkout_notice as
+          | { text: string; enabled: boolean }
+          | undefined;
+        if (notice) setCheckoutNotice(notice);
+      })
       .catch(() => {});
   }, []);
 
@@ -78,28 +96,12 @@ export function CheckoutForm() {
     }
   }
 
-  if (orderNumber) {
+  if (isRedirectingToSuccess) {
     return (
-      <div className="mx-auto max-w-xl rounded-3xl border border-green-100 bg-green-50 px-6 py-12 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl text-green-700 shadow-sm">
-          ✓
-        </div>
-        <h2 className="mt-5 text-2xl font-black text-brand-black">
-          تم استلام طلبك
-        </h2>
-        <p className="mt-3 text-[var(--muted)]">
-          رقم الطلب:{" "}
-          <span className="font-black text-brand-pink">{orderNumber}</span>
+      <div className="mx-auto max-w-xl rounded-3xl border border-brand-pink/20 bg-brand-light-pink/30 px-6 py-12 text-center">
+        <p className="text-lg font-black text-brand-black">
+          جاري تأكيد الطلب...
         </p>
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          سنتواصل معك قريباً لتأكيد الطلب وتفاصيل الشحن.
-        </p>
-        <Link
-          className="mt-6 inline-flex rounded-full bg-brand-pink px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-blue"
-          href="/products"
-        >
-          تصفح المزيد من المنتجات
-        </Link>
       </div>
     );
   }
@@ -132,7 +134,7 @@ export function CheckoutForm() {
     const payload: CreateOrderInput = {
       customerName: String(form.get("customerName") ?? ""),
       phone: String(form.get("phone") ?? ""),
-      email: String(form.get("email") ?? "") || undefined,
+      email: String(form.get("email") ?? "").trim() || undefined,
       address: String(form.get("address") ?? ""),
       city: city?.nameAr ?? "",
       shippingCityId: cityId || undefined,
@@ -160,11 +162,9 @@ export function CheckoutForm() {
         return;
       }
 
+      setIsRedirectingToSuccess(true);
       clear();
-      setOrderNumber(order.orderNumber);
-      setMessage(
-        `تم إنشاء الطلب ${order.orderNumber} بقيمة ${order.total} جنيه.`,
-      );
+      router.replace(`/checkout/success?orderNumber=${encodeURIComponent(order.orderNumber)}`);
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "تعذر إنشاء الطلب.",
@@ -406,6 +406,15 @@ export function CheckoutForm() {
             <span>الإجمالي</span>
             <span className="text-brand-pink">{total} ج</span>
           </div>
+          {checkoutNotice?.enabled && checkoutNotice.text ? (
+            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-5 text-amber-800">
+              {checkoutNotice.text}
+            </p>
+          ) : (
+            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-5 text-amber-800">
+              يتم دفع ديبوزت قبل الشحن: 50 ج.م داخل القاهرة، و100 ج.م لباقي المحافظات.
+            </p>
+          )}
         </div>
       </aside>
     </div>

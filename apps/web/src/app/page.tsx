@@ -5,7 +5,7 @@ import { MarqueeBanner } from "@/components/site/MarqueeBanner";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { CategorySlider } from "@/components/site/CategorySlider";
 import { ProductCard } from "@/components/site/ProductCard";
-import { API_URL, apiGet } from "@/lib/api";
+import { apiGet, apiFetch } from "@/lib/api";
 
 type ReasonItem = {
   title: string;
@@ -67,26 +67,12 @@ const REASON_ICONS: Record<string, React.ReactNode> = {
 };
 
 async function getSettings() {
-  try {
-    const res = await fetch(`${API_URL}/settings`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: 30 },
-    });
-    if (!res.ok) throw new Error();
-    return (await res.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+  return apiFetch<Record<string, unknown>>("/settings");
 }
 
 export default async function HomePage() {
   const [categoriesRes, productsRes, settings] = await Promise.all([
-    fetch(`${API_URL}/categories`, {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    })
-      .then((r) => (r.ok ? (r.json() as Promise<Category[]>) : null))
-      .catch(() => null),
+    apiFetch<Category[]>("/categories"),
     apiGet<PaginatedResponse<Product>>("/products?limit=20").catch(() => null),
     getSettings(),
   ]);

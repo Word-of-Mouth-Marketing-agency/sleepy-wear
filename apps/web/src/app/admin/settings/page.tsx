@@ -10,6 +10,7 @@ const inputClass =
 type NoticeSettings = { text: string; enabled: boolean };
 type FooterSettings = { description: string };
 type SocialSettings = { facebook: string; instagram: string; tiktok: string; telegram: string };
+type CheckoutNoticeSettings = { text: string; enabled: boolean };
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,7 @@ export default function AdminSettingsPage() {
   const [notice, setNotice] = useState<NoticeSettings>({ text: "", enabled: true });
   const [footer, setFooter] = useState<FooterSettings>({ description: "" });
   const [social, setSocial] = useState<SocialSettings>({ facebook: "", instagram: "", tiktok: "", telegram: "" });
+  const [checkoutNotice, setCheckoutNotice] = useState<CheckoutNoticeSettings>({ text: "", enabled: true });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -32,6 +34,7 @@ export default function AdminSettingsPage() {
       if (settings.site_notice) setNotice(settings.site_notice as NoticeSettings);
       if (settings.site_footer_text) setFooter(settings.site_footer_text as FooterSettings);
       if (settings.site_social_links) setSocial(settings.site_social_links as SocialSettings);
+      if (settings.checkout_notice) setCheckoutNotice(settings.checkout_notice as CheckoutNoticeSettings);
     } catch {
       setMessage({ type: "error", text: "تعذر تحميل الإعدادات." });
     } finally {
@@ -94,6 +97,22 @@ export default function AdminSettingsPage() {
             </label>
           </div>
           <button onClick={() => saveSetting("site_notice", notice)} disabled={saving} type="button" className="mt-4 rounded-full bg-brand-pink px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-pink/90 disabled:opacity-50">حفظ</button>
+        </section>
+
+        {/* Checkout notice */}
+        <section className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-brand-pink">Checkout</p>
+          <h2 className="mb-4 text-xl font-extrabold">إشعار صفحة الدفع</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="نص إشعار الدفع" className="sm:col-span-2">
+              <textarea className={`${inputClass} min-h-20 resize-y leading-7`} value={checkoutNotice.text} onChange={(e) => setCheckoutNotice({ ...checkoutNotice, text: e.target.value })} placeholder="نص الإشعار في صفحة الدفع" maxLength={500} />
+            </Field>
+            <label className="flex items-center gap-3 pb-1">
+              <input type="checkbox" checked={checkoutNotice.enabled} onChange={(e) => setCheckoutNotice({ ...checkoutNotice, enabled: e.target.checked })} className="h-4 w-4 accent-brand-pink" />
+              <span className="text-sm font-bold">تفعيل إشعار الدفع</span>
+            </label>
+          </div>
+          <button onClick={() => saveSetting("checkout_notice", checkoutNotice)} disabled={saving} type="button" className="mt-4 rounded-full bg-brand-pink px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-pink/90 disabled:opacity-50">حفظ</button>
         </section>
 
         {/* Footer text */}

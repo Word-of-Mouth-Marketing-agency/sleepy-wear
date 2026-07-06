@@ -14,8 +14,14 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { EditOrderItemsDto } from "./dto/edit-order-items.dto";
 import { ListOrdersQueryDto } from "./dto/list-orders-query.dto";
 import { UpdateOrderDto } from "./dto/update-order.dto";
+import {
+  resolveOrderItemImage,
+  type ResolverImage,
+  type ResolverVariant,
+} from "./order-item-image-resolver";
 
 @Injectable()
 export class OrdersService {
@@ -27,17 +33,37 @@ export class OrdersService {
   async findAll(query: ListOrdersQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    const where: Prisma.OrderWhereInput = query.status
-      ? { status: query.status }
-      : {};
+
+    if (query.from && query.to) {
+      const from = new Date(query.from);
+      const to = new Date(query.to);
+      if (from >= to) {
+        throw new BadRequestException(
+          "from must be earlier than to",
+        );
+      }
+    }
+
+    const where: Prisma.OrderWhereInput = {};
+
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    if (query.from || query.to) {
+      where.createdAt = {
+        ...(query.from ? { gte: new Date(query.from) } : {}),
+        ...(query.to ? { lt: new Date(query.to) } : {}),
+      };
+    }
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.order.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: (page - 1) * limit,
         take: limit,
-        include: { items: true, customer: true },
+        include: orderReadInclude,
       }),
       this.prisma.order.count({ where }),
     ]);
@@ -51,7 +77,7 @@ export class OrdersService {
   async findOne(id: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: { items: true, customer: true },
+      include: orderReadInclude,
     });
 
     if (!order) throw new NotFoundException("Order not found");
@@ -114,7 +140,16 @@ export class OrdersService {
     const order = await this.prisma.$transaction(async (tx) => {
       const variants = await tx.productVariant.findMany({
         where: { id: { in: variantIds } },
-        include: { product: { include: { category: true } }, size: true, color: true },
+        include: {
+          product: {
+            include: {
+              category: true,
+              images: { orderBy: { sortOrder: "asc" } },
+            },
+          },
+          size: true,
+          color: true,
+        },
       });
 
       if (variants.length !== variantIds.length) {
@@ -143,17 +178,35 @@ export class OrdersService {
         where: { phone: dto.phone },
         update: {
           name: dto.customerName,
-          email: dto.email,
+          email: dto.email ?? null,
           address: dto.address,
           city: dto.city,
         },
         create: {
           name: dto.customerName,
           phone: dto.phone,
-          email: dto.email,
+          email: dto.email ?? null,
           address: dto.address,
           city: dto.city,
         },
+      }).catch(async (err) => {
+        if (err?.code === "P2002" && dto.email) {
+          return tx.customer.upsert({
+            where: { phone: dto.phone },
+            update: {
+              name: dto.customerName,
+              address: dto.address,
+              city: dto.city,
+            },
+            create: {
+              name: dto.customerName,
+              phone: dto.phone,
+              address: dto.address,
+              city: dto.city,
+            },
+          });
+        }
+        throw err;
       });
 
       let subtotal = new Prisma.Decimal(0);
@@ -163,6 +216,24 @@ export class OrdersService {
         const total = unitPrice.mul(quantity);
         subtotal = subtotal.add(total);
 
+        const resolverVariant: ResolverVariant = {
+          id: variant.id,
+          sku: variant.sku,
+          colorId: variant.colorId,
+        };
+        const resolverImages: ResolverImage[] = variant.product.images.map(
+          (img) => ({
+            id: img.id,
+            url: img.url,
+            variantId: img.variantId,
+            colorId: img.colorId,
+            altAr: img.altAr,
+            altEn: img.altEn,
+            sortOrder: img.sortOrder,
+            createdAt: img.createdAt,
+          }),
+        );
+
         return {
           productId: variant.productId,
           variantId: variant.id,
@@ -171,6 +242,10 @@ export class OrdersService {
             .filter(Boolean)
             .join(" / "),
           skuSnapshot: variant.sku,
+          imageUrlSnapshot: resolveOrderItemImage(
+            resolverVariant,
+            resolverImages,
+          ),
           unitPriceSnapshot: unitPrice,
           quantity,
           total,
@@ -245,7 +320,7 @@ export class OrdersService {
           couponDiscount: discountTotal,
           items: { create: orderItems },
         },
-        include: { items: true, customer: true },
+        include: orderReadInclude,
       });
 
       return mapOrder(order);
@@ -268,7 +343,7 @@ export class OrdersService {
     const order = await this.prisma.order.update({
       where: { id },
       data: dto,
-      include: { items: true, customer: true },
+      include: orderReadInclude,
     });
     return mapOrder(order);
   }
@@ -278,6 +353,203 @@ export class OrdersService {
     await this.prisma.order.delete({ where: { id } });
     return { id, deleted: true };
   }
+
+  async editItems(id: string, dto: EditOrderItemsDto) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+
+    if (!order) throw new NotFoundException("Order not found");
+
+    const editableStatuses: OrderStatus[] = [
+      OrderStatus.PENDING,
+      OrderStatus.CONFIRMED,
+      OrderStatus.PROCESSING,
+    ];
+
+    if (!editableStatuses.includes(order.status)) {
+      throw new BadRequestException(
+        "لا يمكن تعديل هذا الطلب في حالته الحالية",
+      );
+    }
+
+    const newQuantities = new Map<string, number>();
+    for (const item of dto.items) {
+      newQuantities.set(
+        item.variantId,
+        (newQuantities.get(item.variantId) ?? 0) + item.quantity,
+      );
+    }
+
+    const oldQuantities = new Map<string, number>();
+    for (const item of order.items) {
+      if (item.variantId) {
+        oldQuantities.set(
+          item.variantId,
+          (oldQuantities.get(item.variantId) ?? 0) + item.quantity,
+        );
+      }
+    }
+
+    const allVariantIds = new Set([
+      ...oldQuantities.keys(),
+      ...newQuantities.keys(),
+    ]);
+
+    const stockDeltas = new Map<string, number>();
+    for (const vid of allVariantIds) {
+      const oldQty = oldQuantities.get(vid) ?? 0;
+      const newQty = newQuantities.get(vid) ?? 0;
+      stockDeltas.set(vid, newQty - oldQty);
+    }
+
+    const requestVariantIds = [...newQuantities.keys()];
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const variants = await tx.productVariant.findMany({
+        where: { id: { in: requestVariantIds } },
+        include: {
+          product: {
+            include: {
+              category: true,
+              images: { orderBy: { sortOrder: "asc" } },
+            },
+          },
+          size: true,
+          color: true,
+        },
+      });
+
+      if (variants.length !== requestVariantIds.length) {
+        throw new NotFoundException("بعض المنتجات غير متوفرة");
+      }
+
+      for (const variant of variants) {
+        if (
+          variant.product.status !== ProductStatus.ACTIVE ||
+          !variant.product.category.isActive
+        ) {
+          throw new BadRequestException(OUT_OF_STOCK_MESSAGE);
+        }
+        const delta = stockDeltas.get(variant.id) ?? 0;
+        if (delta > 0 && variant.stock < delta) {
+          throw new BadRequestException(INSUFFICIENT_STOCK_MESSAGE);
+        }
+      }
+
+      for (const variant of variants) {
+        const delta = stockDeltas.get(variant.id) ?? 0;
+        if (delta === 0) continue;
+
+        if (delta > 0) {
+          const result = await tx.productVariant.updateMany({
+            where: { id: variant.id, stock: { gte: delta } },
+            data: { stock: { decrement: delta } },
+          });
+          if (result.count !== 1) {
+            throw new BadRequestException(
+              "الكمية المطلوبة غير متوفرة",
+            );
+          }
+        } else {
+          await tx.productVariant.update({
+            where: { id: variant.id },
+            data: { stock: { increment: -delta } },
+          });
+        }
+      }
+
+      await tx.orderItem.deleteMany({ where: { orderId: id } });
+
+      let subtotal = new Prisma.Decimal(0);
+      const newItems = variants.map((variant) => {
+        const quantity = newQuantities.get(variant.id) ?? 0;
+        const unitPrice = variant.salePrice ?? variant.price;
+        const total = unitPrice.mul(quantity);
+        subtotal = subtotal.add(total);
+
+        const resolverVariant: ResolverVariant = {
+          id: variant.id,
+          sku: variant.sku,
+          colorId: variant.colorId,
+        };
+        const resolverImages: ResolverImage[] = variant.product.images.map(
+          (img) => ({
+            id: img.id,
+            url: img.url,
+            variantId: img.variantId,
+            colorId: img.colorId,
+            altAr: img.altAr,
+            altEn: img.altEn,
+            sortOrder: img.sortOrder,
+            createdAt: img.createdAt,
+          }),
+        );
+
+        return {
+          productId: variant.productId,
+          variantId: variant.id,
+          productNameSnapshot: variant.product.nameAr,
+          variantInfoSnapshot: [variant.size?.labelAr, variant.color?.nameAr]
+            .filter(Boolean)
+            .join(" / "),
+          skuSnapshot: variant.sku,
+          imageUrlSnapshot: resolveOrderItemImage(
+            resolverVariant,
+            resolverImages,
+          ),
+          unitPriceSnapshot: unitPrice,
+          quantity,
+          total,
+        };
+      });
+
+      let discountTotal = new Prisma.Decimal(order.discountTotal);
+      let couponDiscount = order.couponDiscount
+        ? new Prisma.Decimal(order.couponDiscount)
+        : undefined;
+
+      if (order.couponId) {
+        const coupon = await tx.coupon.findUnique({
+          where: { id: order.couponId },
+        });
+        if (coupon && coupon.isActive) {
+          if (coupon.type === CouponType.FREE_DELIVERY) {
+            discountTotal = new Prisma.Decimal(0);
+            couponDiscount = new Prisma.Decimal(0);
+          } else if (coupon.type === CouponType.FIXED) {
+            discountTotal = Prisma.Decimal.min(coupon.value, subtotal);
+            couponDiscount = discountTotal;
+          } else if (coupon.type === CouponType.PERCENTAGE) {
+            const percent = coupon.value.toNumber();
+            discountTotal = subtotal.mul(percent).div(100);
+            discountTotal = Prisma.Decimal.min(discountTotal, subtotal);
+            couponDiscount = discountTotal;
+          }
+        }
+      }
+
+      const shippingTotal = new Prisma.Decimal(order.shippingTotal);
+      const total = subtotal.add(shippingTotal).sub(discountTotal);
+
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: {
+          subtotal,
+          discountTotal,
+          total,
+          couponDiscount,
+          items: { create: newItems },
+        },
+        include: orderReadInclude,
+      });
+
+      return mapOrder(updatedOrder);
+    });
+
+    return updated;
+  }
 }
 
 const OUT_OF_STOCK_MESSAGE =
@@ -285,8 +557,28 @@ const OUT_OF_STOCK_MESSAGE =
 const INSUFFICIENT_STOCK_MESSAGE =
   "\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629 \u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631\u0629";
 
+const orderReadInclude = {
+  items: {
+    include: {
+      variant: {
+        select: {
+          id: true,
+          sku: true,
+          colorId: true,
+        },
+      },
+      product: {
+        include: {
+          images: { orderBy: { sortOrder: "asc" as const } },
+        },
+      },
+    },
+  },
+  customer: true,
+} satisfies Prisma.OrderInclude;
+
 type OrderWithItems = Prisma.OrderGetPayload<{
-  include: { items: true; customer: true };
+  include: typeof orderReadInclude;
 }>;
 
 function mapOrder(order: OrderWithItems) {
@@ -315,17 +607,52 @@ function mapOrder(order: OrderWithItems) {
     couponCode: order.couponCode,
     couponType: order.couponType,
     couponDiscount: order.couponDiscount?.toNumber() ?? null,
-    items: order.items.map((item) => ({
-      id: item.id,
-      productId: item.productId,
-      variantId: item.variantId,
-      productNameSnapshot: item.productNameSnapshot,
-      variantInfoSnapshot: item.variantInfoSnapshot,
-      skuSnapshot: item.skuSnapshot,
-      unitPriceSnapshot: item.unitPriceSnapshot.toNumber(),
-      quantity: item.quantity,
-      total: item.total.toNumber(),
-    })),
+    items: order.items.map((item) => {
+      const imageUrlSnapshot = item.imageUrlSnapshot?.trim()
+        ? item.imageUrlSnapshot
+        : null;
+
+      let legacyFallback: string | null = null;
+      if (!imageUrlSnapshot) {
+        const variant = item.variant;
+        const productImages = item.product?.images ?? [];
+        if (variant && productImages.length) {
+          const resolverVariant: ResolverVariant = {
+            id: variant.id,
+            sku: variant.sku,
+            colorId: variant.colorId,
+          };
+          const resolverImages: ResolverImage[] = productImages.map((img) => ({
+            id: img.id,
+            url: img.url,
+            variantId: img.variantId,
+            colorId: img.colorId,
+            altAr: img.altAr,
+            altEn: img.altEn,
+            sortOrder: img.sortOrder,
+            createdAt: img.createdAt,
+          }));
+          legacyFallback = resolveOrderItemImage(
+            resolverVariant,
+            resolverImages,
+          );
+        }
+      }
+
+      return {
+        id: item.id,
+        productId: item.productId,
+        variantId: item.variantId,
+        productNameSnapshot: item.productNameSnapshot,
+        variantInfoSnapshot: item.variantInfoSnapshot,
+        skuSnapshot: item.skuSnapshot,
+        imageUrlSnapshot,
+        displayImageUrl: imageUrlSnapshot ?? legacyFallback,
+        unitPriceSnapshot: item.unitPriceSnapshot.toNumber(),
+        quantity: item.quantity,
+        total: item.total.toNumber(),
+      };
+    }),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
   };

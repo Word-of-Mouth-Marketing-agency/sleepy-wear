@@ -228,6 +228,45 @@ async function main() {
     },
   });
 
+  const shippingCities = [
+    { nameAr: "القاهرة", nameEn: "Cairo", price: 50, sortOrder: 1 },
+    { nameAr: "الجيزة", nameEn: "Giza", price: 50, sortOrder: 2 },
+    { nameAr: "الإسكندرية", nameEn: "Alexandria", price: 60, sortOrder: 3 },
+    { nameAr: "الدقهلية", nameEn: "Dakahlia", price: 60, sortOrder: 4 },
+    { nameAr: "البحيرة", nameEn: "Beheira", price: 60, sortOrder: 5 },
+    { nameAr: "القليوبية", nameEn: "Qalyubia", price: 50, sortOrder: 6 },
+    { nameAr: "المنوفية", nameEn: "Monufia", price: 60, sortOrder: 7 },
+    { nameAr: "الغربية", nameEn: "Gharbia", price: 60, sortOrder: 8 },
+    { nameAr: "الشرقية", nameEn: "Sharqia", price: 60, sortOrder: 9 },
+    { nameAr: "كفر الشيخ", nameEn: "Kafr El Sheikh", price: 60, sortOrder: 10 },
+    { nameAr: "دمياط", nameEn: "Damietta", price: 60, sortOrder: 11 },
+    { nameAr: "بورسعيد", nameEn: "Port Said", price: 70, sortOrder: 12 },
+    { nameAr: "الإسماعيلية", nameEn: "Ismailia", price: 70, sortOrder: 13 },
+    { nameAr: "السويس", nameEn: "Suez", price: 70, sortOrder: 14 },
+    { nameAr: "الفيوم", nameEn: "Fayoum", price: 65, sortOrder: 15 },
+    { nameAr: "بني سويف", nameEn: "Beni Suef", price: 65, sortOrder: 16 },
+    { nameAr: "المنيا", nameEn: "Minya", price: 70, sortOrder: 17 },
+    { nameAr: "أسيوط", nameEn: "Asyut", price: 75, sortOrder: 18 },
+    { nameAr: "سوهاج", nameEn: "Sohag", price: 75, sortOrder: 19 },
+    { nameAr: "قنا", nameEn: "Qena", price: 80, sortOrder: 20 },
+    { nameAr: "الأقصر", nameEn: "Luxor", price: 85, sortOrder: 21 },
+    { nameAr: "أسوان", nameEn: "Aswan", price: 90, sortOrder: 22 },
+    { nameAr: "البحر الأحمر", nameEn: "Red Sea", price: 90, sortOrder: 23 },
+    { nameAr: "الوادي الجديد", nameEn: "New Valley", price: 95, sortOrder: 24 },
+    { nameAr: "مطروح", nameEn: "Matrouh", price: 85, sortOrder: 25 },
+    { nameAr: "شمال سيناء", nameEn: "North Sinai", price: 90, sortOrder: 26 },
+    { nameAr: "جنوب سيناء", nameEn: "South Sinai", price: 90, sortOrder: 27 },
+  ];
+
+  for (const city of shippingCities) {
+    await prisma.shippingCity.upsert({
+      where: { id: `seed-city-${city.nameEn!.replace(/\s+/g, "-").toLowerCase()}` },
+      update: { nameAr: city.nameAr, nameEn: city.nameEn, price: city.price, sortOrder: city.sortOrder, isActive: true },
+      create: { id: `seed-city-${city.nameEn!.replace(/\s+/g, "-").toLowerCase()}`, ...city, isActive: true },
+    });
+  }
+  console.log(`Seeded ${shippingCities.length} shipping cities`);
+
   for (const page of staticPages) {
     await prisma.staticPage.upsert({
       where: { slug: page.slug },

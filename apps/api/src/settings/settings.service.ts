@@ -11,6 +11,7 @@ const PUBLIC_KEYS = [
   "site_notice",
   "site_footer_text",
   "site_social_links",
+  "checkout_notice",
   "marketing_pixel",
 ];
 
@@ -77,6 +78,10 @@ const DEFAULT_SETTINGS: Record<string, unknown> = {
   domain: "sleepyweareg.com",
   currency: "EGP",
   marketing_pixel: { enabled: false, pixelId: "" },
+  checkout_notice: {
+    enabled: true,
+    text: "يتم دفع ديبوزت قبل الشحن: 50 ج.م داخل القاهرة، و100 ج.م لباقي المحافظات.",
+  },
 };
 
 @Injectable()

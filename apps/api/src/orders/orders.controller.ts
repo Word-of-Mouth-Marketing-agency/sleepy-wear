@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { EditOrderItemsDto } from "./dto/edit-order-items.dto";
 import { ListOrdersQueryDto } from "./dto/list-orders-query.dto";
 import { UpdateOrderDto } from "./dto/update-order.dto";
 import { OrdersService } from "./orders.service";
@@ -46,5 +47,11 @@ export class OrdersController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.ordersService.remove(id);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch(":id/items")
+  editItems(@Param("id") id: string, @Body() dto: EditOrderItemsDto) {
+    return this.ordersService.editItems(id, dto);
   }
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import { DOMAIN, SITE_NAME } from "@sleepywear/shared";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { ClientShell } from "@/components/site/ClientShell";
 import { SiteHeader } from "@/components/site/Header";
 import { MetaPixel } from "@/components/site/MetaPixel";
@@ -44,16 +44,7 @@ export const metadata: Metadata = {
 };
 
 async function getSiteSettings() {
-  try {
-    const res = await fetch(`${API_URL}/settings`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: 30 },
-    });
-    if (!res.ok) throw new Error();
-    return (await res.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+  return apiFetch<Record<string, unknown>>("/settings");
 }
 
 export default async function RootLayout({

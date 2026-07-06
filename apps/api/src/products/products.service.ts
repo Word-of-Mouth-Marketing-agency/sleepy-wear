@@ -74,6 +74,49 @@ export class ProductsService {
     return mapProduct(product);
   }
 
+  async adminSearch(query: string) {
+    const where: Prisma.ProductWhereInput = {
+      status: ProductStatus.ACTIVE,
+    };
+
+    if (query) {
+      where.OR = [
+        { nameAr: { contains: query, mode: "insensitive" } },
+        { nameEn: { contains: query, mode: "insensitive" } },
+        { slug: { contains: query, mode: "insensitive" } },
+      ];
+    }
+
+    const products = await this.prisma.product.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        category: { select: { id: true, nameAr: true, isActive: true } },
+        variants: {
+          where: { stock: { gt: 0 } },
+          orderBy: { sku: "asc" },
+          include: { size: true, color: true },
+        },
+      },
+    });
+
+    return products.map((p) => ({
+      id: p.id,
+      nameAr: p.nameAr,
+      category: p.category,
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        sku: v.sku,
+        price: v.price.toNumber(),
+        salePrice: v.salePrice?.toNumber() ?? null,
+        stock: v.stock,
+        sizeLabel: v.size?.labelAr ?? null,
+        colorName: v.color?.nameAr ?? null,
+      })),
+    }));
+  }
+
   async create(dto: CreateProductDto) {
     const category = await this.prisma.category.findUnique({
       where: { id: dto.categoryId },

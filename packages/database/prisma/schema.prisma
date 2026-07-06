@@ -271,6 +271,7 @@ model Order {
   @@index([paymentStatus])
   @@index([paymobIntentionId])
   @@index([paymobTransactionId])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -284,6 +285,7 @@ model OrderItem {
   productNameSnapshot String
   variantInfoSnapshot String
   skuSnapshot         String
+  imageUrlSnapshot    String?
   unitPriceSnapshot   Decimal         @db.Decimal(10, 2)
   quantity            Int
   total               Decimal         @db.Decimal(10, 2)

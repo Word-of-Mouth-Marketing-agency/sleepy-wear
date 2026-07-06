@@ -1,17 +1,10 @@
 import type { Category } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
 import { CategoryManager } from "@/components/admin/CategoryManager";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 export default async function AdminCategoriesPage() {
-  const categories = await fetch(`${API_URL}/categories?includeInactive=true`, {
-    cache: "no-store",
-    headers: { Accept: "application/json" },
-  })
-    .then((response) =>
-      response.ok ? (response.json() as Promise<Category[]>) : null,
-    )
-    .catch(() => null);
+  const categories = await apiFetch<Category[]>("/categories?includeInactive=true");
 
   return (
     <PageShell

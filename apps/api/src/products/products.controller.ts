@@ -32,6 +32,12 @@ export class ProductsController {
     return this.productsService.findVariants(id);
   }
 
+  @UseGuards(AdminGuard)
+  @Get("admin/search")
+  adminSearch(@Query("q") q: string) {
+    return this.productsService.adminSearch(q ?? "");
+  }
+
   @Get(":slug")
   findOne(@Param("slug") slugOrId: string) {
     return this.productsService.findOne(slugOrId);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Category } from "@sleepywear/shared";
-import { API_URL, apiGet } from "@/lib/api";
+import { apiGet, apiFetch } from "@/lib/api";
 import { HeaderSearch } from "./HeaderSearch";
 import { NoticeBar } from "./NoticeBar";
 import { CartIcon } from "./CartIcon";
@@ -17,16 +17,7 @@ async function getCategories() {
 }
 
 async function getSettings() {
-  try {
-    const res = await fetch(`${API_URL}/settings`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: 30 },
-    });
-    if (!res.ok) throw new Error();
-    return (await res.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+  return apiFetch<Record<string, unknown>>("/settings");
 }
 
 export async function SiteHeader() {

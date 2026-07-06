@@ -15,9 +15,12 @@ export function getAvailableVariants(product: Product) {
   return product.variants.filter((variant) => variant.stock > 0);
 }
 
+export function getAllVariants(product: Product) {
+  return product.variants;
+}
+
 export function hasSelectableVariations(product: Product) {
-  const variants = getAvailableVariants(product);
-  return variants.some(hasRealOption);
+  return product.variants.some(hasRealOption);
 }
 
 export function hasRealOption(variant: ProductVariant) {

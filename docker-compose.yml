@@ -21,8 +21,13 @@ services:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+      args:
+        DATABASE_URL: postgresql://sleepywear:sleepywear@postgres:5432/sleepywear?schema=public
     restart: unless-stopped
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://sleepywear:sleepywear@postgres:5432/sleepywear?schema=public
+      REDIS_URL: redis://redis:6379
     depends_on:
       - postgres
       - redis
@@ -35,8 +40,13 @@ services:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+        API_INTERNAL_URL: http://api:4000/api
     restart: unless-stopped
     env_file: .env
+    environment:
+      API_INTERNAL_URL: http://api:4000/api
     depends_on:
       - api
     ports:

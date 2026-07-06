@@ -5,6 +5,7 @@ import type { Product } from "@sleepywear/shared";
 import { useCartStore } from "@/stores/cart-store";
 import { getMediaUrl, getThumbUrl } from "@/lib/media";
 import {
+  getAllVariants,
   getAvailableVariants,
   getVariantInfo,
   hasRealColor,
@@ -26,14 +27,19 @@ export default function ProductDetailsClient({
 
   const images = product.images;
 
+  const allVariants = useMemo(
+    () => getAllVariants(product),
+    [product],
+  );
+
   const activeVariants = useMemo(
     () => getAvailableVariants(product),
     [product],
   );
 
   const galleryImages = useMemo(() => {
-    return buildGalleryImages(images, activeVariants);
-  }, [images, activeVariants]);
+    return buildGalleryImages(images, allVariants);
+  }, [images, allVariants]);
 
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
@@ -45,22 +51,22 @@ export default function ProductDetailsClient({
       string,
       NonNullable<(typeof product.variants)[0]["size"]>
     >();
-    for (const v of activeVariants) {
+    for (const v of allVariants) {
       if (v.size && hasRealSize(v)) map.set(v.size.id, v.size);
     }
     return Array.from(map.values());
-  }, [activeVariants]);
+  }, [allVariants]);
 
   const colors = useMemo(() => {
     const map = new Map<
       string,
       NonNullable<(typeof product.variants)[0]["color"]>
     >();
-    for (const v of activeVariants) {
+    for (const v of allVariants) {
       if (v.color && hasRealColor(v)) map.set(v.color.id, v.color);
     }
     return Array.from(map.values());
-  }, [activeVariants]);
+  }, [allVariants]);
 
   const hasSizes = sizes.length > 1;
   const hasColors = colors.length > 1;
@@ -75,7 +81,7 @@ export default function ProductDetailsClient({
   const selectedVariant = useMemo(() => {
     if (hasSizes && hasColors) {
       return (
-        activeVariants.find(
+        allVariants.find(
           (v) =>
             v.size?.id === selectedSizeId && v.color?.id === selectedColorId,
         ) ?? null
@@ -83,24 +89,22 @@ export default function ProductDetailsClient({
     }
     if (hasSizes) {
       return (
-        activeVariants.find((v) => v.size?.id === selectedSizeId) ?? null
+        allVariants.find((v) => v.size?.id === selectedSizeId) ?? null
       );
     }
     if (hasColors) {
       return (
-        activeVariants.find((v) => v.color?.id === selectedColorId) ?? null
+        allVariants.find((v) => v.color?.id === selectedColorId) ?? null
       );
     }
-    return activeVariants[0] ?? null;
-  }, [activeVariants, selectedSizeId, selectedColorId, hasSizes, hasColors]);
+    return allVariants[0] ?? null;
+  }, [allVariants, selectedSizeId, selectedColorId, hasSizes, hasColors]);
 
-  const hasSale = activeVariants.some((v) => v.salePrice !== null);
+  const hasSale = allVariants.some((v) => v.salePrice !== null);
   const allOutOfStock = activeVariants.length === 0;
-  const activePrices = activeVariants.map((v) => v.salePrice ?? v.price);
-  const minPrice = activePrices.length ? Math.min(...activePrices) : null;
-  const maxPrice = activePrices.length
-    ? Math.max(...activeVariants.map((v) => v.price))
-    : null;
+  const allPrices = allVariants.map((v) => v.salePrice ?? v.price);
+  const minPrice = allPrices.length ? Math.min(...allPrices) : null;
+  const maxPrice = allPrices.length ? Math.max(...allPrices) : null;
 
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -214,7 +218,7 @@ export default function ProductDetailsClient({
                       });
                       const skuMatch = img.altAr?.match(/^(EO-VAR-[a-f0-9-]+)/);
                       if (skuMatch) {
-                        const v = activeVariants.find((v) => v.sku === skuMatch[1]);
+                        const v = allVariants.find((v) => v.sku === skuMatch[1]);
                         if (v) {
                           if (hasSizes) setSelectedSizeId(v.size?.id ?? null);
                           if (hasColors) setSelectedColorId(v.color?.id ?? null);
@@ -270,6 +274,10 @@ export default function ProductDetailsClient({
                     <span className="text-2xl font-black text-brand-pink">
                       {minPrice} - {maxPrice} ج
                     </span>
+                  ) : minPrice !== null ? (
+                    <span className="text-2xl font-black text-brand-pink">
+                      {minPrice} ج
+                    </span>
                   ) : null}
                 </div>
                 <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
@@ -296,19 +304,19 @@ export default function ProductDetailsClient({
                           disabled={!hasStock}
                           onClick={() => {
                             setSelectedSizeId(size.id);
-                            const v = activeVariants.find(
+                            const v = allVariants.find(
                               (v) =>
                                 v.size?.id === size.id &&
                                 (!hasColors || v.color?.id === selectedColorId),
                             );
-                            if (v) {
+                            if (v?.stock && v.stock > 0) {
                               const img = galleryImages.find((img) =>
                                 img.altAr?.startsWith(v.sku),
                               );
                               if (img) setSelectedImageUrl(img.url);
                             }
                           }}
-                          className={`min-h-11 min-w-[52px] rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
+                          className={`relative min-h-11 min-w-[52px] rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
                             isSelected
                               ? "border-brand-pink bg-brand-pink text-white"
                               : "border-[var(--line)] bg-white text-black hover:border-brand-pink/60"
@@ -317,6 +325,11 @@ export default function ProductDetailsClient({
                           }`}
                         >
                           {size.labelAr}
+                          {!hasStock ? (
+                            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-red-100 px-1.5 py-px text-[10px] font-bold text-red-600">
+                              نفدت
+                            </span>
+                          ) : null}
                         </button>
                       );
                     })}
@@ -337,19 +350,19 @@ export default function ProductDetailsClient({
                           disabled={!hasStock}
                           onClick={() => {
                             setSelectedColorId(color.id);
-                            const v = activeVariants.find(
+                            const v = allVariants.find(
                               (v) =>
                                 v.color?.id === color.id &&
                                 (!hasSizes || v.size?.id === selectedSizeId),
                             );
-                            if (v) {
+                            if (v?.stock && v.stock > 0) {
                               const img = galleryImages.find((img) =>
                                 img.altAr?.startsWith(v.sku),
                               );
                               if (img) setSelectedImageUrl(img.url);
                             }
                           }}
-                          className={`flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
+                          className={`relative min-h-11 min-w-[52px] rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
                             isSelected
                               ? "border-brand-pink bg-brand-pink text-white"
                               : "border-[var(--line)] bg-white text-black hover:border-brand-pink/60"
@@ -357,11 +370,12 @@ export default function ProductDetailsClient({
                             !hasStock ? "cursor-not-allowed opacity-40" : ""
                           }`}
                         >
-                          <span
-                            className="inline-block h-4 w-4 rounded-full border border-black/10"
-                            style={{ backgroundColor: color.hex }}
-                          />
                           {color.nameAr}
+                          {!hasStock ? (
+                            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-red-100 px-1.5 py-px text-[10px] font-bold text-red-600">
+                              نفدت
+                            </span>
+                          ) : null}
                         </button>
                       );
                     })}
@@ -372,7 +386,7 @@ export default function ProductDetailsClient({
                   selectedVariant={selectedVariant}
                   allOutOfStock={allOutOfStock}
                   hasOptions={hasSizes || hasColors}
-                  hasVariants={activeVariants.length > 0}
+                  hasVariants={allVariants.length > 0}
                 />
 
                 <div className="space-y-3">
@@ -382,7 +396,11 @@ export default function ProductDetailsClient({
                     onClick={handleAddToCart}
                     className="w-full rounded-2xl bg-brand-pink px-6 py-3.5 text-base font-black text-white transition-colors hover:bg-brand-blue disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {adding ? "جاري الإضافة..." : "أضف للسلة"}
+                    {selectedVariant && selectedVariant.stock < 1
+                      ? "نفدت الكمية"
+                      : adding
+                        ? "جاري الإضافة..."
+                        : "أضف للسلة"}
                   </button>
 
                   {feedback ? (
@@ -538,7 +556,7 @@ function StockStatus({
 }) {
   if (selectedVariant) {
     if (selectedVariant.stock === 0) {
-      return <StatusText tone="danger" label="غير متوفر" />;
+      return <StatusText tone="danger" label="نفدت الكمية" />;
     }
     if (selectedVariant.stock <= 5) {
       return <StatusText tone="warning" label={`متبقي ${selectedVariant.stock}`} />;
@@ -548,10 +566,14 @@ function StockStatus({
 
   if (!hasOptions && hasVariants) {
     return allOutOfStock ? (
-      <StatusText tone="danger" label="غير متوفر" />
+      <StatusText tone="danger" label="نفدت الكمية" />
     ) : (
       <StatusText tone="success" label="متوفر" />
     );
+  }
+
+  if (allOutOfStock) {
+    return <StatusText tone="danger" label="المنتج غير متوفر حالياً" />;
   }
 
   return null;

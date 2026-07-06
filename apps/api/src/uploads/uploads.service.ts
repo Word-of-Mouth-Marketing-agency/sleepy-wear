@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import sharp from "sharp";
 import { PrismaService } from "../prisma/prisma.service";
@@ -82,18 +82,8 @@ export class UploadsService {
     });
     if (!image) throw new NotFoundException("Product image not found");
 
-    const url = image.url;
-    const baseMatch = url.match(/\/media\/products\/(.+)\.webp$/);
-    if (baseMatch) {
-      const baseName = baseMatch[1];
-      const dir = join(this.uploadRoot, "products");
-      for (const size of SIZES) {
-        const filename = `${baseName}${size.suffix}.webp`;
-        await rm(join(dir, filename), { force: true });
-      }
-    }
-
     await this.prisma.productImage.delete({ where: { id: imageId } });
+
     return { id: imageId, deleted: true };
   }
 
