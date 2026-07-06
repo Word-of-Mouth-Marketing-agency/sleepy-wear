@@ -1,6 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 const API_INTERNAL_URL =
   process.env.API_INTERNAL_URL ?? API_URL;
+const SERVER_FETCH_TIMEOUT_MS = 5000;
 
 function getAdminHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -9,10 +10,12 @@ function getAdminHeaders(): Record<string, string> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const baseUrl = typeof window === "undefined" ? API_INTERNAL_URL : API_URL;
+  const baseUrl = getApiBaseUrl();
+  const signal = getServerFetchSignal();
   const response = await fetch(`${baseUrl}${path}`, {
     headers: { Accept: "application/json" },
     next: { revalidate: 30 },
+    signal,
   });
 
   if (!response.ok) {
@@ -23,17 +26,29 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T | null> {
-  const baseUrl = typeof window === "undefined" ? API_INTERNAL_URL : API_URL;
+  const baseUrl = getApiBaseUrl();
+  const signal = init?.signal ?? getServerFetchSignal();
   try {
     const response = await fetch(`${baseUrl}${path}`, {
       headers: { Accept: "application/json" },
       ...init,
+      signal,
     });
     if (!response.ok) return null;
     return response.json() as Promise<T>;
   } catch {
     return null;
   }
+}
+
+function getApiBaseUrl() {
+  if (typeof window !== "undefined") return API_URL;
+  return API_INTERNAL_URL || API_URL;
+}
+
+function getServerFetchSignal() {
+  if (typeof window !== "undefined") return undefined;
+  return AbortSignal.timeout(SERVER_FETCH_TIMEOUT_MS);
 }
 
 export async function apiPost<TResponse, TBody>(
