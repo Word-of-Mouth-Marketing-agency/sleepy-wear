@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 type TrackingData = {
   orderId: string;
@@ -24,10 +25,9 @@ function SuccessContent() {
   useEffect(() => {
     if (!orderNumber) return;
 
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored === orderNumber) return;
+    const alreadyTracked = sessionStorage.getItem(STORAGE_KEY) === orderNumber;
 
-    fetch(`/api/orders/success/${encodeURIComponent(orderNumber)}`, {
+    fetch(`${API_URL}/orders/success/${encodeURIComponent(orderNumber)}`, {
       headers: { Accept: "application/json" },
     })
       .then((r) => {
@@ -36,7 +36,7 @@ function SuccessContent() {
       })
       .then((data) => {
         setTracking(data);
-        if (typeof window !== "undefined" && (window as any).fbq) {
+        if (!alreadyTracked && typeof window !== "undefined" && (window as any).fbq) {
           (window as any).fbq("track", "Purchase", {
             value: data.total,
             currency: data.currency,
@@ -44,8 +44,8 @@ function SuccessContent() {
             content_type: "product",
             num_items: data.itemCount,
           });
+          sessionStorage.setItem(STORAGE_KEY, orderNumber);
         }
-        sessionStorage.setItem(STORAGE_KEY, orderNumber);
       })
       .catch(() => {});
   }, [orderNumber]);
