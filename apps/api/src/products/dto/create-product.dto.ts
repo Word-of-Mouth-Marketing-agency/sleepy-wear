@@ -8,7 +8,7 @@ import {
   Min,
   ValidateNested,
 } from "class-validator";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import { ProductStatus } from "@prisma/client";
 
 class ProductVariantDto {
@@ -56,6 +56,7 @@ export class CreateProductDto {
 
   @IsString()
   @IsNotEmpty()
+  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   slug: string;
 
   @IsString()

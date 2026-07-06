@@ -65,13 +65,38 @@ export class ProductsService {
   }
 
   async findOne(slugOrId: string) {
+    const normalizedSlugOrId = slugOrId.trim();
     const product = await this.prisma.product.findFirst({
-      where: { OR: [{ id: slugOrId }, { slug: slugOrId }] },
+      where: {
+        OR: [
+          { id: slugOrId },
+          { id: normalizedSlugOrId },
+          { slug: slugOrId },
+          { slug: normalizedSlugOrId },
+        ],
+      },
       include: productInclude,
     });
 
-    if (!product) throw new NotFoundException("Product not found");
-    return mapProduct(product);
+    if (product) return mapProduct(product);
+
+    const normalizedMatches = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT id
+      FROM "Product"
+      WHERE lower(btrim(slug)) = lower(${normalizedSlugOrId})
+      LIMIT 2
+    `;
+
+    if (normalizedMatches.length === 1) {
+      const normalizedProduct = await this.prisma.product.findUnique({
+        where: { id: normalizedMatches[0].id },
+        include: productInclude,
+      });
+
+      if (normalizedProduct) return mapProduct(normalizedProduct);
+    }
+
+    throw new NotFoundException("Product not found");
   }
 
   async adminSearch(query: string) {
@@ -142,7 +167,7 @@ export class ProductsService {
       data: {
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
-        slug: dto.slug,
+        slug: dto.slug.trim(),
         descriptionAr: dto.descriptionAr,
         categoryId: dto.categoryId,
         status: dto.status ?? ProductStatus.DRAFT,
@@ -164,7 +189,7 @@ export class ProductsService {
       data: {
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
-        slug: dto.slug,
+        slug: dto.slug?.trim(),
         descriptionAr: dto.descriptionAr,
         categoryId: dto.categoryId,
         status: dto.status,
