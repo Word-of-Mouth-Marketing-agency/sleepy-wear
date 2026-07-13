@@ -57,6 +57,17 @@ export class OrdersService {
       };
     }
 
+    if (query.search) {
+      const search = query.search.trim();
+      if (search) {
+        where.OR = [
+          { orderNumber: { contains: search, mode: "insensitive" } },
+          { customerName: { contains: search, mode: "insensitive" } },
+          { phone: { contains: search } },
+        ];
+      }
+    }
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.order.findMany({
         where,

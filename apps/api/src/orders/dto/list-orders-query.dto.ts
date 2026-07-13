@@ -1,5 +1,5 @@
 import { OrderStatus } from "@prisma/client";
-import { IsDateString, IsEnum, IsOptional } from "class-validator";
+import { IsDateString, IsEnum, IsOptional, IsString } from "class-validator";
 import { PaginationQueryDto } from "../../common/dto/pagination-query.dto";
 
 export class ListOrdersQueryDto extends PaginationQueryDto {
@@ -14,4 +14,8 @@ export class ListOrdersQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsDateString()
   to?: string;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

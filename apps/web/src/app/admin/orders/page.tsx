@@ -51,6 +51,25 @@ export default function AdminOrdersPage() {
   const [customToDate, setCustomToDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlSearch = params.get("search") || "";
+    if (urlSearch) {
+      setSearchInput(urlSearch);
+      setSearchQuery(urlSearch);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const handlePeriodChange = (newPeriod: OrderPeriod) => {
     setPeriod(newPeriod);
@@ -128,6 +147,10 @@ export default function AdminOrdersPage() {
         params.set("to", range.to);
       }
 
+      if (searchQuery.trim()) {
+        params.set("search", searchQuery.trim());
+      }
+
       const currentPage = page;
 
       fetch(`${API_URL}/orders?${params.toString()}`, {
@@ -163,7 +186,7 @@ export default function AdminOrdersPage() {
           setLoading(false);
         });
     },
-    [period, selectedDate, customFromDate, customToDate, page, router],
+    [period, selectedDate, customFromDate, customToDate, page, router, searchQuery],
   );
 
   useEffect(() => {
@@ -219,6 +242,38 @@ export default function AdminOrdersPage() {
                   {opt.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="order-search"
+              className="text-xs font-bold text-[var(--muted)]"
+            >
+              بحث
+            </label>
+            <div className="relative">
+              <input
+                id="order-search"
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="ابحث باسم العميل أو رقم الهاتف أو رقم الطلب"
+                className="w-full rounded-xl border border-[var(--line)] bg-white px-4 py-2 text-sm font-bold shadow-sm focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/20"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput("");
+                    setSearchQuery("");
+                    setPage(1);
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-bold text-[var(--muted)] transition hover:text-brand-pink"
+                >
+                  مسح
+                </button>
+              )}
             </div>
           </div>
 
@@ -350,9 +405,11 @@ export default function AdminOrdersPage() {
 
       {!error && !loading && orders?.items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-10 text-center text-sm font-semibold text-[var(--muted)] shadow-sm">
-          {isFiltered
-            ? "لا توجد طلبات في الفترة المحددة."
-            : "لا توجد طلبات حتى الآن."}
+          {searchQuery.trim()
+            ? "لا توجد طلبات مطابقة للبحث"
+            : isFiltered
+              ? "لا توجد طلبات في الفترة المحددة."
+              : "لا توجد طلبات حتى الآن."}
         </div>
       ) : null}
 
