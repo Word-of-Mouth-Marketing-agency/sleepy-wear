@@ -34,10 +34,6 @@ type MarqueeSettings = {
   messages: string[];
 };
 
-type BestSellersSettings = {
-  productIds: string[];
-};
-
 const REASON_ICONS: Record<string, React.ReactNode> = {
   factory: (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -71,32 +67,31 @@ async function getSettings() {
 }
 
 export default async function HomePage() {
-  const [categoriesRes, productsRes, settings] = await Promise.all([
-    apiFetch<Category[]>("/categories"),
-    apiGet<PaginatedResponse<Product>>("/products?limit=20").catch(() => null),
-    getSettings(),
-  ]);
+  const [categoriesRes, recentRes, bestSellersRes, settings] =
+    await Promise.all([
+      apiFetch<Category[]>("/categories"),
+      apiGet<PaginatedResponse<Product>>("/products?sort=recent&limit=4").catch(
+        () => null,
+      ),
+      apiGet<PaginatedResponse<Product>>(
+        "/products?sort=best_sellers&limit=4",
+      ).catch(() => null),
+      getSettings(),
+    ]);
 
-  const products = productsRes?.items ?? [];
   const categories = categoriesRes ?? [];
-  const latest = [...products].reverse().slice(0, 4);
+  const latest = recentRes?.items ?? [];
+
+  let bestSellers: Product[];
+  if (bestSellersRes?.items?.length) {
+    bestSellers = bestSellersRes.items;
+  } else {
+    bestSellers = latest;
+  }
 
   const marqueeSettings = (settings?.homepage_marquee ?? {
     messages: ["توصيل مجاني", "خصم 10%", "جودة من المصنع"],
   }) as MarqueeSettings;
-
-  const bestSellerIds = (settings?.homepage_best_sellers as BestSellersSettings)?.productIds ?? [];
-
-  let bestSellers: Product[];
-  if (bestSellerIds.length > 0) {
-    bestSellers = products.filter((p) => bestSellerIds.includes(p.id));
-    if (bestSellers.length < 4) {
-      const fallback = products.filter((p) => !bestSellerIds.includes(p.id));
-      bestSellers = [...bestSellers, ...fallback].slice(0, 4);
-    }
-  } else {
-    bestSellers = products.slice(0, 4);
-  }
 
   const midBanner = (settings?.homepage_mid_banner ?? {
     title: "عرض خاص",

@@ -26,4 +26,8 @@ export class ListProductsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsBooleanString()
   includeInactive?: string;
+
+  @IsOptional()
+  @IsString()
+  sort?: string;
 }

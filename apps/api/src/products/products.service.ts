@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Prisma, ProductStatus } from "@prisma/client";
+import { OrderStatus, Prisma, ProductStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { CreateVariantDto } from "./dto/create-variant.dto";
@@ -38,9 +38,61 @@ export class ProductsService {
       where.category = { slug: query.categorySlug };
     }
 
-    // The current schema does not yet contain featured/best-seller flags.
-    void query.featured;
-    void query.bestSeller;
+    if (query.sort === "best_sellers") {
+      const productRows = await this.prisma.$queryRaw<
+        Array<{ id: string }>
+      >`
+        SELECT p.id
+        FROM "Product" p
+        JOIN "OrderItem" oi ON oi."productId" = p.id
+        JOIN "Order" o ON oi."orderId" = o.id
+        WHERE p.status = 'ACTIVE'
+          AND o.status != 'CANCELLED'
+          AND oi."productId" IS NOT NULL
+        GROUP BY p.id
+        ORDER BY SUM(oi.quantity) DESC, p.id ASC
+        LIMIT ${limit}
+        OFFSET ${(page - 1) * limit}
+      `;
+
+      const ids = productRows.map((r) => r.id);
+
+      if (ids.length === 0) {
+        return {
+          items: [],
+          meta: { page, limit, total: 0, totalPages: 0 },
+        };
+      }
+
+      const products = await this.prisma.product.findMany({
+        where: { id: { in: ids }, status: ProductStatus.ACTIVE },
+        include: productInclude,
+      });
+
+      const productMap = new Map(products.map((p) => [p.id, p]));
+      const items = ids
+        .map((id) => productMap.get(id))
+        .filter((p): p is NonNullable<typeof p> => p != null);
+
+      const totalResult = await this.prisma.$queryRaw<
+        Array<{ count: bigint }>
+      >`
+        SELECT COUNT(DISTINCT oi."productId") as count
+        FROM "OrderItem" oi
+        JOIN "Order" o ON oi."orderId" = o.id
+        JOIN "Product" p ON oi."productId" = p.id
+        WHERE p.status = 'ACTIVE'
+          AND o.status != 'CANCELLED'
+          AND oi."productId" IS NOT NULL
+      `;
+
+      const total = Number(totalResult[0]?.count ?? 0);
+
+      return {
+        items: items.map(mapProduct),
+        meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    }
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
