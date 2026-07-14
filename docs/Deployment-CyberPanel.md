@@ -218,35 +218,39 @@ docker compose -f docker-compose.prod.yml down -v
 
 ## 12. Backups
 
-### PostgreSQL
+### Using the backup script
+
+A helper script is provided at `docker/backup.sh`:
 
 ```bash
-# Backup
-docker compose -f docker-compose.prod.yml exec -T postgres \
-  pg_dump -U sleepyweare sleepyweare > /root/backups/sleepywear-$(date +%Y%m%d).sql
-
-# Restore
-cat backup.sql | docker compose -f docker-compose.prod.yml exec -T postgres \
-  psql -U sleepyweare -d sleepyweare
+# Create backups in /root/backups/
+POSTGRES_USER=sleepyweare POSTGRES_DB=sleepyweare \
+  sh docker/backup.sh /root/backups
 ```
 
-### Uploads
+This produces:
+- `sleepywear-YYYYMMDD-HHMMSS.dump` — PostgreSQL dump in `pg_custom` format (smaller, restorable with `pg_restore`)
+- `uploads-YYYYMMDD-HHMMSS.tar.gz` — Uploads volume archive
+
+### Manual backup only (no restore commands included to prevent accidental data loss)
 
 ```bash
-# Backup uploads volume
-docker run --rm -v uploads-data:/source -v /root/backups:/dest alpine \
-  tar czf /dest/uploads-$(date +%Y%m%d).tar.gz -C /source .
+# PostgreSQL custom-format dump
+docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_dump -U sleepyweare -d sleepyweare --format=custom \
+  > /root/backups/sleepywear-$(date +%Y%m%d-%H%M%S).dump
 
-# Restore uploads
-docker run --rm -v uploads-data:/dest -v /root/backups:/source alpine \
-  tar xzf /source/uploads-20260101.tar.gz -C /dest
+# Uploads volume
+docker run --rm -v uploads-data:/source -v /root/backups:/dest alpine \
+  tar czf /dest/uploads-$(date +%Y%m%d-%H%M%S).tar.gz -C /source .
 ```
 
 ### Cron job for nightly backups
 
 ```bash
 # Add to crontab (runs at 3 AM daily)
-0 3 * * * docker compose -f /var/www/sleepywear/docker-compose.prod.yml exec -T postgres pg_dump -U sleepyweare sleepyweare > /root/backups/sleepywear-$(date +\%Y\%m\%d).sql
+0 3 * * * POSTGRES_USER=sleepyweare POSTGRES_DB=sleepyweare \
+  sh /var/www/sleepywear/docker/backup.sh /root/backups
 ```
 
 ---
@@ -257,8 +261,10 @@ docker run --rm -v uploads-data:/dest -v /root/backups:/source alpine \
 |---------------|-----------|----------------|--------------------------------|
 | Web (Next.js) | 3001      | 3000           | Avoids conflict with Jelly     |
 | API (NestJS)  | 4000      | 4000           |                                |
-| PostgreSQL    | 5433      | 5432           | Avoids conflict with system PG |
-| Redis         | 6380      | 6379           | Avoids conflict with system RD |
+| PostgreSQL    | —         | 5432           | Internal network only          |
+| Redis         | —         | 6379           | Internal network only          |
+
+> Postgres and Redis are not exposed to the host in production. Only API and web containers on the `sleepy-network` can reach them. API connects via `postgres:5432` and `redis:6379` service names.
 
 ---
 

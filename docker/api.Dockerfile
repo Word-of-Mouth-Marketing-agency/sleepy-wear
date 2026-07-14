@@ -3,9 +3,10 @@ WORKDIR /app
 RUN corepack enable
 
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+RUN pnpm install --frozen-lockfile
+
 COPY apps/api apps/api
 COPY packages packages
-RUN pnpm install --frozen-lockfile
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL

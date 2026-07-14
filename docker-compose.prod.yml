@@ -5,8 +5,8 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     env_file: .env.production
-    ports:
-      - "5433:5432"
+    expose:
+      - "5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -21,8 +21,8 @@ services:
   redis:
     image: redis:8-alpine
     restart: unless-stopped
-    ports:
-      - "6380:6379"
+    expose:
+      - "6379"
     networks:
       - sleepy-network
     healthcheck:

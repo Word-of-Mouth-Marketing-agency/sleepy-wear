@@ -3,9 +3,10 @@ WORKDIR /app
 RUN corepack enable
 
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+RUN pnpm install --frozen-lockfile
+
 COPY apps/web apps/web
 COPY packages packages
-RUN pnpm install --frozen-lockfile
 
 ARG NEXT_PUBLIC_API_URL
 ARG API_INTERNAL_URL
