@@ -18,9 +18,9 @@ export default async function EditProductPage({
 
   return (
     <PageShell
-      title="تعديل منتج"
+      title="تعديل المنتج"
       eyebrow="Admin"
-      description="راجع بيانات المنتج والصور والمتغيرات في مساحات واضحة."
+      description="عدّل بيانات المنتج والأسعار والصور والمتغيرات."
       noContainer
       surface="plain"
     >

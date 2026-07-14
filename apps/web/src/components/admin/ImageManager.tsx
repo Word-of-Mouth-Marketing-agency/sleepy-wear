@@ -128,9 +128,6 @@ export function ImageManager({ product }: ImageManagerProps) {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 px-4 py-3 text-xs font-bold text-brand-blue">
-            إجمالي الصور: {dedupeImages(product.images).length}
-          </div>
           {(Object.keys(IMAGE_LABELS) as Array<keyof typeof IMAGE_LABELS>).map(
             (type) => {
               const images = groupedImages[type];
@@ -147,18 +144,15 @@ export function ImageManager({ product }: ImageManagerProps) {
                     {images.map((image) => (
                       <div
                         key={image.id}
-                        className="group relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
+                        className="relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
                       >
                         <img
                           alt={image.altAr ?? product.nameAr}
                           className="aspect-[4/3] w-full object-cover"
                           src={getMediaUrl(image.url)}
                         />
-                        <div className="absolute bottom-2 right-2 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-black shadow-sm">
-                          {info.label}
-                        </div>
                         <button
-                          className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                          className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200"
                           onClick={() => handleDelete(image.id)}
                           type="button"
                         >

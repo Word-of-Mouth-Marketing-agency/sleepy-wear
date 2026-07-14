@@ -8,7 +8,6 @@ import type {
   ProductStatus,
 } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
-import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 
 type FullProductFormProps = {
   categories: Category[];
@@ -183,14 +182,10 @@ export function FullProductForm({
   }
 
   return (
-    <div className="pb-24">
+    <div className="mx-auto max-w-3xl pb-16">
       <form ref={formRef} onSubmit={submit}>
         <div className="space-y-6">
-          <CollapsibleSection
-            title="البيانات الأساسية"
-            subtitle="الاسم، الرابط، التصنيف، الوصف، وحالة المنتج."
-            defaultOpen
-          >
+          <FormSection title="البيانات الأساسية">
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="اسم المنتج (عربي)">
                 <input
@@ -209,8 +204,13 @@ export function FullProductForm({
                 />
               </Field>
               <Field label="التصنيف">
-                <select className={fieldClass} name="categoryId" required>
-                  <option value="" disabled selected>
+                <select
+                  className={fieldClass}
+                  defaultValue=""
+                  name="categoryId"
+                  required
+                >
+                  <option value="" disabled>
                     اختر التصنيف
                   </option>
                   {categories.map((category) => (
@@ -237,12 +237,9 @@ export function FullProductForm({
                 />
               </Field>
             </div>
-          </CollapsibleSection>
+          </FormSection>
 
-          <CollapsibleSection
-            title="الصور"
-            subtitle="اختر صورة واحدة أو أكثر للمنتج."
-          >
+          <FormSection title="الصور">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink">
                 اختر صوراً
@@ -268,7 +265,7 @@ export function FullProductForm({
                       src={url}
                     />
                     <button
-                      className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 opacity-0 shadow-sm transition hover:opacity-100"
+                      className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 shadow-sm transition hover:bg-red-50"
                       onClick={() => removeImage(i)}
                       type="button"
                     >
@@ -283,12 +280,9 @@ export function FullProductForm({
                 لم تختر أي صور بعد.
               </div>
             )}
-          </CollapsibleSection>
+          </FormSection>
 
-          <CollapsibleSection
-            title="المتغيرات والمخزون"
-            subtitle="أضف متغيراً لكل مقاس أو لون متاح."
-          >
+          <FormSection title="المتغيرات والمخزون">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <button
                 className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink"
@@ -383,7 +377,7 @@ export function FullProductForm({
                 منتج متغير.
               </div>
             )}
-          </CollapsibleSection>
+          </FormSection>
 
           {error ? (
             <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
@@ -391,29 +385,39 @@ export function FullProductForm({
             </p>
           ) : null}
 
-          <button type="submit" className="hidden" />
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-full bg-brand-pink px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-pink/90 disabled:opacity-50"
+            >
+              {isSaving ? "جاري الحفظ..." : "حفظ المنتج"}
+            </button>
+            <a
+              href="/admin/products"
+              className="rounded-full border border-[var(--line)] px-4 py-2.5 text-sm font-bold text-[var(--muted)] transition hover:border-red-200 hover:text-red-700"
+            >
+              رجوع
+            </a>
+          </div>
         </div>
       </form>
-
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--line)] bg-white/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => formRef.current?.requestSubmit()}
-            disabled={isSaving}
-            className="rounded-full bg-brand-pink px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-pink/90 disabled:opacity-50"
-          >
-            {isSaving ? "جاري الحفظ..." : "حفظ المنتج"}
-          </button>
-          <a
-            href="/admin/products"
-            className="rounded-full border border-[var(--line)] px-4 py-2.5 text-sm font-bold text-[var(--muted)] transition hover:border-red-200 hover:text-red-700"
-          >
-            رجوع
-          </a>
-        </div>
-      </div>
     </div>
+  );
+}
+
+function FormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm sm:p-6">
+      <h3 className="mb-4 text-lg font-black text-black">{title}</h3>
+      {children}
+    </section>
   );
 }
 

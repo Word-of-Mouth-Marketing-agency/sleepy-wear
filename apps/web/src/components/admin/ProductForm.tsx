@@ -82,16 +82,13 @@ export function ProductForm({
     <form
       id={formId}
       ref={formRef}
-      className="space-y-5"
+      className="space-y-6"
       onSubmit={submit}
     >
-      <div className="rounded-2xl border border-pink-100 bg-[#fffafd] p-4 sm:p-5">
-        <div className="mb-4">
-          <h4 className="text-base font-black text-black">معلومات المنتج</h4>
-          <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
-            الاسم والرابط والوصف الذي يظهر للعميل في صفحة المنتج.
-          </p>
-        </div>
+      <section className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm sm:p-6">
+        <h3 className="mb-4 text-lg font-black text-black">
+          البيانات الأساسية
+        </h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="اسم المنتج بالعربي">
             <input
@@ -120,15 +117,12 @@ export function ProductForm({
             />
           </Field>
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-2xl border border-blue-100 bg-[#f8fdff] p-4 sm:p-5">
-        <div className="mb-4">
-          <h4 className="text-base font-black text-black">التصنيفات والظهور</h4>
-          <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
-            اختر التصنيف وحالة ظهور المنتج في الواجهة.
-          </p>
-        </div>
+      <section className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm sm:p-6">
+        <h3 className="mb-4 text-lg font-black text-black">
+          التصنيف والظهور
+        </h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="التصنيف">
             <select
@@ -161,7 +155,7 @@ export function ProductForm({
             </select>
           </Field>
         </div>
-      </div>
+      </section>
 
       {error ? (
         <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
@@ -174,6 +168,137 @@ export function ProductForm({
         </p>
       ) : null}
       <button type="submit" className="hidden" />
+    </form>
+  );
+}
+
+type PricingSectionProps = {
+  product: Product;
+};
+
+export function PricingSection({ product }: PricingSectionProps) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const simpleVariant =
+    product.variants.length === 1 &&
+    !product.variants[0].size &&
+    !product.variants[0].color
+      ? product.variants[0]
+      : null;
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!simpleVariant) return;
+    setError(null);
+    setIsSaving(true);
+
+    const form = new FormData(event.currentTarget);
+    const payload = {
+      price: String(form.get("price") ?? ""),
+      salePrice: String(form.get("salePrice") ?? "") || undefined,
+      stock: Number(form.get("stock") ?? 0),
+    };
+
+    try {
+      const response = await fetch(
+        `${API_URL}/products/variants/${simpleVariant.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAdminHeaders(),
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+      if (!response.ok) throw new Error(await readError(response));
+      router.refresh();
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "تعذر حفظ السعر.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (!simpleVariant) {
+    const prices = product.variants.map((v) =>
+      Number(v.salePrice ?? v.price),
+    );
+    const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2 text-sm font-bold">
+          <span className="rounded-full bg-pink-50 px-3 py-1.5 text-brand-pink">
+            {prices.length > 0
+              ? `السعر: ${Math.min(...prices)} - ${Math.max(...prices)} ج`
+              : "لا توجد أسعار بعد"}
+          </span>
+          <span className="rounded-full bg-blue-50 px-3 py-1.5 text-brand-blue">
+            إجمالي المخزون: {totalStock}
+          </span>
+          <span className="rounded-full bg-[#fbf7fa] px-3 py-1.5 text-[var(--muted)]">
+            عدد المتغيرات: {product.variants.length}
+          </span>
+        </div>
+        <p className="text-sm font-semibold text-[var(--muted)]">
+          هذا المنتج له متغيرات، عدّل السعر والمخزون لكل متغير من قسم
+          المتغيرات بالأسفل.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={submit}>
+      <div className="grid gap-5 sm:grid-cols-3">
+        <Field label="السعر">
+          <input
+            className={fieldClass}
+            defaultValue={simpleVariant.price}
+            min="0"
+            name="price"
+            required
+            step="0.01"
+            type="number"
+          />
+        </Field>
+        <Field label="سعر الخصم">
+          <input
+            className={fieldClass}
+            defaultValue={simpleVariant.salePrice ?? ""}
+            min="0"
+            name="salePrice"
+            placeholder="اختياري"
+            step="0.01"
+            type="number"
+          />
+        </Field>
+        <Field label="المخزون">
+          <input
+            className={fieldClass}
+            defaultValue={simpleVariant.stock}
+            min="0"
+            name="stock"
+            type="number"
+          />
+        </Field>
+      </div>
+      {error ? (
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+          {error}
+        </p>
+      ) : null}
+      <button
+        className="rounded-full bg-black px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-pink disabled:opacity-50"
+        disabled={isSaving}
+        type="submit"
+      >
+        {isSaving ? "جاري الحفظ..." : "حفظ السعر والمخزون"}
+      </button>
     </form>
   );
 }
