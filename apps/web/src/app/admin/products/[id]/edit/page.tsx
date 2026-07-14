@@ -1,8 +1,5 @@
 import type { Category, Product } from "@sleepywear/shared";
 import { PageShell } from "@/components/PageShell";
-import { ProductForm, VariantManager } from "@/components/admin/ProductForm";
-import { ImageManager } from "@/components/admin/ImageManager";
-import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 import { EditProductShell } from "@/components/admin/EditProductShell";
 import { apiGet } from "@/lib/api";
 

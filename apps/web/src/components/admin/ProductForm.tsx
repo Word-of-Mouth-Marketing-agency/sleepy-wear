@@ -18,6 +18,7 @@ import {
 type ProductFormProps = {
   categories: Category[];
   product?: Product;
+  formId?: string;
   formRef?: React.RefObject<HTMLFormElement | null>;
 };
 
@@ -26,7 +27,12 @@ const statuses: ProductStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
 const fieldClass =
   "w-full rounded-2xl border border-[var(--line)] bg-[#fbf7fa] px-4 py-3 text-sm outline-none transition focus:border-brand-pink focus:bg-white focus:ring-4 focus:ring-pink-100";
 
-export function ProductForm({ categories, product, formRef }: ProductFormProps) {
+export function ProductForm({
+  categories,
+  product,
+  formId,
+  formRef,
+}: ProductFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,66 +79,98 @@ export function ProductForm({ categories, product, formRef }: ProductFormProps) 
   }
 
   return (
-    <form ref={formRef} className="grid gap-5 sm:grid-cols-2" onSubmit={submit}>
-      <Field label="اسم المنتج بالعربي">
-        <input
-          className={fieldClass}
-          defaultValue={product?.nameAr}
-          name="nameAr"
-          placeholder="مثال: بيجامة قطن ناعمة"
-          required
-        />
-      </Field>
-      <Field label="رابط المنتج">
-        <input
-          className={fieldClass}
-          defaultValue={product?.slug}
-          name="slug"
-          placeholder="product-slug"
-          required
-        />
-      </Field>
-      <Field label="التصنيف">
-        <select
-          className={fieldClass}
-          defaultValue={product?.categoryId ?? ""}
-          name="categoryId"
-          required
-        >
-          <option value="" disabled>
-            اختر التصنيف
-          </option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.nameAr}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field label="حالة المنتج">
-        <select
-          className={fieldClass}
-          defaultValue={product?.status ?? "DRAFT"}
-          name="status"
-        >
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field label="الوصف العربي" className="sm:col-span-2">
-        <textarea
-          className={`${fieldClass} min-h-32 resize-y leading-7`}
-          defaultValue={product?.descriptionAr ?? ""}
-          name="descriptionAr"
-          placeholder="اكتب وصفا مختصرا يساعد العميل على الاختيار"
-        />
-      </Field>
+    <form
+      id={formId}
+      ref={formRef}
+      className="space-y-5"
+      onSubmit={submit}
+    >
+      <div className="rounded-2xl border border-pink-100 bg-[#fffafd] p-4 sm:p-5">
+        <div className="mb-4">
+          <h4 className="text-base font-black text-black">معلومات المنتج</h4>
+          <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+            الاسم والرابط والوصف الذي يظهر للعميل في صفحة المنتج.
+          </p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="اسم المنتج بالعربي">
+            <input
+              className={fieldClass}
+              defaultValue={product?.nameAr}
+              name="nameAr"
+              placeholder="مثال: بيجامة قطن ناعمة"
+              required
+            />
+          </Field>
+          <Field label="رابط المنتج">
+            <input
+              className={fieldClass}
+              defaultValue={product?.slug.trim()}
+              name="slug"
+              placeholder="product-slug"
+              required
+            />
+          </Field>
+          <Field label="الوصف العربي" className="sm:col-span-2">
+            <textarea
+              className={`${fieldClass} min-h-36 resize-y leading-7`}
+              defaultValue={product?.descriptionAr ?? ""}
+              name="descriptionAr"
+              placeholder="اكتب وصفا مختصرا يساعد العميل على الاختيار"
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-blue-100 bg-[#f8fdff] p-4 sm:p-5">
+        <div className="mb-4">
+          <h4 className="text-base font-black text-black">التصنيفات والظهور</h4>
+          <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+            اختر التصنيف وحالة ظهور المنتج في الواجهة.
+          </p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="التصنيف">
+            <select
+              className={fieldClass}
+              defaultValue={product?.categoryId ?? ""}
+              name="categoryId"
+              required
+            >
+              <option value="" disabled>
+                اختر التصنيف
+              </option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.nameAr}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="حالة المنتج">
+            <select
+              className={fieldClass}
+              defaultValue={product?.status ?? "DRAFT"}
+              name="status"
+            >
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      </div>
+
       {error ? (
-        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700 sm:col-span-2">
+        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
           {error}
+        </p>
+      ) : null}
+      {isSaving ? (
+        <p className="rounded-2xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-brand-blue">
+          جاري حفظ بيانات المنتج...
         </p>
       ) : null}
       <button type="submit" className="hidden" />
@@ -306,14 +344,32 @@ export function VariantManager({
                 className="rounded-2xl border border-[var(--line)] bg-white shadow-sm"
               >
                 {isEditing ? (
-                  <div className="p-4">
+                  <div className="space-y-4 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-black text-black">
+                          تعديل المتغير
+                        </h4>
+                        <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                          عدّل السعر أو المخزون أو بيانات المقاس واللون.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditing(null)}
+                        className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs font-bold text-[var(--muted)] transition hover:border-brand-pink hover:text-brand-pink"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
                     <VariantFields
                       onSubmit={(event) => saveVariant(event, variant.id)}
                       variant={variant}
+                      submitLabel="حفظ التعديل"
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
+                  <div className="grid gap-3 p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:p-4 xl:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
                     <button
                       type="button"
                       className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-brand-light-pink transition hover:border-brand-pink sm:h-14 sm:w-14"
@@ -348,7 +404,7 @@ export function VariantManager({
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
                       {variant.salePrice ? (
                         <span className="text-xs text-[var(--muted)] line-through">
                           {variant.price} ج
@@ -360,7 +416,7 @@ export function VariantManager({
                       <StockBadge stock={variant.stock} />
                     </div>
 
-                    <div className="flex shrink-0 gap-1.5">
+                    <div className="flex shrink-0 gap-1.5 sm:col-span-3 xl:col-span-1 xl:justify-end">
                       <button
                         className="rounded-full border border-[var(--line)] px-2.5 py-1 text-xs font-bold transition hover:border-brand-blue hover:text-brand-blue sm:px-3"
                         onClick={() => setEditing(variant.id)}
@@ -472,9 +528,15 @@ export function VariantManager({
       </div>
 
       <div className="rounded-2xl border border-pink-100 bg-white p-4 shadow-sm sm:p-5">
-        <h3 className="mb-3 text-sm font-extrabold">إضافة متغير جديد</h3>
+        <div className="mb-4">
+          <h3 className="text-sm font-extrabold">إضافة متغير جديد</h3>
+          <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+            اترك المقاس أو اللون فارغا إذا كان المنتج بسيطا.
+          </p>
+        </div>
         <VariantFields
           onSubmit={(event) => saveVariant(event)}
+          submitLabel="إضافة المتغير"
         />
       </div>
     </div>
@@ -506,65 +568,79 @@ function StockBadge({ stock }: { stock: number }) {
 type VariantFieldsProps = {
   variant?: Product["variants"][number];
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  submitLabel?: string;
 };
 
 function VariantFields({
   variant,
   onSubmit,
+  submitLabel = "حفظ المتغير",
 }: VariantFieldsProps) {
   return (
-    <form className="grid gap-3 sm:grid-cols-7" onSubmit={onSubmit}>
-      <input
-        className={`${fieldClass} sm:col-span-2`}
-        defaultValue={variant?.sku}
-        name="sku"
-        placeholder="SKU"
-        required
-      />
-      <input
-        className={fieldClass}
-        defaultValue={variant?.price}
-        min="0"
-        name="price"
-        placeholder="السعر"
-        required
-        step="0.01"
-        type="number"
-      />
-      <input
-        className={fieldClass}
-        defaultValue={variant?.salePrice ?? ""}
-        min="0"
-        name="salePrice"
-        placeholder="سعر الخصم"
-        step="0.01"
-        type="number"
-      />
-      <input
-        className={fieldClass}
-        defaultValue={variant?.stock ?? 0}
-        min="0"
-        name="stock"
-        placeholder="المخزون"
-        type="number"
-      />
-      <input
-        className={fieldClass}
-        defaultValue={variant?.size?.labelAr ?? ""}
-        name="sizeName"
-        placeholder="مقاس (مثال: XL)"
-      />
-      <input
-        className={fieldClass}
-        defaultValue={variant?.color?.nameAr ?? ""}
-        name="colorName"
-        placeholder="لون (مثال: موف)"
-      />
+    <form className="grid gap-3 sm:grid-cols-6" onSubmit={onSubmit}>
+      <Field label="SKU" className="sm:col-span-2">
+        <input
+          className={fieldClass}
+          defaultValue={variant?.sku}
+          name="sku"
+          placeholder="SKU"
+          required
+        />
+      </Field>
+      <Field label="السعر">
+        <input
+          className={fieldClass}
+          defaultValue={variant?.price}
+          min="0"
+          name="price"
+          placeholder="السعر"
+          required
+          step="0.01"
+          type="number"
+        />
+      </Field>
+      <Field label="سعر الخصم">
+        <input
+          className={fieldClass}
+          defaultValue={variant?.salePrice ?? ""}
+          min="0"
+          name="salePrice"
+          placeholder="اختياري"
+          step="0.01"
+          type="number"
+        />
+      </Field>
+      <Field label="المخزون">
+        <input
+          className={fieldClass}
+          defaultValue={variant?.stock ?? 0}
+          min="0"
+          name="stock"
+          placeholder="0"
+          type="number"
+        />
+      </Field>
+      <Field label="المقاس">
+        <input
+          className={fieldClass}
+          defaultValue={variant?.size?.labelAr ?? ""}
+          name="sizeName"
+          placeholder="مثال: XL"
+        />
+      </Field>
+      <Field label="اللون" className="sm:col-span-2">
+        <input
+          className={fieldClass}
+          defaultValue={variant?.color?.nameAr ?? ""}
+          name="colorName"
+          placeholder="مثال: موف"
+        />
+      </Field>
       <button
-        className="rounded-full bg-black px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-pink sm:col-span-7"
+        className="rounded-full bg-black px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-pink sm:col-span-6"
         type="submit"
       >
-        حفظ المتغير
+        {submitLabel}
       </button>
     </form>
   );
