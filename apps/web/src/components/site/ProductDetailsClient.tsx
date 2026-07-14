@@ -148,20 +148,23 @@ export default function ProductDetailsClient({
 
   const displayImage = useMemo(
     () => {
-      const selected = selectedImageUrl
-        ? galleryImages.find(
-            (img) =>
-              img.url === selectedImageUrl && !failedImageUrls.has(img.url),
-          )
-        : null;
+      if (selectedImageUrl && !failedImageUrls.has(selectedImageUrl)) {
+        const matched = galleryImages.find((img) => img.url === selectedImageUrl);
+        if (matched) return matched;
+        const fullMatch = product.images.find((img) => img.url === selectedImageUrl);
+        if (fullMatch) return fullMatch;
+        if (selectedVariant?.images?.length) {
+          const vImg = selectedVariant.images.find((img) => img.url === selectedImageUrl);
+          if (vImg) return vImg;
+        }
+      }
 
       return (
-        selected ??
         galleryImages.find((img) => !failedImageUrls.has(img.url)) ??
         null
       );
     },
-    [galleryImages, selectedImageUrl, failedImageUrls],
+    [galleryImages, selectedImageUrl, failedImageUrls, selectedVariant, product.images],
   );
 
   const isActiveThumbnail = (img: (typeof galleryImages)[number]) =>
@@ -316,9 +319,13 @@ export default function ProductDetailsClient({
                             );
                             if (v?.stock && v.stock > 0) {
                               const img = galleryImages.find((img) =>
-                                img.altAr?.startsWith(v.sku),
+                                img.altAr?.startsWith(v.sku) || img.variantId === v.id,
                               );
-                              if (img) setSelectedImageUrl(img.url);
+                              if (img) {
+                                setSelectedImageUrl(img.url);
+                              } else if (v.images?.length) {
+                                setSelectedImageUrl(v.images[0].url);
+                              }
                             }
                           }}
                           className={`relative min-h-11 min-w-[52px] rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
@@ -362,9 +369,13 @@ export default function ProductDetailsClient({
                             );
                             if (v?.stock && v.stock > 0) {
                               const img = galleryImages.find((img) =>
-                                img.altAr?.startsWith(v.sku),
+                                img.altAr?.startsWith(v.sku) || img.variantId === v.id,
                               );
-                              if (img) setSelectedImageUrl(img.url);
+                              if (img) {
+                                setSelectedImageUrl(img.url);
+                              } else if (v.images?.length) {
+                                setSelectedImageUrl(v.images[0].url);
+                              }
                             }
                           }}
                           className={`relative min-h-11 min-w-[52px] rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/30 ${
