@@ -145,7 +145,12 @@ export default function AdminOrderDetailPage() {
       });
       if (!res.ok) {
         if (res.status === 401) throw Object.assign(new Error(), { status: 401 });
-        throw new Error("تعذر تحديث حالة الطلب.");
+        const body = await res.json().catch(() => null);
+        throw new Error(
+          typeof body?.message === "string"
+            ? body.message
+            : "تعذر تحديث حالة الطلب.",
+        );
       }
       setSaveSuccess(true);
       fetchOrder();

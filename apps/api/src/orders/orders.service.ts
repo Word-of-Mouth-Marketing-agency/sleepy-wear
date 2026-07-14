@@ -349,12 +349,6 @@ export class OrdersService {
 
     if (!existing) throw new NotFoundException("Order not found");
 
-    const allowed = ALLOWED_TRANSITIONS[existing.status] ?? [];
-
-    if (dto.status && !allowed.includes(dto.status)) {
-      throw new BadRequestException(TRANSITION_ERROR_MESSAGE);
-    }
-
     const isBeingCancelled =
       dto.status === OrderStatus.CANCELLED &&
       existing.status !== OrderStatus.CANCELLED;
@@ -608,18 +602,6 @@ export class OrdersService {
     return updated;
   }
 }
-
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-  [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
-  [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
-  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
-  [OrderStatus.DELIVERED]: [],
-  [OrderStatus.CANCELLED]: [],
-};
-
-const TRANSITION_ERROR_MESSAGE =
-  "\u0644\u0627 \u064a\u0645\u0643\u0646 \u062a\u063a\u064a\u064a\u0631 \u062d\u0627\u0644\u0629 \u0627\u0644\u0637\u0644\u0628 \u0628\u0647\u0630\u0647 \u0627\u0644\u0637\u0631\u064a\u0642\u0629";
 
 const PAID_DELETE_ERROR_MESSAGE =
   "\u0644\u0627 \u064a\u0645\u0643\u0646 \u062d\u0630\u0641 \u0637\u0644\u0628 \u0645\u062f\u0641\u0648\u0639";
