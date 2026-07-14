@@ -215,11 +215,16 @@ export class ProductsService {
       }),
     );
 
+    const normalizedSlug = dto.slug
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/^\s+|\s+$/g, "");
+
     const product = await this.prisma.product.create({
       data: {
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
-        slug: dto.slug.trim(),
+        slug: normalizedSlug,
         descriptionAr: dto.descriptionAr,
         categoryId: dto.categoryId,
         status: dto.status ?? ProductStatus.DRAFT,
@@ -236,12 +241,17 @@ export class ProductsService {
   async update(id: string, dto: UpdateProductDto) {
     await this.ensureProduct(id);
 
+    const slug =
+      dto.slug !== undefined
+        ? dto.slug.trim().replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "")
+        : undefined;
+
     const product = await this.prisma.product.update({
       where: { id },
       data: {
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
-        slug: dto.slug?.trim(),
+        slug: slug,
         descriptionAr: dto.descriptionAr,
         categoryId: dto.categoryId,
         status: dto.status,

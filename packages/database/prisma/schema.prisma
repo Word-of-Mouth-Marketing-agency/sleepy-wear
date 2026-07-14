@@ -291,6 +291,8 @@ model OrderItem {
   total               Decimal         @db.Decimal(10, 2)
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
+
+  @@index([orderId])
 }
 
 model Coupon {

@@ -342,13 +342,40 @@ export class OrdersService {
   }
 
   async update(id: string, dto: UpdateOrderDto) {
-    await this.findOne(id);
-    const order = await this.prisma.order.update({
+    const existing = await this.prisma.order.findUnique({
       where: { id },
-      data: dto,
-      include: orderReadInclude,
+      include: { items: { select: { variantId: true, quantity: true } } },
     });
-    return mapOrder(order);
+
+    if (!existing) throw new NotFoundException("Order not found");
+
+    const isBeingCancelled =
+      dto.status === OrderStatus.CANCELLED &&
+      existing.status !== OrderStatus.CANCELLED;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (isBeingCancelled) {
+        for (const item of existing.items) {
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
+        }
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: {
+          status: dto.status,
+          notes: dto.notes,
+        },
+        include: orderReadInclude,
+      });
+    });
+
+    return mapOrder(updated);
   }
 
   async remove(id: string) {

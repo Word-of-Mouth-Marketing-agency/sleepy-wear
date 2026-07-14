@@ -1,8 +1,9 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
+import helmet from "helmet";
 import { config as loadEnv } from "dotenv";
-import { join } from "node:path";
+import { json } from "express";
 import { resolve } from "node:path";
 import { AppModule } from "./app.module";
 
@@ -10,6 +11,16 @@ loadEnv({ path: resolve(process.cwd(), "../../.env") });
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.use(json({ limit: "1mb" }));
+
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      contentSecurityPolicy: false,
+    }),
+  );
+
   const corsOrigin =
     process.env.WEB_ORIGIN ??
     (process.env.NODE_ENV === "production"

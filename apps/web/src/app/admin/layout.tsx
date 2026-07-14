@@ -4,6 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 export const metadata: Metadata = {
   title: "Store Admin",
   manifest: "/manifest.json",
+  robots: { index: false },
 };
 
 export const viewport: Viewport = {

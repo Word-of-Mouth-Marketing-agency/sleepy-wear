@@ -11,6 +11,12 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - sleepy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sleepyweare}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:8-alpine
@@ -19,6 +25,11 @@ services:
       - "6380:6379"
     networks:
       - sleepy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   api:
     build:
@@ -29,14 +40,22 @@ services:
     restart: unless-stopped
     env_file: .env.production
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "4000:4000"
     volumes:
       - uploads-data:/app/uploads
     networks:
       - sleepy-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   web:
     build:
@@ -50,11 +69,18 @@ services:
     environment:
       - API_INTERNAL_URL=http://api:4000/api
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "3001:3000"
     networks:
       - sleepy-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres-data:
