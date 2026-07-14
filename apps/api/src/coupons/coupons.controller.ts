@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CouponsService } from "./coupons.service";
 import { CreateCouponDto } from "./dto/create-coupon.dto";
@@ -24,6 +25,7 @@ export class CouponsController {
     return this.couponsService.findAll();
   }
 
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get("validate")
   validate(@Query("code") code: string, @Query("subtotal") subtotal: string) {
     return this.couponsService.validate(code, Number(subtotal) || 0);

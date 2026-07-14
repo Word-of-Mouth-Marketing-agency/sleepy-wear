@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
+import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -41,6 +41,9 @@ export class PaymobService {
     });
 
     if (!order) throw new BadRequestException("Order not found");
+    if (order.status === OrderStatus.CANCELLED) {
+      throw new BadRequestException("Cannot pay a cancelled order");
+    }
     if (order.paymentStatus === PaymentStatus.PAID) {
       throw new BadRequestException("Order is already paid");
     }
