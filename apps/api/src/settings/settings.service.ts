@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateSettingDto } from "./dto/update-setting.dto";
@@ -84,6 +88,152 @@ const DEFAULT_SETTINGS: Record<string, unknown> = {
   },
 };
 
+const ALLOWED_KEYS = new Set([
+  ...PUBLIC_KEYS,
+  "name",
+  "domain",
+  "currency",
+]);
+
+function validateSettingValue(
+  key: string,
+  value: unknown,
+): asserts value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new BadRequestException("القيمة يجب أن تكون كائن (object)");
+  }
+
+  const obj = value as Record<string, unknown>;
+
+  switch (key) {
+    case "marketing_pixel": {
+      if (typeof obj.enabled !== "boolean") {
+        throw new BadRequestException("enabled يجب أن يكون قيمة منطقية");
+      }
+      if (obj.enabled) {
+        const script =
+          typeof obj.headScript === "string" ? obj.headScript.trim() : "";
+        if (script.length > 20000) {
+          throw new BadRequestException("كود Meta Pixel طويل جدًا");
+        }
+        if (script && !/fbq/i.test(script)) {
+          throw new BadRequestException(
+            "كود Meta Pixel غير صالح: يجب أن يحتوي على fbq",
+          );
+        }
+        const blockedDomains =
+          /google-analytics|googletagmanager|gtag|tiktok\.com|snap\.chat|pinterest\.com|twitter\.com|linkedin\.com/i;
+        if (blockedDomains.test(script)) {
+          throw new BadRequestException(
+            "هذا المكان مخصص لكود Meta Pixel فقط. لا تضف أكواد أخرى",
+          );
+        }
+      }
+      break;
+    }
+
+    case "site_notice":
+    case "checkout_notice": {
+      if (typeof obj.enabled !== "boolean") {
+        throw new BadRequestException("enabled يجب أن يكون قيمة منطقية");
+      }
+      if (typeof obj.text !== "string") {
+        throw new BadRequestException("text يجب أن يكون نصًا");
+      }
+      if (obj.text.length > 500) {
+        throw new BadRequestException(
+          "النص طويل جدًا. الحد الأقصى 500 حرف",
+        );
+      }
+      break;
+    }
+
+    case "site_footer_text": {
+      if (typeof obj.description !== "string") {
+        throw new BadRequestException("description يجب أن يكون نصًا");
+      }
+      if (obj.description.length > 500) {
+        throw new BadRequestException(
+          "الوصف طويل جدًا. الحد الأقصى 500 حرف",
+        );
+      }
+      break;
+    }
+
+    case "site_social_links": {
+      const urlFields = ["facebook", "instagram", "tiktok", "telegram"];
+      for (const field of urlFields) {
+        if (
+          obj[field] !== undefined &&
+          typeof obj[field] !== "string"
+        ) {
+          throw new BadRequestException(
+            `${field} يجب أن يكون رابطًا نصيًا`,
+          );
+        }
+        if (
+          typeof obj[field] === "string" &&
+          (obj[field] as string).length > 500
+        ) {
+          throw new BadRequestException(
+            `${field} طويل جدًا. الحد الأقصى 500 حرف`,
+          );
+        }
+      }
+      break;
+    }
+
+    case "homepage_mid_banner": {
+      if (typeof obj.title !== "string") {
+        throw new BadRequestException("title يجب أن يكون نصًا");
+      }
+      if (obj.title.length > 200) {
+        throw new BadRequestException("العنوان طويل جدًا");
+      }
+      break;
+    }
+
+    case "homepage_why_sleepywear": {
+      if (typeof obj.title !== "string") {
+        throw new BadRequestException("title يجب أن يكون نصًا");
+      }
+      break;
+    }
+
+    case "homepage_marquee": {
+      if (!Array.isArray(obj.messages)) {
+        throw new BadRequestException("messages يجب أن يكون مصفوفة");
+      }
+      for (const msg of obj.messages) {
+        if (typeof msg !== "string") {
+          throw new BadRequestException("كل رسالة يجب أن تكون نصًا");
+        }
+        if (msg.length > 200) {
+          throw new BadRequestException(
+            "بعض الرسائل طويلة جدًا. الحد الأقصى 200 حرف للرسالة",
+          );
+        }
+      }
+      break;
+    }
+
+    case "homepage_best_sellers": {
+      if (!Array.isArray(obj.productIds)) {
+        throw new BadRequestException("productIds يجب أن يكون مصفوفة");
+      }
+      for (const id of obj.productIds) {
+        if (typeof id !== "string") {
+          throw new BadRequestException("كل productId يجب أن يكون نصًا");
+        }
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
 @Injectable()
 export class SettingsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -114,6 +264,12 @@ export class SettingsService {
   }
 
   async update(key: string, dto: UpdateSettingDto) {
+    if (!ALLOWED_KEYS.has(key)) {
+      throw new BadRequestException("مفتاح الإعداد غير صالح");
+    }
+
+    validateSettingValue(key, dto.value);
+
     const value = dto.value as Prisma.InputJsonValue;
     const row = await this.prisma.setting.upsert({
       where: { key },
