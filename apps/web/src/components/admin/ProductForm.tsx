@@ -18,6 +18,7 @@ import {
 type ProductFormProps = {
   categories: Category[];
   product?: Product;
+  formRef?: React.RefObject<HTMLFormElement | null>;
 };
 
 const statuses: ProductStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
@@ -25,7 +26,7 @@ const statuses: ProductStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
 const fieldClass =
   "w-full rounded-2xl border border-[var(--line)] bg-[#fbf7fa] px-4 py-3 text-sm outline-none transition focus:border-brand-pink focus:bg-white focus:ring-4 focus:ring-pink-100";
 
-export function ProductForm({ categories, product }: ProductFormProps) {
+export function ProductForm({ categories, product, formRef }: ProductFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -72,7 +73,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
   }
 
   return (
-    <form className="grid gap-5 sm:grid-cols-2" onSubmit={submit}>
+    <form ref={formRef} className="grid gap-5 sm:grid-cols-2" onSubmit={submit}>
       <Field label="اسم المنتج بالعربي">
         <input
           className={fieldClass}
@@ -134,13 +135,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
           {error}
         </p>
       ) : null}
-      <button
-        className="rounded-full bg-brand-pink px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-pink/90 disabled:opacity-50 sm:col-span-2"
-        disabled={isSaving}
-        type="submit"
-      >
-        {isSaving ? "جاري الحفظ..." : "حفظ المنتج"}
-      </button>
+      <button type="submit" className="hidden" />
     </form>
   );
 }
@@ -318,10 +313,10 @@ export function VariantManager({
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-center gap-4 p-4">
+                  <div className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
                     <button
                       type="button"
-                      className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-brand-light-pink transition hover:border-brand-pink"
+                      className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-brand-light-pink transition hover:border-brand-pink sm:h-14 sm:w-14"
                       onClick={() =>
                         setImagePickerFor(
                           isPicking ? null : variant.id,
@@ -337,7 +332,7 @@ export function VariantManager({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[var(--muted)]">
-                          <ImageIcon size={20} aria-hidden="true" />
+                          <ImageIcon size={18} aria-hidden="true" />
                         </div>
                       )}
                     </button>
@@ -353,23 +348,28 @@ export function VariantManager({
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className="rounded-full bg-pink-50 px-3 py-1 font-bold text-brand-pink">
+                    <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
+                      {variant.salePrice ? (
+                        <span className="text-xs text-[var(--muted)] line-through">
+                          {variant.price} ج
+                        </span>
+                      ) : null}
+                      <span className="rounded-full bg-pink-50 px-3 py-1 text-xs font-bold text-brand-pink">
                         {variant.salePrice ?? variant.price} ج
                       </span>
                       <StockBadge stock={variant.stock} />
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex shrink-0 gap-1.5">
                       <button
-                        className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs font-bold transition hover:border-brand-blue hover:text-brand-blue"
+                        className="rounded-full border border-[var(--line)] px-2.5 py-1 text-xs font-bold transition hover:border-brand-blue hover:text-brand-blue sm:px-3"
                         onClick={() => setEditing(variant.id)}
                         type="button"
                       >
                         تعديل
                       </button>
                       <button
-                        className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-50"
+                        className="rounded-full border border-red-200 px-2.5 py-1 text-xs font-bold text-red-700 transition hover:bg-red-50 sm:px-3"
                         onClick={() => deleteVariant(variant.id)}
                         type="button"
                       >
@@ -471,8 +471,8 @@ export function VariantManager({
         )}
       </div>
 
-      <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-extrabold">إضافة متغير جديد</h3>
+      <div className="rounded-2xl border border-pink-100 bg-white p-4 shadow-sm sm:p-5">
+        <h3 className="mb-3 text-sm font-extrabold">إضافة متغير جديد</h3>
         <VariantFields
           onSubmit={(event) => saveVariant(event)}
         />
@@ -513,7 +513,7 @@ function VariantFields({
   onSubmit,
 }: VariantFieldsProps) {
   return (
-    <form className="grid gap-3 sm:grid-cols-6" onSubmit={onSubmit}>
+    <form className="grid gap-3 sm:grid-cols-7" onSubmit={onSubmit}>
       <input
         className={`${fieldClass} sm:col-span-2`}
         defaultValue={variant?.sku}
@@ -561,7 +561,7 @@ function VariantFields({
         placeholder="لون (مثال: موف)"
       />
       <button
-        className="rounded-full bg-black px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-pink sm:col-span-6"
+        className="rounded-full bg-black px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-pink sm:col-span-7"
         type="submit"
       >
         حفظ المتغير

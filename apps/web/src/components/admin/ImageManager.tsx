@@ -6,21 +6,39 @@ import { ImagePlus, Trash2 } from "lucide-react";
 import type { Product } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
 import { getMediaUrl } from "@/lib/media";
-import { filterProductGalleryImages } from "@/lib/product-variants";
+import {
+  classifyImage,
+  dedupeImages,
+} from "@/lib/product-variants";
 
 type ImageManagerProps = {
   product: Product;
 };
+
+const IMAGE_LABELS = {
+  product: { label: "صورة المنتج", className: "text-green-700" },
+  variation: { label: "صورة متغير", className: "text-amber-700" },
+  "assigned-variant": { label: "مستخدمة مع متغير", className: "text-brand-pink" },
+} as const;
 
 export function ImageManager({ product }: ImageManagerProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const galleryImages = useMemo(
-    () => filterProductGalleryImages(product.images),
-    [product.images],
-  );
+  const groupedImages = useMemo(() => {
+    const deduped = dedupeImages(product.images);
+    const groups: Record<string, typeof deduped> = {
+      product: [],
+      variation: [],
+      "assigned-variant": [],
+    };
+    for (const img of deduped) {
+      const type = classifyImage(img);
+      groups[type].push(img);
+    }
+    return groups;
+  }, [product.images]);
 
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -84,12 +102,6 @@ export function ImageManager({ product }: ImageManagerProps) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-extrabold">صور المنتج الأساسية</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            ارفع صورا واضحة لتظهر في كروت المنتج والمعرض الرئيسي. صور المتغيرات تدار من قسم المتغيرات.
-          </p>
-        </div>
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink">
           <ImagePlus size={17} aria-hidden="true" />
           {uploading ? "جاري الرفع..." : "رفع صور"}
@@ -110,32 +122,50 @@ export function ImageManager({ product }: ImageManagerProps) {
         </p>
       ) : null}
 
-      {galleryImages.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {galleryImages.map((image) => (
-            <div
-              key={image.id}
-              className="group relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
-            >
-              <img
-                alt={image.altAr ?? product.nameAr}
-                className="aspect-[4/3] w-full object-cover"
-                src={getMediaUrl(image.url)}
-              />
-              <button
-                className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 opacity-0 shadow-sm transition group-hover:opacity-100"
-                onClick={() => handleDelete(image.id)}
-                type="button"
-              >
-                <Trash2 size={13} aria-hidden="true" />
-                حذف
-              </button>
-            </div>
-          ))}
+      {product.images.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
+          لا توجد صور للمنتج بعد.
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
-          لا توجد صور أساسية للمنتج بعد.
+        <div className="space-y-6">
+          {(Object.keys(IMAGE_LABELS) as Array<keyof typeof IMAGE_LABELS>).map(
+            (type) => {
+              const images = groupedImages[type];
+              const info = IMAGE_LABELS[type];
+              if (images.length === 0) return null;
+              return (
+                <div key={type}>
+                  <p
+                    className={`mb-2 text-xs font-bold ${info.className}`}
+                  >
+                    {info.label}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {images.map((image) => (
+                      <div
+                        key={image.id}
+                        className="group relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
+                      >
+                        <img
+                          alt={image.altAr ?? product.nameAr}
+                          className="aspect-[4/3] w-full object-cover"
+                          src={getMediaUrl(image.url)}
+                        />
+                        <button
+                          className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 opacity-0 shadow-sm transition group-hover:opacity-100"
+                          onClick={() => handleDelete(image.id)}
+                          type="button"
+                        >
+                          <Trash2 size={13} aria-hidden="true" />
+                          حذف
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            },
+          )}
         </div>
       )}
     </div>

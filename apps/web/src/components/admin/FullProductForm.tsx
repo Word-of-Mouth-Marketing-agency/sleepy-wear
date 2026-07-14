@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import type {
@@ -8,6 +8,7 @@ import type {
   ProductStatus,
 } from "@sleepywear/shared";
 import { API_URL, getAdminHeaders } from "@/lib/api";
+import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 
 type FullProductFormProps = {
   categories: Category[];
@@ -38,6 +39,7 @@ export function FullProductForm({
   categories,
 }: FullProductFormProps) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -181,227 +183,237 @@ export function FullProductForm({
   }
 
   return (
-    <form className="grid gap-5" onSubmit={submit}>
-      {/* البيانات الأساسية */}
-      <section className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-extrabold">البيانات الأساسية</h2>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="اسم المنتج (عربي)">
-            <input
-              className={fieldClass}
-              name="nameAr"
-              placeholder="مثال: بيجامة قطن ناعمة"
-              required
-            />
-          </Field>
-          <Field label="رابط المنتج">
-            <input
-              className={fieldClass}
-              name="slug"
-              placeholder="product-slug"
-              required
-            />
-          </Field>
-          <Field label="التصنيف">
-            <select className={fieldClass} name="categoryId" required>
-              <option value="" disabled selected>
-                اختر التصنيف
-              </option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.nameAr}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="حالة المنتج">
-            <select className={fieldClass} name="status">
-              {statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="الوصف (عربي)" className="sm:col-span-2">
-            <textarea
-              className={`${fieldClass} min-h-32 resize-y leading-7`}
-              name="descriptionAr"
-              placeholder="اكتب وصفا مختصرا يساعد العميل على الاختيار"
-            />
-          </Field>
-        </div>
-      </section>
-
-      {/* الصور */}
-      <section className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-extrabold">الصور</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              اختر صورة واحدة أو أكثر للمنتج.
-            </p>
-          </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink">
-            اختر صوراً
-            <input
-              accept="image/jpeg,image/png,image/webp,image/avif"
-              className="hidden"
-              multiple
-              onChange={(e) => handleImagesChange(e.target.files)}
-              type="file"
-            />
-          </label>
-        </div>
-        {imagePreviewUrls.length > 0 ? (
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {imagePreviewUrls.map((url, i) => (
-              <div
-                key={url}
-                className="group relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
-              >
-                <img
-                  alt=""
-                  className="aspect-[4/3] w-full object-cover"
-                  src={url}
-                />
-                <button
-                  className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 opacity-0 shadow-sm transition hover:opacity-100"
-                  onClick={() => removeImage(i)}
-                  type="button"
-                >
-                  <Trash2 size={13} aria-hidden="true" />
-                  حذف
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
-            لم تختر أي صور بعد.
-          </div>
-        )}
-      </section>
-
-      {/* المتغيرات */}
-      <section className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-extrabold">المتغيرات والمخزون</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              أضف متغيرا لكل مقاس أو لون متاح. إذا لم تضف متغيرات، سيعمل
-              المنتج كمنتج بسيط بدون مقاسات/ألوان.
-            </p>
-          </div>
-          <button
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink"
-            onClick={addVariant}
-            type="button"
+    <div className="pb-24">
+      <form ref={formRef} onSubmit={submit}>
+        <div className="space-y-6">
+          <CollapsibleSection
+            title="البيانات الأساسية"
+            subtitle="الاسم، الرابط، التصنيف، الوصف، وحالة المنتج."
+            defaultOpen
           >
-            + إضافة متغير
-          </button>
-        </div>
-        {variantEntries.length > 0 ? (
-          <div className="space-y-3">
-            {variantEntries.map((variant) => (
-              <div
-                key={variant.key}
-                className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm"
-              >
-                <div className="grid gap-3 sm:grid-cols-7">
-                  <input
-                    className={`${fieldClass} sm:col-span-2`}
-                    placeholder="SKU"
-                    required
-                    value={variant.sku}
-                    onChange={(e) =>
-                      updateVariant(variant.key, "sku", e.target.value)
-                    }
-                  />
-                  <input
-                    className={fieldClass}
-                    min="0"
-                    placeholder="السعر"
-                    required
-                    step="0.01"
-                    type="number"
-                    value={variant.price}
-                    onChange={(e) =>
-                      updateVariant(variant.key, "price", e.target.value)
-                    }
-                  />
-                  <input
-                    className={fieldClass}
-                    min="0"
-                    placeholder="سعر الخصم"
-                    step="0.01"
-                    type="number"
-                    value={variant.salePrice}
-                    onChange={(e) =>
-                      updateVariant(variant.key, "salePrice", e.target.value)
-                    }
-                  />
-                  <input
-                    className={fieldClass}
-                    min="0"
-                    placeholder="المخزون"
-                    type="number"
-                    value={variant.stock}
-                    onChange={(e) =>
-                      updateVariant(variant.key, "stock", e.target.value)
-                    }
-                  />
-                  <input
-                    className={fieldClass}
-                    placeholder="مقاس (مثال: XL)"
-                    value={variant.sizeName}
-                    onChange={(e) =>
-                      updateVariant(variant.key, "sizeName", e.target.value)
-                    }
-                  />
-                  <div className="flex gap-2">
-                    <input
-                      className={fieldClass}
-                      placeholder="لون (مثال: موف)"
-                      value={variant.colorName}
-                      onChange={(e) =>
-                        updateVariant(variant.key, "colorName", e.target.value)
-                      }
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="اسم المنتج (عربي)">
+                <input
+                  className={fieldClass}
+                  name="nameAr"
+                  placeholder="مثال: بيجامة قطن ناعمة"
+                  required
+                />
+              </Field>
+              <Field label="رابط المنتج">
+                <input
+                  className={fieldClass}
+                  name="slug"
+                  placeholder="product-slug"
+                  required
+                />
+              </Field>
+              <Field label="التصنيف">
+                <select className={fieldClass} name="categoryId" required>
+                  <option value="" disabled selected>
+                    اختر التصنيف
+                  </option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.nameAr}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="حالة المنتج">
+                <select className={fieldClass} name="status">
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="الوصف (عربي)" className="sm:col-span-2">
+                <textarea
+                  className={`${fieldClass} min-h-32 resize-y leading-7`}
+                  name="descriptionAr"
+                  placeholder="اكتب وصفا مختصرا يساعد العميل على الاختيار"
+                />
+              </Field>
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="الصور"
+            subtitle="اختر صورة واحدة أو أكثر للمنتج."
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink">
+                اختر صوراً
+                <input
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="hidden"
+                  multiple
+                  onChange={(e) => handleImagesChange(e.target.files)}
+                  type="file"
+                />
+              </label>
+            </div>
+            {imagePreviewUrls.length > 0 ? (
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {imagePreviewUrls.map((url, i) => (
+                  <div
+                    key={url}
+                    className="group relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[#fbf7fa]"
+                  >
+                    <img
+                      alt=""
+                      className="aspect-[4/3] w-full object-cover"
+                      src={url}
                     />
                     <button
-                      className="rounded-full border border-red-200 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50"
-                      onClick={() => removeVariant(variant.key)}
+                      className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-red-700 opacity-0 shadow-sm transition hover:opacity-100"
+                      onClick={() => removeImage(i)}
                       type="button"
                     >
+                      <Trash2 size={13} aria-hidden="true" />
                       حذف
                     </button>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
-            لم تضف أي متغيرات بعد. إذا أضفت مقاسا أو لونا سيتحول المنتج إلى
-            منتج متغير.
-          </div>
-        )}
-      </section>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
+                لم تختر أي صور بعد.
+              </div>
+            )}
+          </CollapsibleSection>
 
-      {error ? (
-        <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-          {error}
-        </p>
-      ) : null}
+          <CollapsibleSection
+            title="المتغيرات والمخزون"
+            subtitle="أضف متغيراً لكل مقاس أو لون متاح."
+          >
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <button
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold transition hover:border-brand-pink hover:text-brand-pink"
+                onClick={addVariant}
+                type="button"
+              >
+                + إضافة متغير
+              </button>
+            </div>
+            {variantEntries.length > 0 ? (
+              <div className="space-y-3">
+                {variantEntries.map((variant) => (
+                  <div
+                    key={variant.key}
+                    className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm"
+                  >
+                    <div className="grid gap-3 sm:grid-cols-7">
+                      <input
+                        className={`${fieldClass} sm:col-span-2`}
+                        placeholder="SKU"
+                        required
+                        value={variant.sku}
+                        onChange={(e) =>
+                          updateVariant(variant.key, "sku", e.target.value)
+                        }
+                      />
+                      <input
+                        className={fieldClass}
+                        min="0"
+                        placeholder="السعر"
+                        required
+                        step="0.01"
+                        type="number"
+                        value={variant.price}
+                        onChange={(e) =>
+                          updateVariant(variant.key, "price", e.target.value)
+                        }
+                      />
+                      <input
+                        className={fieldClass}
+                        min="0"
+                        placeholder="سعر الخصم"
+                        step="0.01"
+                        type="number"
+                        value={variant.salePrice}
+                        onChange={(e) =>
+                          updateVariant(variant.key, "salePrice", e.target.value)
+                        }
+                      />
+                      <input
+                        className={fieldClass}
+                        min="0"
+                        placeholder="المخزون"
+                        type="number"
+                        value={variant.stock}
+                        onChange={(e) =>
+                          updateVariant(variant.key, "stock", e.target.value)
+                        }
+                      />
+                      <input
+                        className={fieldClass}
+                        placeholder="مقاس (مثال: XL)"
+                        value={variant.sizeName}
+                        onChange={(e) =>
+                          updateVariant(variant.key, "sizeName", e.target.value)
+                        }
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          className={fieldClass}
+                          placeholder="لون (مثال: موف)"
+                          value={variant.colorName}
+                          onChange={(e) =>
+                            updateVariant(variant.key, "colorName", e.target.value)
+                          }
+                        />
+                        <button
+                          className="rounded-full border border-red-200 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50"
+                          onClick={() => removeVariant(variant.key)}
+                          type="button"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-pink-200 bg-white p-8 text-center text-sm font-semibold text-[var(--muted)]">
+                لم تضف أي متغيرات بعد. إذا أضفت مقاسا أو لونا سيتحول المنتج إلى
+                منتج متغير.
+              </div>
+            )}
+          </CollapsibleSection>
 
-      <button
-        className="w-full rounded-full bg-brand-pink px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-pink/90 disabled:opacity-50 sm:w-auto sm:self-start"
-        disabled={isSaving}
-        type="submit"
-      >
-        {isSaving ? "جاري الحفظ..." : "حفظ المنتج"}
-      </button>
-    </form>
+          {error ? (
+            <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+              {error}
+            </p>
+          ) : null}
+
+          <button type="submit" className="hidden" />
+        </div>
+      </form>
+
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--line)] bg-white/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => formRef.current?.requestSubmit()}
+            disabled={isSaving}
+            className="rounded-full bg-brand-pink px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-pink/90 disabled:opacity-50"
+          >
+            {isSaving ? "جاري الحفظ..." : "حفظ المنتج"}
+          </button>
+          <a
+            href="/admin/products"
+            className="rounded-full border border-[var(--line)] px-4 py-2.5 text-sm font-bold text-[var(--muted)] transition hover:border-red-200 hover:text-red-700"
+          >
+            رجوع
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
 
