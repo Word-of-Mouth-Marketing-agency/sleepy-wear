@@ -5,6 +5,10 @@ import { API_URL } from "@/lib/api";
 
 const baseUrl = `https://${DOMAIN}`;
 
+function encodeSlug(slug: string): string {
+  return encodeURIComponent(slug.trim());
+}
+
 async function getJson<T>(path: string): Promise<T | null> {
   try {
     const response = await fetch(`${API_URL}${path}`, {
@@ -39,14 +43,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const categoryRoutes: MetadataRoute.Sitemap = (categories ?? []).map(
     (category) => ({
-      url: `${baseUrl}/categories/${category.slug}`,
+      url: `${baseUrl}/categories/${encodeSlug(category.slug)}`,
       lastModified: now,
     }),
   );
 
   const productRoutes: MetadataRoute.Sitemap = (products?.items ?? []).map(
     (product) => ({
-      url: `${baseUrl}/products/${product.slug}`,
+      url: `${baseUrl}/products/${encodeSlug(product.slug)}`,
       lastModified: product.updatedAt ? new Date(product.updatedAt) : now,
     }),
   );
