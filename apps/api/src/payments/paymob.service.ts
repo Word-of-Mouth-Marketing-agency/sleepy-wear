@@ -123,7 +123,7 @@ export class PaymobService {
         integrationIdTypes: paymentMethods.map((method) => typeof method),
       });
       throw new ServiceUnavailableException(
-        `Paymob intention creation failed: ${response.status} ${message} | payment_methods=${JSON.stringify(paymentMethods)}`,
+        "تعذر إنشاء رابط الدفع. حاول مرة أخرى لاحقاً",
       );
     }
 

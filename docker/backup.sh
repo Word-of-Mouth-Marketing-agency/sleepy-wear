@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 # SleepyWear backup script — read-only, no restore included.
+# ⚠️  Never restore a backup to production without explicit approval.
+#     Restoring overwrites all live orders, settings, and user data.
 # Usage: sh docker/backup.sh [output-dir]
 # Default output: /root/backups/sleepywear-YYYYMMDD-HHMMSS.dump (custom format)
 

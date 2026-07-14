@@ -6,6 +6,7 @@ import { config as loadEnv } from "dotenv";
 import { json } from "express";
 import { resolve } from "node:path";
 import { AppModule } from "./app.module";
+import { GlobalExceptionFilter } from "./common/exception-filter";
 
 loadEnv({ path: resolve(process.cwd(), "../../.env") });
 
@@ -32,6 +33,8 @@ async function bootstrap() {
     origin: corsOrigin,
     credentials: true,
   });
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

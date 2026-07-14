@@ -218,6 +218,11 @@ docker compose -f docker-compose.prod.yml down -v
 
 ## 12. Backups
 
+### ⚠️ Restore warning
+
+**Never restore a backup to the production database without explicit approval.**  
+Restoring overwrites all live orders, settings, and user data. If a restore is needed, test on a local or staging environment first.
+
 ### Using the backup script
 
 A helper script is provided at `docker/backup.sh`:

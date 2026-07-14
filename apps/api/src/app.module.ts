@@ -1,6 +1,7 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { RequestIdMiddleware } from "./common/request-id.middleware";
 import { AdminUsersModule } from "./admin-users/admin-users.module";
 import { AuthModule } from "./auth/auth.module";
 import { BannersModule } from "./banners/banners.module";
@@ -57,4 +58,8 @@ import { UploadsModule } from "./uploads/uploads.module";
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes("*");
+  }
+}
