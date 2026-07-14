@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ExternalLink,
   LayoutDashboard,
   Package,
   Grid3X3,
@@ -173,6 +174,21 @@ export function AdminShell({
             );
           })}
         </nav>
+
+        {/* View Website */}
+        <div className="border-t border-pink-100 px-3 py-2">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-[var(--muted)] transition-colors hover:bg-blue-50 hover:text-brand-blue"
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#fbf7fa]">
+              <ExternalLink size={18} strokeWidth={2} aria-hidden="true" />
+            </span>
+            عرض الموقع
+          </a>
+        </div>
 
         {/* Logout */}
         <div className="border-t border-pink-100 px-3 py-4">

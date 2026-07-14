@@ -89,7 +89,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
 
   try {
-    const product = await apiGet<Product>(`/products/${slug}`);
+    const product = await apiGet<Product>(`/products/${slug}`, { cache: 'no-store' });
 
     if (product.status !== "ACTIVE") {
       return (

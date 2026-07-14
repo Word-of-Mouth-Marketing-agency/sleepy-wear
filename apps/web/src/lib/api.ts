@@ -9,12 +9,13 @@ function getAdminHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+export async function apiGet<T>(path: string, options?: { cache?: RequestCache; next?: NextFetchRequestConfig }): Promise<T> {
   const baseUrl = getApiBaseUrl();
   const signal = getServerFetchSignal();
   const response = await fetch(`${baseUrl}${path}`, {
     headers: { Accept: "application/json" },
     next: { revalidate: 30 },
+    ...options,
     signal,
   });
 
