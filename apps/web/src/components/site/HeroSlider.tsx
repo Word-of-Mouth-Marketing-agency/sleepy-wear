@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Banner } from "@sleepywear/shared";
@@ -46,17 +47,23 @@ export function HeroSlider() {
           >
             {banner.href ? (
               <Link href={banner.href} className="block h-full w-full">
-                <img
+                <Image
                   src={getMediaUrl(banner.imageUrl)}
                   alt={banner.titleAr}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  priority={i === 0}
                 />
               </Link>
             ) : (
-              <img
+              <Image
                 src={getMediaUrl(banner.imageUrl)}
                 alt={banner.titleAr}
-                className="h-full w-full object-cover"
+                fill
+                sizes="100vw"
+                className="object-cover"
+                priority={i === 0}
               />
             )}
           </div>

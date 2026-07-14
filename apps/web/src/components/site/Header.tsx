@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Category } from "@sleepywear/shared";
 import { apiGet, apiFetch } from "@/lib/api";
@@ -71,10 +72,13 @@ export function SiteHeaderContent({
           </div>
 
           <Link href="/" className="justify-self-center">
-            <img
+            <Image
               alt="SleepyWear"
+              width={160}
+              height={48}
               className="h-10 w-auto sm:h-12"
               src="/brand/pink-logo.png"
+              priority
             />
           </Link>
 

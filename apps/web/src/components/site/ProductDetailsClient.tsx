@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useMemo } from "react";
 import type { Product } from "@sleepywear/shared";
 import { useCartStore } from "@/stores/cart-store";
@@ -173,9 +174,11 @@ export default function ProductDetailsClient({
           <section className="flex min-w-0 w-full flex-col gap-3 lg:flex-row-reverse">
             <div className="relative flex h-[420px] w-full items-center justify-center overflow-hidden rounded-3xl border border-[var(--line)] bg-brand-light-pink sm:h-[520px] lg:h-[700px] lg:flex-1">
               {displayImage ? (
-                <img
+                <Image
                   alt={displayImage.altAr ?? product.nameAr}
-                  className="h-full w-full object-contain p-4"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-contain p-4"
                   src={getMediaUrl(displayImage.url)}
                   onError={() => {
                     setFailedImageUrls((prev) => {
@@ -225,15 +228,17 @@ export default function ProductDetailsClient({
                         }
                       }
                     }}
-                    className={`h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-brand-light-pink transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/40 lg:h-24 lg:w-24 ${
+                    className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-brand-light-pink transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/40 lg:h-24 lg:w-24 ${
                       isActiveThumbnail(img)
                         ? "border-brand-pink"
                         : "border-transparent hover:border-brand-pink/50"
                     }`}
                   >
-                    <img
+                    <Image
                       alt={img.altAr ?? `${product.nameAr} ${i + 1}`}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="100px"
+                      className="object-cover"
                       src={getThumbUrl(img.url)}
                     />
                   </button>

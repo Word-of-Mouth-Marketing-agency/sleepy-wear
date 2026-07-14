@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef } from "react";
 import type { Product } from "@sleepywear/shared";
@@ -170,9 +171,11 @@ function ProductImage({
       className={`relative flex items-center justify-center overflow-hidden bg-brand-light-pink ${className}`}
     >
       {imageUrl ? (
-        <img
+        <Image
           alt={alt}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           src={getCardUrl(imageUrl)}
         />
       ) : (
