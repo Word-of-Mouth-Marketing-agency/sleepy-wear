@@ -128,7 +128,12 @@ export class DashboardService {
         },
       }),
       this.prisma.orderItem.aggregate({
-        where: { order: { createdAt: { gte: range.start, lt: range.end } } },
+        where: {
+          order: {
+            createdAt: { gte: range.start, lt: range.end },
+            status: { not: OrderStatus.CANCELLED },
+          },
+        },
         _sum: { quantity: true },
       }),
     ]);
@@ -300,13 +305,11 @@ function getPresetRange(preset: Preset): DateRange {
     }
     case "this_week": {
       const start = new Date(now);
-      const day = start.getDay();
-      const diffToSun = day === 0 ? 0 : 7 - day;
-      start.setDate(start.getDate() + diffToSun - 6);
+      const day = start.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      start.setDate(start.getDate() - day); // Go back to Sunday
       start.setHours(0, 0, 0, 0);
-      const end = new Date(now);
-      end.setDate(end.getDate() + diffToSun + 1);
-      end.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7); // Next Sunday (exclusive end)
       return { start, end };
     }
     case "this_month": {
