@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
+import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 type DateRange = { start: Date; end: Date };
@@ -10,6 +10,155 @@ type Preset = (typeof PRESETS)[number];
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getStatistics(query: { preset?: string; from?: string; to?: string }) {
+    const range = resolveDateRange(query, true);
+    const deliveredCount = await this.prisma.order.count({
+      where: { createdAt: { gte: range.start, lt: range.end }, status: OrderStatus.DELIVERED },
+    });
+    const cancelledCount = await this.prisma.order.count({
+      where: { createdAt: { gte: range.start, lt: range.end }, status: OrderStatus.CANCELLED },
+    });
+
+    const [
+      totalOrdersCount,
+      nonCancelledAgg,
+      deliveredAgg,
+      cancelledAgg,
+      pendingCount,
+      confirmedCount,
+      processingCount,
+      shippedCount,
+      codAgg,
+      codCount,
+      onlineAgg,
+      onlineCount,
+      paidAgg,
+      paidCount,
+      unpaidAgg,
+      unpaidCount,
+      itemsSold,
+    ] = await this.prisma.$transaction([
+      this.prisma.order.count({
+        where: { createdAt: { gte: range.start, lt: range.end } },
+      }),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          status: { not: OrderStatus.CANCELLED },
+        },
+        _sum: { total: true },
+      }),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          status: OrderStatus.DELIVERED,
+        },
+        _sum: { total: true },
+      }),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          status: OrderStatus.CANCELLED,
+        },
+        _sum: { total: true },
+      }),
+      this.prisma.order.count({
+        where: { createdAt: { gte: range.start, lt: range.end }, status: OrderStatus.PENDING },
+      }),
+      this.prisma.order.count({
+        where: { createdAt: { gte: range.start, lt: range.end }, status: OrderStatus.CONFIRMED },
+      }),
+      this.prisma.order.count({
+        where: { createdAt: { gte: range.start, lt: range.end }, status: OrderStatus.PROCESSING },
+      }),
+      this.prisma.order.count({
+        where: { createdAt: { gte: range.start, lt: range.end }, status: OrderStatus.SHIPPED },
+      }),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentMethod: PaymentMethod.COD,
+        },
+        _sum: { total: true },
+      }),
+      this.prisma.order.count({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentMethod: PaymentMethod.COD,
+        },
+      }),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentMethod: PaymentMethod.PAYMOB,
+        },
+        _sum: { total: true },
+      }),
+      this.prisma.order.count({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentMethod: PaymentMethod.PAYMOB,
+        },
+      }),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentStatus: PaymentStatus.PAID,
+        },
+        _sum: { total: true },
+      }),
+      this.prisma.order.count({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentStatus: PaymentStatus.PAID,
+        },
+      }),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentStatus: PaymentStatus.PENDING,
+        },
+        _sum: { total: true },
+      }),
+      this.prisma.order.count({
+        where: {
+          createdAt: { gte: range.start, lt: range.end },
+          paymentStatus: PaymentStatus.PENDING,
+        },
+      }),
+      this.prisma.orderItem.aggregate({
+        where: { order: { createdAt: { gte: range.start, lt: range.end } } },
+        _sum: { quantity: true },
+      }),
+    ]);
+
+    const totalValue = toNumber(nonCancelledAgg._sum.total);
+    const nonCancelledCount = totalOrdersCount - cancelledCount;
+
+    return {
+      totalOrdersCount,
+      totalOrdersValue: totalValue,
+      deliveredOrdersCount: deliveredCount,
+      deliveredOrdersValue: toNumber(deliveredAgg._sum.total),
+      cancelledOrdersCount: cancelledCount,
+      cancelledOrdersValue: toNumber(cancelledAgg._sum.total),
+      pendingOrdersCount: pendingCount,
+      confirmedOrdersCount: confirmedCount,
+      processingOrdersCount: processingCount,
+      shippedOrdersCount: shippedCount,
+      averageOrderValue: nonCancelledCount > 0 ? Math.round(totalValue / nonCancelledCount) : 0,
+      totalItemsSold: itemsSold._sum.quantity ?? 0,
+      codOrdersCount: codCount,
+      codOrdersValue: toNumber(codAgg._sum.total),
+      onlineOrdersCount: onlineCount,
+      onlineOrdersValue: toNumber(onlineAgg._sum.total),
+      paidOrdersCount: paidCount,
+      paidOrdersValue: toNumber(paidAgg._sum.total),
+      unpaidOrdersCount: unpaidCount,
+      unpaidOrdersValue: toNumber(unpaidAgg._sum.total),
+    };
+  }
 
   async getSummary(query: { preset?: string; from?: string; to?: string }) {
     const range = resolveDateRange(query);
@@ -91,7 +240,10 @@ export class DashboardService {
   }
 }
 
-function resolveDateRange(query: { preset?: string; from?: string; to?: string }): DateRange {
+function resolveDateRange(query: { preset?: string; from?: string; to?: string }, allowAll?: boolean): DateRange {
+  if (query.preset === "all" && allowAll) {
+    return { start: new Date(0), end: new Date("2100-01-01") };
+  }
   if (query.preset && PRESETS.includes(query.preset as Preset)) {
     return getPresetRange(query.preset as Preset);
   }

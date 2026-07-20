@@ -22,6 +22,29 @@ export type NotificationLog = {
   deviceId: string | null;
 };
 
+export type AdminStatistics = {
+  totalOrdersCount: number;
+  totalOrdersValue: number;
+  deliveredOrdersCount: number;
+  deliveredOrdersValue: number;
+  cancelledOrdersCount: number;
+  cancelledOrdersValue: number;
+  pendingOrdersCount: number;
+  confirmedOrdersCount: number;
+  processingOrdersCount: number;
+  shippedOrdersCount: number;
+  averageOrderValue: number;
+  totalItemsSold: number;
+  codOrdersCount: number;
+  codOrdersValue: number;
+  onlineOrdersCount: number;
+  onlineOrdersValue: number;
+  paidOrdersCount: number;
+  paidOrdersValue: number;
+  unpaidOrdersCount: number;
+  unpaidOrdersValue: number;
+};
+
 export type AdminDashboardSummary = {
   periodOrders: number;
   periodOrderValue: number;
@@ -198,6 +221,21 @@ export async function getAdminDashboardSummary(params?: {
     ? `/admin/dashboard/summary?${qs.toString()}`
     : "/admin/dashboard/summary";
   return adminFetch<AdminDashboardSummary>(path);
+}
+
+export async function getAdminStatistics(params?: {
+  preset?: string;
+  from?: string;
+  to?: string;
+}) {
+  const qs = new URLSearchParams();
+  if (params?.preset) qs.set("preset", params.preset);
+  if (params?.from) qs.set("from", params.from);
+  if (params?.to) qs.set("to", params.to);
+  const path = qs.toString()
+    ? `/admin/dashboard/statistics?${qs.toString()}`
+    : "/admin/dashboard/statistics";
+  return adminFetch<AdminStatistics>(path);
 }
 
 export function getBrowserDeviceName() {

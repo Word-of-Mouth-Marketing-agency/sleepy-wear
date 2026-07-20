@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  BarChart3,
   ExternalLink,
   LayoutDashboard,
   Package,
@@ -24,6 +25,7 @@ import { AdminPwaBootstrap } from "@/components/admin/AdminPwaBootstrap";
 
 const NAV = [
   { href: "/admin", label: "الرئيسية", icon: LayoutDashboard },
+  { href: "/admin/statistics", label: "الإحصائيات", icon: BarChart3 },
   { href: "/admin/products", label: "المنتجات", icon: Package },
   { href: "/admin/categories", label: "التصنيفات", icon: Grid3X3 },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingCart },
