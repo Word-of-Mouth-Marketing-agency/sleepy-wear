@@ -46,7 +46,15 @@ async function bootstrap() {
   const uploadRoot = process.env.UPLOAD_PATH
     ? resolve(process.env.UPLOAD_PATH)
     : resolve(process.cwd(), "../../uploads");
-  app.useStaticAssets(uploadRoot, { prefix: "/media" });
+  app.useStaticAssets(uploadRoot, {
+    prefix: "/media",
+    setHeaders: (res) => {
+      res.setHeader(
+        "Cache-Control",
+        "public, max-age=31536000, immutable",
+      );
+    },
+  });
 
   const port = Number(process.env.API_PORT ?? 4000);
   await app.listen(port);
